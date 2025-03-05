@@ -30,12 +30,10 @@ import {
 import {
   BadgeCheck,
   LogOut,
-  KeyRound,
   ShoppingCart,
 } from "lucide-react";
 
 export function NavUser() {
-  const { isMobile } = useSidebar();
   const router = useRouter();
   const { user, loading } = useAuth(); // Ahora `user` tiene nombre y apellido
 

@@ -1,17 +1,11 @@
 "use client"
-import Link from 'next/link';
 import * as React from "react"
 //import data from "@/data"; // Asegura que data.navMain esté correctamente importado
 
 import {
-  AudioWaveform,
   BookOpen,
   Bot,
-  Command,
-  Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
   Settings2,
   SquareTerminal,
 } from "lucide-react"
@@ -22,7 +16,6 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
 

@@ -1,4 +1,3 @@
-import { LoginForm } from "@/components/login-form"
 import { RegistroForm } from "@/components/Registro-form"
 
 export default function Page() {
