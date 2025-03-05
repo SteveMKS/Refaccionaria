@@ -4,8 +4,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
 
+interface Users {
+  nombre: string;
+  apellido: string;
+  avatar: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: (User & Users) | null;
   session: Session | null;
   logout: () => Promise<void>;
 }
@@ -14,20 +20,41 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<(User & Users) | null>(null);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user || null);
+    const fetchUser = async (session: Session | null) => {
+      if (!session?.user) {
+        setUser(null);
+        return;
+      }
+
+      // 🔹 Consultamos la información adicional del usuario desde Supabase
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nombre, apellido, avatar")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error) {
+        console.error("Error obteniendo perfil:", error);
+        setUser(session.user as User & Users);
+      } else {
+        setUser({ ...session.user, ...data });
+      }
     };
 
-    fetchSession();
+    const initAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      await fetchUser(data.session);
+    };
+
+    initAuth();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setUser(session?.user || null);
+      fetchUser(session);
     });
 
     return () => {
