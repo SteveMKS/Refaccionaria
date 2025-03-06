@@ -34,42 +34,41 @@ function Nuevacontraseña() {
     setLoading(true);
     setError(null);
     setMessage(null);
-
+  
+    console.log("🔹 Iniciando actualización de contraseña...");
+  
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       setLoading(false);
       return;
     }
-
+  
     if (!accessToken) {
       setError("Token no válido. Inténtalo de nuevo.");
       setLoading(false);
       return;
     }
-
-    // Intenta autenticar con el token antes de cambiar la contraseña
-    const { error: signInError } = await supabase.auth.setSession({
-      access_token: accessToken,
-      refresh_token: accessToken, // En algunos casos no se necesita
-    });
-
-    if (signInError) {
-      setError("No se pudo autenticar con el token.");
+  
+    try {
+      console.log("🔹 Enviando solicitud a Supabase...");
+      const { data, error } = await supabase.auth.updateUser({ password });
+  
+      if (error) {
+        console.error("❌ Error en Supabase:", error);
+        setError(error.message);
+      } else {
+        console.log("✅ Contraseña actualizada exitosamente", data);
+        setMessage("Contraseña actualizada exitosamente. Redirigiendo...");
+        setTimeout(() => router.push("/login"), 3000);
+      }
+    } catch (err) {
+      console.error("❌ Error inesperado:", err);
+      setError("Ocurrió un error inesperado. Inténtalo más tarde.");
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    const { error } = await supabase.auth.updateUser({ password });
-
-    setLoading(false);
-
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage("Contraseña actualizada exitosamente. Redirigiendo...");
-      setTimeout(() => router.push("/login"), 3000);
     }
   };
+  
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
