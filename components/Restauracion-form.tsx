@@ -64,6 +64,7 @@ function Nuevacontraseña() {
       }
   
       console.log("✅ Sesión establecida correctamente.");
+      console.log("Todo bien de momento.")
   
       console.log("🔹 Enviando solicitud de actualización de contraseña...");
       const { error } = await supabase.auth.updateUser({ password });
