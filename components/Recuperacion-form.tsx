@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 
-export function PasswordRecoveryForm({
+export function RecuperacionContraseña({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
