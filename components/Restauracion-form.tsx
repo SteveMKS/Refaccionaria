@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,16 +14,20 @@ function Nuevacontraseña() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const accessToken = searchParams.get("access_token");
 
   useEffect(() => {
-    if (!accessToken) {
+    const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const token = hashParams.get("access_token");
+    
+    if (!token) {
       setError("Token no válido. Inténtalo de nuevo.");
+    } else {
+      setAccessToken(token);
     }
-  }, [accessToken]);
+  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +43,18 @@ function Nuevacontraseña() {
 
     if (!accessToken) {
       setError("Token no válido. Inténtalo de nuevo.");
+      setLoading(false);
+      return;
+    }
+
+    // Intenta autenticar con el token antes de cambiar la contraseña
+    const { error: signInError } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: accessToken, // En algunos casos no se necesita
+    });
+
+    if (signInError) {
+      setError("No se pudo autenticar con el token.");
       setLoading(false);
       return;
     }
