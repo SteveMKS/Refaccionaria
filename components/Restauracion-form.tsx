@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export function Nuevacontraseña() {
+function Nuevacontraseña() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -96,5 +96,14 @@ export function Nuevacontraseña() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// 🟢 La solución: envolver en <Suspense>
+export function NuevaContraseña() {
+  return (
+    <Suspense fallback={<p className="text-center">Cargando...</p>}>
+      <Nuevacontraseña />
+    </Suspense>
   );
 }
