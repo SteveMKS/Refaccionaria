@@ -50,14 +50,29 @@ function Nuevacontraseña() {
     }
   
     try {
-      console.log("🔹 Enviando solicitud a Supabase...");
-      const { data, error } = await supabase.auth.updateUser({ password });
+      console.log("🔹 Configurando sesión en Supabase...");
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: accessToken, // También puede ser necesario
+      });
+  
+      if (sessionError) {
+        console.error("❌ Error al establecer sesión en Supabase:", sessionError);
+        setError(sessionError.message);
+        setLoading(false);
+        return;
+      }
+  
+      console.log("✅ Sesión establecida correctamente.");
+  
+      console.log("🔹 Enviando solicitud de actualización de contraseña...");
+      const { error } = await supabase.auth.updateUser({ password });
   
       if (error) {
         console.error("❌ Error en Supabase:", error);
         setError(error.message);
       } else {
-        console.log("✅ Contraseña actualizada exitosamente", data);
+        console.log("✅ Contraseña actualizada exitosamente.");
         setMessage("Contraseña actualizada exitosamente. Redirigiendo...");
         setTimeout(() => router.push("/login"), 3000);
       }
@@ -68,6 +83,7 @@ function Nuevacontraseña() {
       setLoading(false);
     }
   };
+  
   
 
   return (
