@@ -56,7 +56,7 @@ export function RecuperacionContraseña({
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            Recuperar Contraseña
+            Recuperación de Contraseña
           </CardTitle>
           <CardDescription>
             Ingresa tu correo para recibir instrucciones.
