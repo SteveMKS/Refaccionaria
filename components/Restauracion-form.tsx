@@ -50,21 +50,21 @@ function Nuevacontraseña() {
     }
   
     try {
-      console.log("🔹 Configurando sesión en Supabase...");
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: accessToken, // También puede ser necesario
+      console.log("🔹 Intentando iniciar sesión con el token de recuperación...");
+      
+      const { error: signInError } = await supabase.auth.signInWithOAuth({
+        provider: "email",
+        options: { access_token: accessToken },
       });
   
-      if (sessionError) {
-        console.error("❌ Error al establecer sesión en Supabase:", sessionError);
-        setError(sessionError.message);
+      if (signInError) {
+        console.error("❌ Error al iniciar sesión con el token:", signInError);
+        setError("No se pudo autenticar la sesión.");
         setLoading(false);
         return;
       }
   
-      console.log("✅ Sesión establecida correctamente.");
-      console.log("Todo bien de momento.")
+      console.log("✅ Sesión iniciada correctamente.");
   
       console.log("🔹 Enviando solicitud de actualización de contraseña...");
       const { error } = await supabase.auth.updateUser({ password });
@@ -84,7 +84,6 @@ function Nuevacontraseña() {
       setLoading(false);
     }
   };
-  
   
 
   return (
