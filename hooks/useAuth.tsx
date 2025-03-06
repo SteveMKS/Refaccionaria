@@ -1,57 +1,63 @@
-"use client";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase"; // Importa Supabase correctamente
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Session, User } from "@supabase/supabase-js";
-
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+const useAuth = () => {
+  const [session, setSession] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user || null);
+    const getSessionData = async () => {
+      setLoading(true);
+
+      // 🔹 Obtiene la sesión actual
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+
+      if (session?.user) {
+        await fetchUserData(session.user.id);
+      } else {
+        setUser(null);
+      }
+
+      setLoading(false);
     };
 
-    fetchSession();
+    getSessionData();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user || null);
-    });
+    // 🔹 Escuchar cambios en la autenticación
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          await fetchUserData(session.user.id);
+        } else {
+          setUser(null);
+        }
+      }
+    );
 
     return () => {
-      listener.subscription.unsubscribe();
+      authListener.subscription?.unsubscribe();
     };
   }, []);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
+  // 🔹 Función para obtener los datos del usuario desde la BD
+  const fetchUserData = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("users") // Asegúrate de que esta es la tabla correcta
+      .select("nombre, apellido, correo") // Selecciona solo lo necesario
+      .eq("id", userId)
+      .single();
+
+    if (error) {
+      console.error("Error obteniendo usuario:", error);
+    } else {
+      setUser({ ...data, id: userId }); // 🔹 Fusionamos el ID con los datos obtenidos
+    }
   };
 
-  return (
-    <AuthContext.Provider value={{ user, session, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  return { session, user, loading };
+};
 
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
-  }
-  return context;
-}
+export default useAuth;
