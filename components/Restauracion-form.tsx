@@ -23,7 +23,7 @@ function Nuevacontraseña() {
     const token = hashParams.get("access_token");
     
     if (!token) {
-      setError("Token no válido. Inténtalo de nuevo.");
+      setError("Token no valido. Intentalo de nuevo.");
     } else {
       setAccessToken(token);
     }
@@ -35,7 +35,7 @@ function Nuevacontraseña() {
     setError(null);
     setMessage(null);
   
-    console.log("🔹 Iniciando actualización de contraseña...");
+    console.log("Iniciando actualizacion de contraseña...");
   
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
@@ -44,13 +44,13 @@ function Nuevacontraseña() {
     }
   
     if (!accessToken) {
-      setError("Token no válido. Inténtalo de nuevo.");
+      setError("Token no valido. Intentalo de nuevo.");
       setLoading(false);
       return;
     }
   
     try {
-      console.log("🔹 Intentando iniciar sesión con el token de recuperación...");
+      console.log("Intentando iniciar sesión con el token de recuperación...");
       
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: "email",
@@ -58,28 +58,28 @@ function Nuevacontraseña() {
       });
   
       if (signInError) {
-        console.error("❌ Error al iniciar sesión con el token:", signInError);
+        console.error("Error al iniciar sesión con el token:", signInError);
         setError("No se pudo autenticar la sesión.");
         setLoading(false);
         return;
       }
   
-      console.log("✅ Sesión iniciada correctamente.");
+      console.log("Sesión iniciada correctamente.");
   
-      console.log("🔹 Enviando solicitud de actualización de contraseña...");
+      console.log("Enviando solicitud de actualización de contraseña...");
       const { error } = await supabase.auth.updateUser({ password });
   
       if (error) {
-        console.error("❌ Error en Supabase:", error);
+        console.error("Error en Supabase:", error);
         setError(error.message);
       } else {
-        console.log("✅ Contraseña actualizada exitosamente.");
+        console.log("Contraseña actualizada exitosamente.");
         setMessage("Contraseña actualizada exitosamente. Redirigiendo...");
         setTimeout(() => router.push("/login"), 3000);
       }
     } catch (err) {
-      console.error("❌ Error inesperado:", err);
-      setError("Ocurrió un error inesperado. Inténtalo más tarde.");
+      console.error("Error inesperado:", err);
+      setError("Ocurrió un error inesperado. Intentalo más tarde.");
     } finally {
       setLoading(false);
     }
