@@ -48,16 +48,13 @@ function Nuevacontraseña() {
     }
   
     try {
-      console.log("Intentando establecer sesión con el token de recuperación...");
+      console.log("Intentando intercambiar el token por una sesión válida...");
   
-      // Establecer sesión con el access_token de la URL
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: "",
-      });
+      // Intercambiar access_token por sesión
+      const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(accessToken);
   
-      if (sessionError) {
-        console.error("Error al establecer la sesión:", sessionError);
+      if (sessionError || !data.session) {
+        console.error("Error al intercambiar el código por sesión:", sessionError);
         setError("No se pudo autenticar la sesión.");
         setLoading(false);
         return;
@@ -83,7 +80,6 @@ function Nuevacontraseña() {
       setLoading(false);
     }
   };
-  
   
 
   return (
