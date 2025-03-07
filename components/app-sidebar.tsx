@@ -98,8 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavMain items={data.categories} />
+        <NavMain items={data.navMain} categories={data.categories} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
