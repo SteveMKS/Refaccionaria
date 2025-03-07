@@ -8,7 +8,6 @@ import {
   GalleryVerticalEnd,
   Settings2,
   SquareTerminal,
-  PanelLeftOpen,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
