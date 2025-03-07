@@ -35,8 +35,6 @@ function Nuevacontraseña() {
     setError(null);
     setMessage(null);
   
-    console.log("Iniciando actualizacion de contraseña...");
-  
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       setLoading(false);
@@ -44,27 +42,28 @@ function Nuevacontraseña() {
     }
   
     if (!accessToken) {
-      setError("Token no valido. Intentalo de nuevo.");
+      setError("Token no válido. Inténtalo de nuevo.");
       setLoading(false);
       return;
     }
   
     try {
-      console.log("Intentando iniciar sesión con el token de recuperación...");
-      
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
-        provider: "email",
-        options: { access_token: accessToken },
+      console.log("Intentando establecer sesión con el token de recuperación...");
+  
+      // Establecer sesión con el access_token de la URL
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: "",
       });
   
-      if (signInError) {
-        console.error("Error al iniciar sesión con el token:", signInError);
+      if (sessionError) {
+        console.error("Error al establecer la sesión:", sessionError);
         setError("No se pudo autenticar la sesión.");
         setLoading(false);
         return;
       }
   
-      console.log("Sesión iniciada correctamente.");
+      console.log("Sesión establecida correctamente.");
   
       console.log("Enviando solicitud de actualización de contraseña...");
       const { error } = await supabase.auth.updateUser({ password });
@@ -79,11 +78,12 @@ function Nuevacontraseña() {
       }
     } catch (err) {
       console.error("Error inesperado:", err);
-      setError("Ocurrió un error inesperado. Intentalo más tarde.");
+      setError("Ocurrió un error inesperado. Inténtalo más tarde.");
     } finally {
       setLoading(false);
     }
   };
+  
   
 
   return (
