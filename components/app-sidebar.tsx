@@ -84,7 +84,7 @@ const data = {
     {
       title: "Categorias",
       url: "/Categorias",
-      icon: PanelLeftOpen,
+      icon: BookOpen,
       IsActive: false,
       items: [
         { title: "Refacciones", url: "/Caterorias/Refacciones", },
