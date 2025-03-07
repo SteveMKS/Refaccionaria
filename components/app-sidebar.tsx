@@ -17,7 +17,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarRail,
-  PanelLeftOpen,
 } from "@/components/ui/sidebar"
 
 // This is sample data.
