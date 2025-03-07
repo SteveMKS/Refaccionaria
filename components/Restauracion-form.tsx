@@ -1,6 +1,4 @@
-"use client";
-
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -14,10 +12,10 @@ function Nuevacontraseña() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const router = useRouter();
 
+  // Usamos el token de la URL cuando el usuario hace clic en el enlace de recuperación
   useEffect(() => {
     const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
     const token = hashParams.get("access_token");
@@ -25,6 +23,7 @@ function Nuevacontraseña() {
     if (!token) {
       setError("Token no valido. Intentalo de nuevo.");
     } else {
+      // Puedes almacenar el token en el estado si es necesario
       setAccessToken(token);
     }
   }, []);
@@ -34,7 +33,7 @@ function Nuevacontraseña() {
     setLoading(true);
     setError(null);
     setMessage(null);
-
+  
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       setLoading(false);
@@ -48,11 +47,11 @@ function Nuevacontraseña() {
     }
 
     try {
-      console.log("Enviando solicitud de actualización de contraseña...");
-
-      // Usamos el token de restablecimiento para actualizar la contraseña
-      const { error } = await supabase.auth.api.updateUser(accessToken, { password });
-
+      console.log("Intentando actualizar la contraseña...");
+  
+      // Actualizamos la contraseña usando el token de recuperación
+      const { data, error } = await supabase.auth.updateUser({ password });
+  
       if (error) {
         console.error("Error en Supabase:", error);
         setError(error.message);
@@ -113,10 +112,4 @@ function Nuevacontraseña() {
   );
 }
 
-export function NuevaContraseña() {
-  return (
-    <Suspense fallback={<p className="text-center">Cargando...</p>}>
-      <Nuevacontraseña />
-    </Suspense>
-  );
-}
+export default Nuevacontraseña;
