@@ -1,4 +1,5 @@
-"use client";
+// Restauracion-form.tsx
+"use client";  // Asegúrate de usar la directiva "use client" si usas hooks como useState o useEffect
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Aquí es donde defines el componente
 function Nuevacontraseña() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -16,19 +18,6 @@ function Nuevacontraseña() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-
-  // Usamos el token de la URL cuando el usuario hace clic en el enlace de recuperación
-  useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
-    const token = hashParams.get("access_token");
-    
-    if (!token) {
-      setError("Token no valido. Intentalo de nuevo.");
-    } else {
-      // Puedes almacenar el token en el estado si es necesario
-      setAccessToken(token);
-    }
-  }, []);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,30 +30,18 @@ function Nuevacontraseña() {
       setLoading(false);
       return;
     }
-
-    if (!accessToken) {
-      setError("Token no válido. Inténtalo de nuevo.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      console.log("Intentando actualizar la contraseña...");
   
-      // Actualizamos la contraseña usando el token de recuperación
-      const { data, error } = await supabase.auth.updateUser({ password });
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
   
       if (error) {
-        console.error("Error en Supabase:", error);
         setError(error.message);
       } else {
-        console.log("Contraseña actualizada exitosamente.");
-        setMessage("Contraseña actualizada exitosamente. Redirigiendo...");
+        setMessage("Contraseña actualizada exitosamente.");
         setTimeout(() => router.push("/login"), 3000);
       }
     } catch (err) {
-      console.error("Error inesperado:", err);
-      setError("Ocurrió un error inesperado. Inténtalo más tarde.");
+      setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +61,6 @@ function Nuevacontraseña() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Escribe tu nueva contraseña"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -95,7 +71,6 @@ function Nuevacontraseña() {
                 <Input
                   id="confirm-password"
                   type="password"
-                  placeholder="Repite tu nueva contraseña"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -114,4 +89,5 @@ function Nuevacontraseña() {
   );
 }
 
+// Exporta el componente de manera correcta
 export default Nuevacontraseña;

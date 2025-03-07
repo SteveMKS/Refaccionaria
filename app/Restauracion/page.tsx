@@ -1,4 +1,4 @@
-import { NuevaContraseña } from "@/components/Restauracion-form"
+import { default as NuevaContraseña } from "@/components/Restauracion-form"
 
 export default function Page() {
   return (
@@ -7,5 +7,5 @@ export default function Page() {
         <NuevaContraseña />
       </div>
     </div>
-  )
+  );
 }
