@@ -33,7 +33,7 @@ export function RecuperacionContraseña({
 
     // Usamos la función de Supabase para enviar el correo con el enlace de recuperación de contraseña
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/Restauracion`, // URL a la que el usuario será redirigido
+      redirectTo: `https://refaccionaria-front.vercel.app/Restauracion`, // URL a la que el usuario será redirigido
     });
 
     setLoading(false);
