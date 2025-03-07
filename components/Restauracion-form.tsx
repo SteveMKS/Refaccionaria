@@ -1,7 +1,6 @@
-// Restauracion-form.tsx
-"use client";  // Asegúrate de usar la directiva "use client" si usas hooks como useState o useEffect
+"use client";  // Asegúrate de que el archivo sea un componente de cliente
 
-import { useState, useEffect } from "react";
+import { useState } from "react"; // Eliminamos 'useEffect' si no se usa
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Aquí es donde defines el componente
 function Nuevacontraseña() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,16 +22,16 @@ function Nuevacontraseña() {
     setLoading(true);
     setError(null);
     setMessage(null);
-  
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       setLoading(false);
       return;
     }
-  
+
     try {
       const { error } = await supabase.auth.updateUser({ password });
-  
+
       if (error) {
         setError(error.message);
       } else {
@@ -41,6 +39,7 @@ function Nuevacontraseña() {
         setTimeout(() => router.push("/login"), 3000);
       }
     } catch (err) {
+      console.error("Error inesperado:", err); // Aquí solo usamos err para loguear el error
       setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
@@ -89,5 +88,4 @@ function Nuevacontraseña() {
   );
 }
 
-// Exporta el componente de manera correcta
 export default Nuevacontraseña;
