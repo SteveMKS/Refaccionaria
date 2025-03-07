@@ -34,37 +34,25 @@ function Nuevacontraseña() {
     setLoading(true);
     setError(null);
     setMessage(null);
-  
+
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
       setLoading(false);
       return;
     }
-  
+
     if (!accessToken) {
       setError("Token no válido. Inténtalo de nuevo.");
       setLoading(false);
       return;
     }
-  
+
     try {
-      console.log("Intentando intercambiar el token por una sesión válida...");
-  
-      // Intercambiar access_token por sesión
-      const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(accessToken);
-  
-      if (sessionError || !data.session) {
-        console.error("Error al intercambiar el código por sesión:", sessionError);
-        setError("No se pudo autenticar la sesión.");
-        setLoading(false);
-        return;
-      }
-  
-      console.log("Sesión establecida correctamente.");
-  
       console.log("Enviando solicitud de actualización de contraseña...");
-      const { error } = await supabase.auth.updateUser({ password });
-  
+
+      // Usamos el token de restablecimiento para actualizar la contraseña
+      const { error } = await supabase.auth.api.updateUser(accessToken, { password });
+
       if (error) {
         console.error("Error en Supabase:", error);
         setError(error.message);
@@ -80,7 +68,6 @@ function Nuevacontraseña() {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
@@ -126,7 +113,6 @@ function Nuevacontraseña() {
   );
 }
 
-// 🟢 La solución: envolver en <Suspense>
 export function NuevaContraseña() {
   return (
     <Suspense fallback={<p className="text-center">Cargando...</p>}>
