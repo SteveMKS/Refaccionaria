@@ -31,8 +31,7 @@ export function RecuperacionContraseña({
     setMessage(null);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL || 
-                  "https://refaccionaria-front.vercel.app/Restauracion",
+      redirectTo: process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL,
     });
 
     setLoading(false);
