@@ -24,21 +24,19 @@ export function RecuperacionContraseña({
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Función para manejar la solicitud de restablecimiento de contraseña
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setMessage(null);
 
-    // Usamos la función de Supabase para enviar el correo con el enlace de recuperación de contraseña
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `https://refaccionaria-front.vercel.app/Restauracion`, // URL a la que el usuario será redirigido
+      redirectTo: process.env.NEXT_PUBLIC_SUPABASE_REDIRECT_URL || 
+                  "https://refaccionaria-front.vercel.app/Restauracion",
     });
 
     setLoading(false);
 
-    // Manejo de errores y mensajes
     if (error) {
       setError(error.message);
     } else {
