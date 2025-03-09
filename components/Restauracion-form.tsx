@@ -60,7 +60,7 @@ function Nuevacontraseña() {
                 <Input
                   id="password"
                   type="password"
-                  value={password}
+                  value={new_password}
                   onChange={(e) => setnewPassword(e.target.value)}
                   required
                 />
