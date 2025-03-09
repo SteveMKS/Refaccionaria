@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function Nuevacontraseña() {
-  const [password, setPassword] = useState("");
+  const [new_password, setnewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -30,8 +30,8 @@ function Nuevacontraseña() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-
+      const { error } = await supabase.auth.updateUser({ password: new_password });
+      
       if (error) {
         setError(error.message);
       } else {
@@ -61,7 +61,7 @@ function Nuevacontraseña() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => setnewPassword(e.target.value)}
                   required
                 />
               </div>
