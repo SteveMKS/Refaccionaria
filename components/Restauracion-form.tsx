@@ -24,7 +24,7 @@ function Nuevacontraseña() {
     setMessage(null);
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError("Las contraseñas no coinciden, intente de nuevo.");
       setLoading(false);
       return;
     }
