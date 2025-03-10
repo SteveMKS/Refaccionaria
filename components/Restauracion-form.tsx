@@ -16,6 +16,8 @@ function Nuevacontraseña() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+
+  // Solo ejecutar `useSearchParams` en el cliente
   const searchParams = useSearchParams();
 
   useEffect(() => {
