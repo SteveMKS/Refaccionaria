@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation"; // ✅ Se agregó useSearchParams
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,11 +16,10 @@ function Nuevacontraseña() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // 🔹 Correcto para obtener parámetros de la URL
+  const searchParams = useSearchParams();
 
-  // Verifica el token en la URL
   useEffect(() => {
-    const token = searchParams.get("token"); // ✅ Obtiene el token correctamente
+    const token = searchParams.get("token");
 
     if (!token) {
       setError("Token no válido o ha expirado.");
@@ -34,14 +33,6 @@ function Nuevacontraseña() {
     setError(null);
     setMessage(null);
 
-    const token = searchParams.get("token"); // ✅ Obtiene el token correctamente
-
-    if (!token) {
-      setError("Token no válido o ha expirado.");
-      setLoading(false);
-      return;
-    }
-
     if (new_password !== confirmPassword) {
       setError("Las contraseñas no coinciden, intente de nuevo.");
       setLoading(false);
@@ -49,14 +40,13 @@ function Nuevacontraseña() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser(
-        { password: new_password },
-        { access_token: token } // ✅ El token se pasa correctamente
-      );
+      const { error } = await supabase.auth.updateUser({
+        password: new_password,
+      });
 
       if (error) {
         setError(error.message);
-        console.error("Ha ocurrido un Error, no se pudo actualizar.");
+        console.error("Ha ocurrido un error, no se pudo actualizar.");
       } else {
         setMessage("Contraseña actualizada exitosamente.");
         setTimeout(() => router.push("/login"), 3000);
