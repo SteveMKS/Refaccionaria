@@ -1,15 +1,12 @@
 "use client";  // Asegúrate de que el archivo sea un componente de cliente
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router"; // ✅ Solo una importación de useRouter
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-import { useRouter } from "next/router";
-import { supabase } from "@/lib/supabase";
 
 function Nuevacontraseña() {
   const [new_password, setnewPassword] = useState("");
@@ -20,7 +17,7 @@ function Nuevacontraseña() {
 
   const router = useRouter();
 
-  //Verifica el token en la URL
+  // Verifica el token en la URL
   useEffect(() => {
     const { token } = router.query;
 
@@ -70,31 +67,6 @@ function Nuevacontraseña() {
       setLoading(false);
     }
   };
-
-  return (
-    <div>
-      <h2>Restablecer tu contraseña</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      <form onSubmit={handleUpdatePassword}>
-        <input
-          type="password"
-          placeholder="Nueva contraseña"
-          value={new_password}
-          onChange={(e) => setnewPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Actualizando..." : "Restablecer Contraseña"}
-        </button>
-      </form>
-    </div>
-  );
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
