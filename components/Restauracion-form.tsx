@@ -1,7 +1,7 @@
-"use client";  // Asegúrate de que el archivo sea un componente de cliente
+"use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // ✅ Se agregó useSearchParams
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,16 +16,17 @@ function Nuevacontraseña() {
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams(); // 🔹 Correcto para obtener parámetros de la URL
 
-  //Verifica el token en la URL
+  // Verifica el token en la URL
   useEffect(() => {
-    const { token } = router.query;
+    const token = searchParams.get("token"); // ✅ Obtiene el token correctamente
 
     if (!token) {
       setError("Token no válido o ha expirado.");
       setLoading(false);
     }
-  }, [router.query]);
+  }, [searchParams]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +34,7 @@ function Nuevacontraseña() {
     setError(null);
     setMessage(null);
 
-    const { token } = router.query; // Obtén el token de la URL
+    const token = searchParams.get("token"); // ✅ Obtiene el token correctamente
 
     if (!token) {
       setError("Token no válido o ha expirado.");
@@ -50,7 +51,7 @@ function Nuevacontraseña() {
     try {
       const { error } = await supabase.auth.updateUser(
         { password: new_password },
-        { access_token: token as string } // Agrega el token manualmente
+        { access_token: token } // ✅ El token se pasa correctamente
       );
 
       if (error) {
