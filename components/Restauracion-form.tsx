@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -60,69 +60,71 @@ function Nuevacontraseña() {
   };
 
   return (
-    <div>
-      <h2>Restablecer tu contraseña</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      <form onSubmit={handleUpdatePassword}>
-        <input
-          type="password"
-          placeholder="Nueva contraseña"
-          value={new_password}
-          onChange={(e) => setnewPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Actualizando..." : "Restablecer Contraseña"}
-        </button>
-      </form>
-    </div>
-  );
+    <Suspense fallback={<div>Cargando...</div>}>
+      {/* Primer return: formulario sin estilos de card */}
+      <div>
+        <h2>Restablecer tu contraseña</h2>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+        {message && <p style={{ color: "green" }}>{message}</p>}
+        <form onSubmit={handleUpdatePassword}>
+          <input
+            type="password"
+            placeholder="Nueva contraseña"
+            value={new_password}
+            onChange={(e) => setnewPassword(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Confirmar contraseña"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+          <button type="submit" disabled={loading}>
+            {loading ? "Actualizando..." : "Restablecer Contraseña"}
+          </button>
+        </form>
+      </div>
 
-  return (
-    <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Actualizar Contraseña</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUpdatePassword}>
-            <div className="flex flex-col gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="password">Nueva Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={new_password}
-                  onChange={(e) => setnewPassword(e.target.value)}
-                  required
-                />
+      {/* Segundo return: formulario con card */}
+      <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Actualizar Contraseña</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdatePassword}>
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Nueva Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={new_password}
+                    onChange={(e) => setnewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {message && <p className="text-green-500 text-sm">{message}</p>}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Actualizando..." : "Actualizar Contraseña"}
+                </Button>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              {message && <p className="text-green-500 text-sm">{message}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Actualizando..." : "Actualizar Contraseña"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </Suspense>
   );
 }
 
