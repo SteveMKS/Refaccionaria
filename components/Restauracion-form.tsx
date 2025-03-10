@@ -8,6 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { supabase } from "@/lib/supabase";
+
 function Nuevacontraseña() {
   const [new_password, setnewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -17,11 +21,29 @@ function Nuevacontraseña() {
 
   const router = useRouter();
 
+  //Verifica el token en la URL
+  useEffect(() => {
+    const { token } = router.query;
+
+    if (!token) {
+      setError("Token no válido o ha expirado.");
+      setLoading(false);
+    }
+  }, [router.query]);
+
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setMessage(null);
+
+    const { token } = router.query; // Obtén el token de la URL
+
+    if (!token) {
+      setError("Token no válido o ha expirado.");
+      setLoading(false);
+      return;
+    }
 
     if (new_password !== confirmPassword) {
       setError("Las contraseñas no coinciden, intente de nuevo.");
@@ -30,21 +52,50 @@ function Nuevacontraseña() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: new_password });
-      
+      const { error } = await supabase.auth.updateUser(
+        { password: new_password },
+        { access_token: token as string } // Agrega el token manualmente
+      );
+
       if (error) {
         setError(error.message);
+        console.error("Ha ocurrido un Error, no se pudo actualizar.");
       } else {
         setMessage("Contraseña actualizada exitosamente.");
         setTimeout(() => router.push("/login"), 3000);
       }
     } catch (err) {
-      console.error("Error inesperado:", err); // Aquí solo usamos err para loguear el error
+      console.error("Error inesperado:", err);
       setError("Ocurrió un error inesperado.");
     } finally {
       setLoading(false);
     }
   };
+
+  return (
+    <div>
+      <h2>Restablecer tu contraseña</h2>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <p style={{ color: "green" }}>{message}</p>}
+      <form onSubmit={handleUpdatePassword}>
+        <input
+          type="password"
+          placeholder="Nueva contraseña"
+          value={new_password}
+          onChange={(e) => setnewPassword(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Confirmar contraseña"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+        <button type="submit" disabled={loading}>
+          {loading ? "Actualizando..." : "Restablecer Contraseña"}
+        </button>
+      </form>
+    </div>
+  );
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
