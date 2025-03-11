@@ -9,37 +9,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function Nuevacontraseña() {
-  const [new_password, setnewPassword] = useState("");
+  const [new_password, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const router = useRouter();
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setMessage(null);
-
+  const handleUpdatePassword = async () => {
     if (new_password !== confirmPassword) {
       setError("Las contraseñas no coinciden, intente de nuevo.");
       return;
     }
 
     try {
-      const { user, error } = await supabase.auth.updateUser({ password: new_password });
-      
+      const { error } = await supabase.auth.update({ password: new_password });
+
       if (error) {
-        setError(error.message);
-        console.log("Ha ocurrido un error, no se pudo actualizar.");
+        setError("Ha ocurrido un error, no se pudo actualizar la contraseña.");
       } else {
         setMessage("Contraseña actualizada exitosamente.");
-        // Redirigir al perfil después de 3 segundos
-        setTimeout(() => router.push("https://refaccionaria-front.vercel.app/Perfil"), 3000);
+        setTimeout(() => router.push("/Perfil"), 3000);
       }
     } catch (err) {
-      console.error("Error inesperado:", err);
-      setError("Ocurrió un error inesperado.");
+      setError("Error inesperado, intente de nuevo más tarde.");
+      console.error(err);
     }
   };
 
