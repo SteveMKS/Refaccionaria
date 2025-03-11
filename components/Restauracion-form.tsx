@@ -44,28 +44,6 @@ function Nuevacontraseña() {
   };
 
   return (
-    <div>
-      <h2>Restablecer tu contraseña</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      <form onSubmit={handleUpdatePassword}>
-        <input
-          type="password"
-          placeholder="Nueva contraseña"
-          value={new_password}
-          onChange={(e) => setnewPassword(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Confirmar contraseña"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-        />
-        <button type="submit">
-          Restablecer Contraseña
-        </button>
-      </form>
-
       <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
         <Card className="w-full max-w-sm">
           <CardHeader>
@@ -104,7 +82,6 @@ function Nuevacontraseña() {
           </CardContent>
         </Card>
       </div>
-    </div>
   );
 }
 
