@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -16,25 +16,9 @@ function Nuevacontraseña() {
 
   const router = useRouter();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const access_token = params.get("access_token");
-
-    if (access_token) {
-      supabase.auth.setSession({
-        access_token,
-        refresh_token: access_token, // Requiere ambos en el flujo de recuperación
-      });
-    } else {
-      setError("Token no encontrado. Por favor, intente nuevamente desde el enlace enviado a su correo.");
-    }
-  }, []);
-
-  const handleUpdatePassword = async (event: React.FormEvent) => {
-    event.preventDefault(); // ¡Prevenir que el formulario se recargue!
-
+  const handleUpdatePassword = async () => {
     if (new_password !== confirmPassword) {
-      setError("Las contraseñas no coinciden, intente de nuevo!.");
+      setError("Las contraseñas no coinciden, intente de nuevo.");
       return;
     }
 
@@ -54,44 +38,44 @@ function Nuevacontraseña() {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Actualizar Contraseña</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleUpdatePassword}>
-            <div className="flex flex-col gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="password">Nueva Contraseña</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={new_password}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
+      <div className="flex min-h-screen w-full items-center justify-center p-6 md:p-10">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Actualizar Contraseña</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleUpdatePassword}>
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="password">Nueva Contraseña</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={new_password}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+                {message && <p className="text-green-500 text-sm">{message}</p>}
+                <Button type="submit" className="w-full">
+                  Actualizar Contraseña
+                </Button>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              {message && <p className="text-green-500 text-sm">{message}</p>}
-              <Button type="submit" className="w-full">
-                Actualizar Contraseña
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
   );
 }
 
