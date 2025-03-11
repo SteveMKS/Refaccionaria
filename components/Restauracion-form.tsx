@@ -23,7 +23,7 @@ function Nuevacontraseña() {
     }
 
     try {
-      const { error } = await supabase.auth.update({ password: new_password });
+      const { error } = await supabase.auth.updateUser({ password: new_password });
 
       if (error) {
         setError("Ha ocurrido un error, no se pudo actualizar la contraseña.");
