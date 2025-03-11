@@ -31,10 +31,10 @@ function Nuevacontraseña() {
   }, []);
 
   const handleUpdatePassword = async (event: React.FormEvent) => {
-    event.preventDefault(); // 🔥 ¡Prevenir que el formulario se recargue!
+    event.preventDefault(); // ¡Prevenir que el formulario se recargue!
 
     if (new_password !== confirmPassword) {
-      setError("Las contraseñas no coinciden, intente de nuevo.");
+      setError("Las contraseñas no coinciden, intente de nuevo!.");
       return;
     }
 
