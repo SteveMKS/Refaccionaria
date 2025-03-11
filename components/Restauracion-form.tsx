@@ -35,7 +35,7 @@ function Nuevacontraseña() {
       } else {
         setMessage("Contraseña actualizada exitosamente.");
         // Redirigir al perfil después de 3 segundos
-        setTimeout(() => router.push("https://refaccionaria-front.vercel.app/Perfil"), 4000);
+        setTimeout(() => router.push("https://refaccionaria-front.vercel.app/Perfil"), 3000);
       }
     } catch (err) {
       console.error("Error inesperado:", err);
