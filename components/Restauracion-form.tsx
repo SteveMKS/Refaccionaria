@@ -27,7 +27,7 @@ function Nuevacontraseña() {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: new_password });
+      const { user, error } = await supabase.auth.updateUser({ password: new_password });
       
       if (error) {
         setError(error.message);
