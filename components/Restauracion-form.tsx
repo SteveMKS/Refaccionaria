@@ -52,7 +52,7 @@ function Nuevacontraseña() {
                     id="password"
                     type="password"
                     value={new_password}
-                    onChange={(e) => setnewPassword(e.target.value)}
+                    onChange={(e) => setNewPassword(e.target.value)}
                     required
                   />
                 </div>
