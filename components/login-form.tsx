@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase"; // 🔹 Importamos Supabase correctamente
+import { registrarLogin } from "@/lib/registrarLogin"; // 🔹 Importa la función para registrar el login
 
 export function LoginForm({
   className,
@@ -48,7 +49,10 @@ export function LoginForm({
       console.log("Sesión:", data.session);
   
       alert("Login exitoso");
-  
+
+      // Registrar el inicio de sesión (función que insertará el registro en la base de datos)
+      await registrarLogin(data.user.id, e); // Llamar a la función para registrar el login
+
       // 🔹 Forzar actualización del estado de sesión
       router.refresh();
       router.push("/Perfil");
@@ -57,7 +61,6 @@ export function LoginForm({
     setLoading(false);
   };
   
-
   return (
     <div
       className={cn(

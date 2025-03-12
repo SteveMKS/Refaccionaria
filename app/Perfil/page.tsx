@@ -20,6 +20,12 @@ interface LoginHistory {
   ip: string;
 }
 
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  router.push("/login");
+  router.refresh(); // 🔹 Forzar actualización del estado del usuario
+};
+
 export default function PerfilUsuario() {
   const pathname = usePathname();  
   const [loading, setLoading] = useState(true);
@@ -118,7 +124,7 @@ export default function PerfilUsuario() {
           </div>
 
           <div className="mt-6">
-            <Button className="w-full" onClick={() => supabase.auth.signOut()}>
+            <Button className="w-full" onClick={handleLogout}>
               Cerrar Sesión
             </Button>
           </div>
