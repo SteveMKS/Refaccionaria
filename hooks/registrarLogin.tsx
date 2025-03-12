@@ -8,7 +8,7 @@ export async function registrarLogin(userId: string) {
     const ip = data.ip || "IP no disponible";
 
     const { error } = await supabase
-      .from("Login")
+      .from("login")
       .insert({
         id_usuario: userId,
         ip: ip
