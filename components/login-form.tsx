@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase"; // 🔹 Importamos Supabase correctamente
-import { registrarLogin } from "@/lib/registrarLogin"; // 🔹 Importa la función para registrar el login
+import { registrarLogin } from "@/hooks/registrarLogin"; // 🔹 Importa la función para registrar el login
 
 export function LoginForm({
   className,
@@ -60,7 +60,7 @@ export function LoginForm({
   
     setLoading(false);
   };
-  
+
   return (
     <div
       className={cn(
