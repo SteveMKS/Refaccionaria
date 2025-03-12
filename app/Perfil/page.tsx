@@ -36,15 +36,18 @@ const PerfilUsuario = () => {
 
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push("/login");  // Redirige si no hay sesión
-      } else {
-        await fetchUserProfile(session.user.id);
-        setLoading(false);
+      const { data: { session }, error } = await supabase.auth.getSession();
+  
+      if (!session || error) {
+        router.push("/login"); // Si no hay sesión, redirige al login
+        return;
       }
+  
+      await fetchUserProfile(session.user.id);
+      setLoading(false);
     };
+  
+    checkSession();
 
     const fetchUserProfile = async (userId: string) => {
       const { data: profile, error: profileError } = await supabase
@@ -61,7 +64,7 @@ const PerfilUsuario = () => {
       setUserProfile(profile);
 
       const { data: history, error: historyError } = await supabase
-        .from("Login")
+        .from("login")
         .select("id, fecha_hora, ip")
         .eq("id_usuario", profile.id)
         .order("fecha_hora", { ascending: false })

@@ -32,33 +32,34 @@ export function LoginForm({
     e.preventDefault();
     setLoading(true);
     setError(null);
-  
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-  
+
     if (error) {
       setError(error.message);
       setLoading(false);
       return;
     }
-  
-    if (data?.user) {
+
+    if (data?.session) {
+      // Almacena el token en el almacenamiento local
+      localStorage.setItem("supabase-token", data.session.access_token);
+
       console.log("Usuario:", data.user);
       console.log("Sesión:", data.session);
-  
+
       alert("Login exitoso");
 
-      // Registrar el inicio de sesión (función que insertará el registro en la base de datos)
-      await registrarLogin(data.user.id, e); // Llamar a la función para registrar el login
-
-      // 🔹 Redirigir a la página de perfil
+      await registrarLogin(data.user.id, e); // Registrar el inicio de sesión
       router.push("/Perfil");
     }
-  
+
     setLoading(false);
-  };
+};
+
 
   return (
     <div

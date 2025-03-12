@@ -1,16 +1,23 @@
-import { supabase } from "@/lib/supabase"; // Asegúrate de que la instancia de Supabase esté correctamente importada
+import { supabase } from "@/lib/supabase";
 
-export async function registrarLogin(userId: string, req: any) {
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+export async function registrarLogin(userId: string) {
+  try {
+    const response = await fetch("https://api.ipify.org?format=json");
+    const data = await response.json();
 
-  const { error } = await supabase
-    .from('login') // Nombre de tu tabla para registrar los logins
-    .insert({
-      user_id: userId,
-      ip: ip || 'IP no disponible'  // En caso de que no se detecte la IP
-    });
+    const ip = data.ip || "IP no disponible";
 
-  if (error) {
-    console.error("Error al registrar el inicio de sesión:", error.message);
+    const { error } = await supabase
+      .from("Login")
+      .insert({
+        id_usuario: userId,
+        ip: ip
+      });
+
+    if (error) {
+      console.error("Error al registrar el inicio de sesión:", error.message);
+    }
+  } catch (error) {
+    console.error("Error al obtener la IP:", error);
   }
 }
