@@ -4,7 +4,7 @@ export async function registrarLogin(userId: string, req: any) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
   const { error } = await supabase
-    .from('logins') // Nombre de tu tabla para registrar los logins
+    .from('login') // Nombre de tu tabla para registrar los logins
     .insert({
       user_id: userId,
       ip: ip || 'IP no disponible'  // En caso de que no se detecte la IP
