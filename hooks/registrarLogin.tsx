@@ -10,7 +10,7 @@ export async function registrarLogin(userId: string) {
     const { error } = await supabase
       .from("login")
       .insert({
-        id_usuario: userId,
+        user_id: userId,
         ip: ip
       });
 

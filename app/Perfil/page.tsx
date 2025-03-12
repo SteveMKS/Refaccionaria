@@ -64,11 +64,11 @@ const PerfilUsuario = () => {
       setUserProfile(profile);
 
       const { data: history, error: historyError } = await supabase
-        .from("login")
-        .select("id, fecha_hora, ip")
-        .eq("id_usuario", profile.id)
-        .order("fecha_hora", { ascending: false })
-        .limit(5);
+      .from("login")
+      .select("id, fecha_hora, ip")
+      .eq("user_id", profile.id)  // Cambia `id_usuario` por el nombre correcto
+      .order("fecha_hora", { ascending: false })
+      .limit(5);    
 
       if (historyError) {
         setError("Error al obtener el historial de inicios de sesión.");
