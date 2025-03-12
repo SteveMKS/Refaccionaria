@@ -53,7 +53,7 @@ export function LoginForm({
 
       alert("Login exitoso");
 
-      await registrarLogin(data.user.id, e); // Registrar el inicio de sesión
+      await registrarLogin(data.user.id); // Registrar el inicio de sesión
       router.push("/Perfil");
     }
 
