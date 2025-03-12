@@ -105,10 +105,12 @@ export function NavUser() {
                   Perfil
                 </DropdownMenuItem>
               </Link>
+              <Link href="/Compras" passHref>
               <DropdownMenuItem>
                 <ShoppingCart />
                 Mis compras
               </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
