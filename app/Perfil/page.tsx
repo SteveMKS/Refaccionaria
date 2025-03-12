@@ -1,11 +1,10 @@
 "use client";
 
-import { usePathname } from "next/navigation";  
+import { usePathname, useRouter } from "next/navigation";  // Asegúrate de que uses 'useRouter'
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRouter } from 'next/navigation';
 
 interface UserProfile {
   id: string;
@@ -21,25 +20,26 @@ interface LoginHistory {
   ip: string;
 }
 
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  router.push("/login");
-  router.refresh(); // 🔹 Forzar actualización del estado del usuario
-};
-
-export default function PerfilUsuario() {
+const PerfilUsuario = () => {
+  const router = useRouter(); // Usa useRouter para las redirecciones
   const pathname = usePathname();  
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login"); // Usa router.push para redirigir
+    router.refresh(); // Forzar actualización del estado
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        window.location.href = "/login";  // Redirige si no hay sesión
+        router.push("/login");  // Redirige si no hay sesión
       } else {
         await fetchUserProfile(session.user.id);
         setLoading(false);
@@ -76,7 +76,7 @@ export default function PerfilUsuario() {
     };
 
     checkSession();
-  }, [pathname]);
+  }, [pathname, router]); // Asegúrate de agregar 'router' a las dependencias
 
   if (loading) {
     return (
@@ -133,4 +133,6 @@ export default function PerfilUsuario() {
       </Card>
     </div>
   );
-}
+};
+
+export default PerfilUsuario;
