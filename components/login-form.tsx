@@ -53,8 +53,7 @@ export function LoginForm({
       // Registrar el inicio de sesión (función que insertará el registro en la base de datos)
       await registrarLogin(data.user.id, e); // Llamar a la función para registrar el login
 
-      // 🔹 Forzar actualización del estado de sesión
-      router.refresh();
+      // 🔹 Redirigir a la página de perfil
       router.push("/Perfil");
     }
   
