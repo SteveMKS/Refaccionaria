@@ -9,7 +9,7 @@ export default function Home() {
         </h1>
         {/* Descripción */}
         <p className="text-lg sm:text-xl text-gray-300 max-w-lg">
-          Explora nuestra tienda y encuentra los mejores productos para tuvehículo.
+          Explora nuestra tienda y encuentra los mejores productos para tu vehículo.
         </p>
         {/* Botón de acción */}
         <a
