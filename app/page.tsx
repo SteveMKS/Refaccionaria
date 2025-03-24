@@ -13,10 +13,10 @@ export default function Home() {
         </p>
         {/* Botón de acción */}
         <a
-          href="/productos"
+          href="/Categorias/Refacciones"
           className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 transition-colors text-white font-semibold py-3 px-6 rounded-lg text-lg shadow-lg"
         >
-          Ver productos
+          Ver Refacciones
         </a>
       </main>
     </div>
