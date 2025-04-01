@@ -36,8 +36,14 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     return NextResponse.json({ message: "Producto agregado exitosamente", data }, { status: 201 });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Ocurrió un error desconocido";
+} catch (error) {
+    let errorMessage = "Ocurrió un error desconocido";
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
+
 }
