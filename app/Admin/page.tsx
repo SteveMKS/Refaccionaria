@@ -44,10 +44,10 @@ export default function AddProductForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Error al agregar el producto");
+        throw new Error("Error al agregar el producto!");
       }
 
-      setSuccessMessage("Producto agregado exitosamente");
+      setSuccessMessage("Producto agregado exitosamente!");
       reset();
     } catch (error) {
       setErrorMessage("Ocurrió un error al agregar el producto");
