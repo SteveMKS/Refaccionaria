@@ -50,7 +50,7 @@ export default function AddProductForm() {
       setSuccessMessage("Producto agregado exitosamente!");
       reset();
     } catch (error) {
-      setErrorMessage("Ocurrió un error al agregar el producto");
+      setErrorMessage("Ocurrió un error al agregar el producto!");
     }
   };
 
