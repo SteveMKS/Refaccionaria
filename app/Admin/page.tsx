@@ -59,10 +59,9 @@ export default function AgregarProducto() {
       } else {
         setMensaje(`❌ Error: ${data.error || "No se pudo agregar el producto"}`);
       }
-      } catch (error) {
-        console.error("Error en la solicitud:", error);
-      }
-      
+    } catch (error) {
+      console.error("Error en la solicitud:", error);
+    }    
     }
   };
 
@@ -94,4 +93,4 @@ export default function AgregarProducto() {
       {mensaje && <p className="mt-4 text-center font-semibold">{mensaje}</p>}
     </div>
   );
-}
+
