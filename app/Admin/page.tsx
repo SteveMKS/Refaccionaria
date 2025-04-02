@@ -59,8 +59,10 @@ export default function AgregarProducto() {
       } else {
         setMensaje(`❌ Error: ${data.error || "No se pudo agregar el producto"}`);
       }
-    } catch (error) {
-      setMensaje("❌ Error de conexión con el servidor");
+      } catch (error) {
+        console.error("Error en la solicitud:", error);
+      }
+      
     }
   };
 
