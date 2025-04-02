@@ -5,27 +5,34 @@ import { useState } from "react";
 export default function AgregarProducto() {
   const [producto, setProducto] = useState({
     numero_parte: "",
-    id_subcategoria3: "",
-    id_marca: "",
+    id_subcategoria3: 0,
+    id_marca: 0,
     id_sku: "",
     nombre: "",
     descripcion: "",
-    precio: "",
-    existencias: "",
+    precio: 0,
+    existencias: 0,
     imagen_url: "",
   });
 
-  const [mensaje, setMensaje] = useState("");
+  const [mensaje, setMensaje] = useState<string | null>(null);
 
   // Manejar cambios en los campos del formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProducto({ ...producto, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    setProducto((prev) => ({
+      ...prev,
+      [name]: ["id_subcategoria3", "id_marca", "precio", "existencias"].includes(name)
+        ? Number(value)
+        : value,
+    }));
   };
 
   // Manejar envío del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMensaje(""); // Limpiar mensaje anterior
+    setMensaje(null);
 
     try {
       const response = await fetch("/api/productos", {
@@ -34,24 +41,26 @@ export default function AgregarProducto() {
         body: JSON.stringify(producto),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setMensaje("Producto agregado correctamente");
+        setMensaje("✅ Producto agregado correctamente");
         setProducto({
           numero_parte: "",
-          id_subcategoria3: "",
-          id_marca: "",
+          id_subcategoria3: 0,
+          id_marca: 0,
           id_sku: "",
           nombre: "",
           descripcion: "",
-          precio: "",
-          existencias: "",
+          precio: 0,
+          existencias: 0,
           imagen_url: "",
         });
       } else {
-        setMensaje("Error al agregar el producto");
+        setMensaje(`❌ Error: ${data.error || "No se pudo agregar el producto"}`);
       }
     } catch (error) {
-      setMensaje("Error de conexión con el servidor");
+      setMensaje("❌ Error de conexión con el servidor");
     }
   };
 
@@ -61,9 +70,9 @@ export default function AgregarProducto() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <input type="text" name="numero_parte" placeholder="Número de parte" value={producto.numero_parte} onChange={handleChange} className="w-full p-2 border rounded" required />
 
-        <input type="text" name="id_subcategoria3" placeholder="ID Subcategoría 3" value={producto.id_subcategoria3} onChange={handleChange} className="w-full p-2 border rounded" required />
+        <input type="number" name="id_subcategoria3" placeholder="ID Subcategoría 3" value={producto.id_subcategoria3} onChange={handleChange} className="w-full p-2 border rounded" required />
 
-        <input type="text" name="id_marca" placeholder="ID Marca" value={producto.id_marca} onChange={handleChange} className="w-full p-2 border rounded" required />
+        <input type="number" name="id_marca" placeholder="ID Marca" value={producto.id_marca} onChange={handleChange} className="w-full p-2 border rounded" required />
 
         <input type="text" name="id_sku" placeholder="SKU" value={producto.id_sku} onChange={handleChange} className="w-full p-2 border rounded" required />
 
