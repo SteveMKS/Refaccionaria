@@ -61,7 +61,7 @@ export default function AgregarProducto() {
       }
     } catch (error) {
       console.error("Error en la solicitud:", error);
-    }    
+      setMensaje("❌ Error de conexión con el servidor");
     }
   };
 
@@ -93,4 +93,5 @@ export default function AgregarProducto() {
       {mensaje && <p className="mt-4 text-center font-semibold">{mensaje}</p>}
     </div>
   );
+}
 
