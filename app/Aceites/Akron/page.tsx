@@ -6,7 +6,11 @@ import Image from "next/image";
 import { Producto } from "@/types/productos";
 import { ProductInfoRow } from "@/components/ProductInfoRow";
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
+interface ProductPageProps {
+  params: { id: string };
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
   const { data, error } = await supabase
     .from("productos")
     .select(`
