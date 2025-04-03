@@ -2,13 +2,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
+import { notFound } from 'next/navigation';
+
+// Definición de tipos para TypeScript
+interface Producto {
+  nombre: string;
+  numero_parte: string;
+  id_sku: string;
+  descripcion: string | null;
+  precio: number;
+  existencias: number;
+  imagen_url: string | null;
+  marcas: { nombre: string } | null;
+  subcategoria_nivel3: { nombre: string } | null;
+}
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  // Obtener datos del producto desde Supabase
-  const { data: producto } = await supabase
+  // Obtener datos con manejo de errores
+  const { data: producto, error } = await supabase
     .from("productos")
-    .select(
-      `
+    .select(`
       nombre,
       numero_parte,
       id_sku,
@@ -18,68 +31,84 @@ export default async function ProductPage({ params }: { params: { id: string } }
       imagen_url,
       marcas(nombre),
       subcategoria_nivel3(nombre)
-    `
-    )
+    `)
     .eq("numero_parte", params.id)
     .single();
 
-  if (!producto) return <div>Producto no encontrado</div>;
+  if (error || !producto) return notFound();
+
+  // Componente reutilizable para información del producto
+  const ProductInfoRow = ({ label, value }: { label: string; value?: string | null }) => (
+    value ? <p className="text-gray-600"><span className="font-semibold">{label}:</span> {value}</p> : null
+  );
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Sección de imagen */}
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <div className="aspect-square relative">
+        <div className="bg-white p-6 rounded-lg shadow-md flex justify-center">
+          <div className="relative w-full max-w-lg aspect-square">
             <Image
               src={producto.imagen_url || "/placeholder-product.jpg"}
               alt={producto.nombre}
-              width={600}
-              height={600}
-              className="w-full h-full object-contain rounded-md"
-              priority={true}
+              fill
+              className="object-contain rounded-md"
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         </div>
 
         {/* Sección de información */}
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold">{producto.nombre}</h1>
-
+          <h1 className="text-3xl font-bold text-gray-900">{producto.nombre}</h1>
+          
           <div className="space-y-2">
-            <p className="text-gray-600">
-              <span className="font-semibold">No. de Parte:</span> {producto.numero_parte}
-            </p>
-            <p className="text-gray-600">
-              <span className="font-semibold">SKU:</span> #{producto.id_sku}
-            </p>
-            <p className="text-gray-600">
-              <span className="font-semibold">Marca:</span> {producto.marcas?.nombre}
-            </p>
-            <p className="text-gray-600">
-              <span className="font-semibold">Categoría:</span> {producto.subcategoria_nivel3?.nombre}
-            </p>
+            <ProductInfoRow label="No. de Parte" value={producto.numero_parte} />
+            <ProductInfoRow label="SKU" value={`#${producto.id_sku}`} />
+            <ProductInfoRow label="Marca" value={producto.marcas?.nombre} />
+            <ProductInfoRow label="Categoría" value={producto.subcategoria_nivel3?.nombre} />
           </div>
 
+          {/* Verificación de compatibilidad */}
           <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
             <p className="font-semibold text-blue-800">Verifica si le queda a tu vehículo</p>
           </div>
 
+          {/* Precio y disponibilidad */}
           <div className="flex items-center gap-4">
-            <span className="text-3xl font-bold">${producto.precio.toLocaleString()}</span>
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Disponible</span>
+            <span className="text-3xl font-bold text-gray-900">
+              {new Intl.NumberFormat('es-MX', { 
+                style: 'currency', 
+                currency: 'MXN' 
+              }).format(producto.precio)}
+            </span>
+            <span className={`px-2 py-1 rounded text-sm ${
+              producto.existencias > 0 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-red-100 text-red-800'
+            }`}>
+              {producto.existencias > 0 ? 'Disponible' : 'Agotado'}
+            </span>
           </div>
 
+          {/* Descripción */}
           <div className="border-t pt-4">
             <h2 className="font-semibold text-lg mb-2">Descripción</h2>
-            <p className="text-gray-700">{producto.descripcion || "Descripción no disponible"}</p>
+            <p className="text-gray-700">
+              {producto.descripcion || "Descripción no disponible"}
+            </p>
           </div>
 
+          {/* Acciones */}
           <div className="space-y-4">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg">
-              AGREGAR AL CARRITO
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
+              disabled={producto.existencias <= 0}
+            >
+              {producto.existencias > 0 ? 'AGREGAR AL CARRITO' : 'PRODUCTO AGOTADO'}
             </Button>
-
+            
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Entrega y disponibilidad</CardTitle>
@@ -93,9 +122,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* Sección de ofertas */}
+      {/* Sección de ofertas (puedes hacerlo dinámico) */}
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-4">Ofertas Disponibles</h2>
+        {/* Aquí podrías incluir productos relacionados */}
       </div>
     </div>
   );
