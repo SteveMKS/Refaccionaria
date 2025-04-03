@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase } from "@/lib/supabase"
+import Image from "next/image"
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   // Obtener datos del producto desde Supabase
@@ -29,10 +30,13 @@ export default async function ProductPage({ params }: { params: { id: string } }
         {/* Sección de imagen */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="aspect-square relative">
-            <img
-              src={producto.imagen_url || "/placeholder-product.jpg"}
-              alt={producto.nombre}
-              className="w-full h-full object-contain rounded-md"
+          <Image
+            src={producto.imagen_url || "/placeholder-product.jpg"}
+            alt={producto.nombre}
+            width={600}
+            height={600}
+            className="w-full h-full object-contain rounded-md"
+            priority={true} // Solo para imágenes importantes
             />
           </div>
         </div>
