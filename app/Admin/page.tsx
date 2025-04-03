@@ -8,10 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
-import { useToast } from "@/components/ui/use-toast";
+//import { useToast } from "@/components/ui/use-toast";
 
 export default function AgregarProducto() {
-  const { toast } = useToast();
+  //const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_parte: "",
@@ -25,7 +25,7 @@ export default function AgregarProducto() {
     id_subcategoria3: "",
   });
 
-  const [categories, setCategories] = useState({
+  /*const [categories, setCategories] = useState({
     main: [],
     sub1: [],
     sub2: [],
@@ -59,7 +59,7 @@ export default function AgregarProducto() {
         variant: "destructive",
       });
     }
-  }, []);
+  }, []);*/
 
   useEffect(() => {
     fetchCategoriesAndBrands();
