@@ -7,7 +7,7 @@ import { Producto } from "@/types/productos";
 import { ProductInfoRow } from "@/components/ProductInfoRow";
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const { data: producto, error } = await supabase
+  const { data, error } = await supabase
     .from("productos")
     .select(`
       nombre,
@@ -23,7 +23,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
     .eq("numero_parte", params.id)
     .single();
 
-  if (error || !producto) return notFound();
+  if (error || !data) return notFound();
+
+  const producto: Producto = data;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
