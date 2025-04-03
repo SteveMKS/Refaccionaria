@@ -17,7 +17,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgregarProducto() {
-  const { toast } = useToast();
+  const { usetoast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_parte: "",
