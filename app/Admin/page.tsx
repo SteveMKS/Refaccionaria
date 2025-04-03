@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabaseClient";
 
 export default function AgregarProducto() {
   const { toast } = useToast();
