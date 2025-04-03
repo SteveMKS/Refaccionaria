@@ -1,24 +1,12 @@
+import { notFound } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { notFound } from 'next/navigation';
-
-// Definición de tipos para TypeScript
-interface Producto {
-  nombre: string;
-  numero_parte: string;
-  id_sku: string;
-  descripcion: string | null;
-  precio: number;
-  existencias: number;
-  imagen_url: string | null;
-  marcas: { nombre: string } | null;
-  subcategoria_nivel3: { nombre: string } | null;
-}
+import { Producto } from "@/types/productos";
+import { ProductInfoRow } from "@/components/Producto/ProductInfoRow";
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  // Obtener datos con manejo de errores
   const { data: producto, error } = await supabase
     .from("productos")
     .select(`
@@ -36,11 +24,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
     .single();
 
   if (error || !producto) return notFound();
-
-  // Componente reutilizable para información del producto
-  const ProductInfoRow = ({ label, value }: { label: string; value?: string | null }) => (
-    value ? <p className="text-gray-600"><span className="font-semibold">{label}:</span> {value}</p> : null
-  );
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
@@ -70,12 +53,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
             <ProductInfoRow label="Categoría" value={producto.subcategoria_nivel3?.nombre} />
           </div>
 
-          {/* Verificación de compatibilidad */}
           <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
             <p className="font-semibold text-blue-800">Verifica si le queda a tu vehículo</p>
           </div>
 
-          {/* Precio y disponibilidad */}
           <div className="flex items-center gap-4">
             <span className="text-3xl font-bold text-gray-900">
               {new Intl.NumberFormat('es-MX', { 
@@ -92,7 +73,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
             </span>
           </div>
 
-          {/* Descripción */}
           <div className="border-t pt-4">
             <h2 className="font-semibold text-lg mb-2">Descripción</h2>
             <p className="text-gray-700">
@@ -100,7 +80,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
             </p>
           </div>
 
-          {/* Acciones */}
           <div className="space-y-4">
             <Button 
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg"
@@ -122,10 +101,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
         </div>
       </div>
 
-      {/* Sección de ofertas (puedes hacerlo dinámico) */}
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-4">Ofertas Disponibles</h2>
-        {/* Aquí podrías incluir productos relacionados */}
       </div>
     </div>
   );
