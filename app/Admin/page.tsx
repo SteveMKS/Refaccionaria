@@ -1,23 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function AgregarProducto() {
-  const { toast } = useToast(); // ✅ Corregido (sin mayúscula)
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_parte: "",
@@ -39,16 +33,13 @@ export default function AgregarProducto() {
     marcas: [],
   });
 
-  // Función para cargar categorías y marcas desde Supabase
-  const fetchCategoriesAndBrands = async () => {
+  const fetchCategoriesAndBrands = useCallback(async () => {
     try {
-      // Cargar categorías principales
       const { data: mainCategories, error: mainError } = await supabase
         .from("categorias")
         .select("*")
         .eq("nivel", 1);
 
-      // Cargar marcas
       const { data: brands, error: brandError } = await supabase
         .from("marcas")
         .select("*");
@@ -68,101 +59,11 @@ export default function AgregarProducto() {
         variant: "destructive",
       });
     }
-  };
-
-  // Cargar subcategorías dinámicamente al seleccionar una categoría superior
-  const fetchSubcategories = async (level: number, parentId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("categorias")
-        .select("*")
-        .eq("nivel", level)
-        .eq("id_categoria_padre", parentId);
-
-      if (error) throw error;
-
-      setCategories(prev => ({
-        ...prev,
-        [`sub${level - 1}`]: data || [],
-      }));
-    } catch (error) {
-      toast({
-        title: "Error al cargar subcategorías",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Cargar categorías y marcas al montar el componente
-  useEffect(() => {
-    fetchCategoriesAndBrands();
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = async (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    if (name === "id_categoria_main") {
-      await fetchSubcategories(2, value); // Cargar subcategoría nivel 1
-    } else if (name === "id_subcategoria1") {
-      await fetchSubcategories(3, value); // Cargar subcategoría nivel 2
-    } else if (name === "id_subcategoria2") {
-      await fetchSubcategories(4, value); // Cargar subcategoría nivel 3
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from("productos")
-        .insert([{
-          numero_parte: formData.numero_parte,
-          id_sku: formData.id_sku,
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
-          precio: parseFloat(formData.precio),
-          existencias: parseInt(formData.existencias),
-          imagen_url: formData.imagen_url,
-          id_marca: parseInt(formData.id_marca),
-          id_subcategoria3: parseInt(formData.id_subcategoria3),
-        }]);
-
-      if (error) throw error;
-
-      toast({
-        title: "Producto agregado",
-        description: "El producto se ha registrado correctamente",
-      });
-
-      setFormData({
-        numero_parte: "",
-        id_sku: "",
-        nombre: "",
-        descripcion: "",
-        precio: "",
-        existencias: "",
-        imagen_url: "",
-        id_marca: "",
-        id_subcategoria3: "",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchCategoriesAndBrands();
+  }, [fetchCategoriesAndBrands]);
 
   return (
     <div className="container mx-auto py-8">
