@@ -1,10 +1,9 @@
-import { PageProps } from "next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
-export default async function ProductPage({ params }: PageProps<{ id: string }>) {
+export default async function ProductPage({ params }: { params: { id: string } }) {
   // Obtener datos del producto desde Supabase
   const { data: producto } = await supabase
     .from("productos")
