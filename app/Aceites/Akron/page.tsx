@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { Producto } from "@/types/productos";
-import { ProductInfoRow } from "@/components/Producto/ProductInfoRow";
+import { ProductInfoRow } from "@/components/ProductInfoRow";
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   const { data: producto, error } = await supabase
