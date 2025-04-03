@@ -12,7 +12,7 @@ const productoEjemplo = {
   descripcion: "Aceite sintético de alto rendimiento para motores modernos",
   disponible: true,
   ubicacion: "Ruta Mariano Matamoros, Frente a la PGJE",
-  imagen_url: "/public/Castrol.jpg" // Asegúrate de tener esta imagen en tu carpeta public
+  imagen_url: "/Castrol.jpg" // Asegúrate de tener esta imagen en tu carpeta public
 };
 
 export default function ProductPage() {
@@ -46,10 +46,6 @@ export default function ProductPage() {
             </p>
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-md border border-blue-100">
-            <p className="font-semibold text-blue-800">Verifica si le queda a tu vehículo</p>
-          </div>
-
           <div className="flex items-center gap-4">
             <span className="text-3xl font-bold">
               ${productoEjemplo.precio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
@@ -65,7 +61,7 @@ export default function ProductPage() {
 
           <div className="space-y-4">
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg">
-              AGREGAR AL CARRITO
+              Agregar al carrito
             </Button>
             
             <Card>
