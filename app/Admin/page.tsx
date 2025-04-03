@@ -14,9 +14,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function AgregarProducto() {
-  //const { usetoast } = useToast();
+  const { toast } = useToast(); // ✅ Corregido (sin mayúscula)
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_parte: "",
@@ -30,13 +31,13 @@ export default function AgregarProducto() {
     id_subcategoria3: "",
   });
 
-  /*const [categories, setCategories] = useState({
+  const [categories, setCategories] = useState({
     main: [],
     sub1: [],
     sub2: [],
     sub3: [],
     marcas: [],
-  });*/
+  });
 
   // Función para cargar categorías y marcas desde Supabase
   const fetchCategoriesAndBrands = async () => {
@@ -120,7 +121,7 @@ export default function AgregarProducto() {
     setLoading(true);
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("productos")
         .insert([{
           numero_parte: formData.numero_parte,
