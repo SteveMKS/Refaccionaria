@@ -1,14 +1,15 @@
-// app/productos/[id]/page.tsx
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { supabase } from "@/lib/supabase"
-import Image from "next/image"
+import { PageProps } from "next";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";
+import Image from "next/image";
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
+export default async function ProductPage({ params }: PageProps<{ id: string }>) {
   // Obtener datos del producto desde Supabase
   const { data: producto } = await supabase
-    .from('productos')
-    .select(`
+    .from("productos")
+    .select(
+      `
       nombre,
       numero_parte,
       id_sku,
@@ -18,11 +19,12 @@ export default async function ProductPage({ params }: { params: { id: string } }
       imagen_url,
       marcas(nombre),
       subcategoria_nivel3(nombre)
-    `)
-    .eq('numero_parte', params.id)
-    .single()
+    `
+    )
+    .eq("numero_parte", params.id)
+    .single();
 
-  if (!producto) return <div>Producto no encontrado</div>
+  if (!producto) return <div>Producto no encontrado</div>;
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -30,13 +32,13 @@ export default async function ProductPage({ params }: { params: { id: string } }
         {/* Sección de imagen */}
         <div className="bg-white p-6 rounded-lg shadow-md">
           <div className="aspect-square relative">
-          <Image
-            src={producto.imagen_url || "/placeholder-product.jpg"}
-            alt={producto.nombre}
-            width={600}
-            height={600}
-            className="w-full h-full object-contain rounded-md"
-            priority={true} // Solo para imágenes importantes
+            <Image
+              src={producto.imagen_url || "/placeholder-product.jpg"}
+              alt={producto.nombre}
+              width={600}
+              height={600}
+              className="w-full h-full object-contain rounded-md"
+              priority={true}
             />
           </div>
         </div>
@@ -44,7 +46,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
         {/* Sección de información */}
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">{producto.nombre}</h1>
-          
+
           <div className="space-y-2">
             <p className="text-gray-600">
               <span className="font-semibold">No. de Parte:</span> {producto.numero_parte}
@@ -66,9 +68,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
           <div className="flex items-center gap-4">
             <span className="text-3xl font-bold">${producto.precio.toLocaleString()}</span>
-            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
-              Disponible
-            </span>
+            <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">Disponible</span>
           </div>
 
           <div className="border-t pt-4">
@@ -80,7 +80,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
             <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg">
               AGREGAR AL CARRITO
             </Button>
-            
+
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium">Entrega y disponibilidad</CardTitle>
@@ -97,8 +97,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
       {/* Sección de ofertas */}
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-4">Ofertas Disponibles</h2>
-        {/* Aquí podrías listar ofertas relacionadas */}
       </div>
     </div>
-  )
+  );
 }
