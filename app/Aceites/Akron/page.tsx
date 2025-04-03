@@ -8,14 +8,14 @@ const productosEjemplo = [
     id: "15D933",
     nombre: "Aceite de Motor Sintético Castrol 5W-40",
     precio: 449.00,
-    imagen_url: "/aceite-castrol.jpg",
+    imagen_url: "/public/Castrol.jpg",
     marca: "Castrol"
   },
   {
     id: "16A234",
     nombre: "Aceite de Motor Full Sintético Mobil 1",
     precio: 499.00,
-    imagen_url: "/aceite-mobil.jpg",
+    imagen_url: "/public/Mobil.jpg",
     marca: "Mobil"
   },
   // Agrega más productos según necesites

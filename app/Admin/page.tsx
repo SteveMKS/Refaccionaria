@@ -11,8 +11,8 @@ const productoEjemplo = {
   precio: 449.00,
   descripcion: "Aceite sintético de alto rendimiento para motores modernos",
   disponible: true,
-  ubicacion: "Av Ejercito Nacional 2926 Inf 2",
-  imagen_url: "/aceite-castrol.jpg" // Asegúrate de tener esta imagen en tu carpeta public
+  ubicacion: "Ruta Mariano Matamoros, Frente a la PGJE",
+  imagen_url: "/public/Castrol.jpg" // Asegúrate de tener esta imagen en tu carpeta public
 };
 
 export default function ProductPage() {
