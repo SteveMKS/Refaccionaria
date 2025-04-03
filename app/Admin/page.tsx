@@ -16,7 +16,7 @@ import {
 import { supabase } from "@/lib/supabase";
 
 export default function AgregarProducto() {
-  const { usetoast } = useToast();
+  //const { usetoast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     numero_parte: "",
@@ -30,13 +30,13 @@ export default function AgregarProducto() {
     id_subcategoria3: "",
   });
 
-  const [categories, setCategories] = useState({
+  /*const [categories, setCategories] = useState({
     main: [],
     sub1: [],
     sub2: [],
     sub3: [],
     marcas: [],
-  });
+  });*/
 
   // Función para cargar categorías y marcas desde Supabase
   const fetchCategoriesAndBrands = async () => {
