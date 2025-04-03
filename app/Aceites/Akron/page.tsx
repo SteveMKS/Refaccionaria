@@ -9,14 +9,22 @@ const productosEjemplo = [
     nombre: "Aceite de Motor Sintético Castrol 5W-40",
     precio: 449.00,
     imagen_url: "/Castrol.jpg",
-    marca: "Castrol"
+    marca: "Castrol",
+    numero_parte: "15D933",
+    sku: "539624",
+    descripcion: "Aceite sintético de alto rendimiento para motores modernos",
+    disponible: true,
   },
   {
     id: "16A234",
     nombre: "Aceite de Motor Full Sintético Mobil 1",
     precio: 499.00,
     imagen_url: "/Mobil.jpg",
-    marca: "Mobil"
+    marca: "Mobil",
+    numero_parte: "16A234",
+    sku: "02122002",
+    descripcion: "Aceite sintético de alto rendimiento para motores modernos",
+    disponible: true,
   },
   // Agrega más productos según necesites
 ];
