@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 
-// Datos de ejemplo para el producto
 const productoEjemplo = {
   id: "15D933",
   nombre: "Aceite de Motor Sintético Castrol 5W-40 1 Cuarto",
@@ -12,28 +11,28 @@ const productoEjemplo = {
   descripcion: "Aceite sintético de alto rendimiento para motores modernos",
   disponible: true,
   ubicacion: "Ruta Mariano Matamoros, Frente a la PGJE",
-  imagen_url: "/Castrol.jpg" // Asegúrate de tener esta imagen en tu carpeta public
+  imagen_url: "/Castrol.jpg"
 };
 
 export default function ProductPage() {
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 max-w-6xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Sección de imagen */}
-        <div className="bg-white p-6 rounded-lg shadow-md flex justify-center">
-          <div className="relative w-full max-w-lg aspect-square">
+        {/* Sección de imagen ajustada */}
+        <div className="bg-white p-4 rounded-lg shadow-md flex justify-center">
+          <div className="relative w-full max-w-sm aspect-square">
             <Image
               src={productoEjemplo.imagen_url}
               alt={productoEjemplo.nombre}
               fill
-              className="object-contain rounded-md"
+              className="object-contain rounded-md p-4"
               priority
-              sizes="(max-width: 600px) 100vw, 50vw"
+              sizes="(max-width: 600px) 100vw, 40vw"
             />
           </div>
         </div>
 
-        {/* Sección de información */}
+        {/* Sección de información (sin cambios) */}
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">{productoEjemplo.nombre}</h1>
           
@@ -79,10 +78,8 @@ export default function ProductPage() {
         </div>
       </div>
 
-      {/* Sección de ofertas */}
       <div className="mt-12">
         <h2 className="text-xl font-bold mb-4">Ofertas Disponibles</h2>
-        {/* Aquí puedes agregar productos relacionados como ofertas */}
       </div>
     </div>
   );
