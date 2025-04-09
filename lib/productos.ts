@@ -19,9 +19,9 @@ interface ProductoDB {
   nombre: string;
   descripcion: string;
   precio: number;
+  existencia: number;
   imagen_principal: string;
   activo: boolean;
-  especificaciones: Record<string, unknown>;
   marcas: Marca;
   subcategoria_nivel2: SubcategoriaNivel2;
 }
@@ -31,9 +31,9 @@ interface ProductoFrontend {
   nombre: string;
   descripcion: string;
   precio: number;
-  imagen_url: string;
-  disponible: boolean;
-  especificaciones: Record<string, unknown>;
+  existencia: number;
+  imagen_principal: string;
+  activo: boolean;
   marca: string;
   subcategoria: string;
   categoria: string;
@@ -48,8 +48,8 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
       descripcion,
       precio,
       imagen_principal,
+      existencia,
       activo,
-      especificaciones,
       marcas:id_marca(nombre),
       subcategoria_nivel2:id_subcategoria2(nombre, subcategoria_nivel1:subcategoria_nivel1(nombre))
     `)
@@ -66,9 +66,8 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
     nombre: producto.nombre,
     descripcion: producto.descripcion,
     precio: producto.precio,
-    imagen_url: producto.imagen_principal,
-    disponible: producto.activo,
-    especificaciones: producto.especificaciones || {},
+    imagen_principal: producto.imagen_principal,
+    activo: producto.activo,
     marca: producto.marcas?.nombre || 'Sin marca',
     subcategoria: producto.subcategoria_nivel2?.nombre || '',
     categoria: producto.subcategoria_nivel2?.subcategoria_nivel1?.nombre || ''
