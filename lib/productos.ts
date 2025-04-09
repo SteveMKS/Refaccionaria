@@ -1,7 +1,45 @@
 // app/lib/productos.ts
 import { supabase } from '@/lib/supabase';
 
-export async function getProductos() {
+interface Marca {
+  nombre: string;
+}
+
+interface SubcategoriaNivel1 {
+  nombre: string;
+}
+
+interface SubcategoriaNivel2 {
+  nombre: string;
+  subcategoria_nivel1: SubcategoriaNivel1;
+}
+
+interface ProductoDB {
+  id_sku: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  imagen_principal: string;
+  activo: boolean;
+  especificaciones: Record<string, unknown>;
+  marcas: Marca;
+  subcategoria_nivel2: SubcategoriaNivel2;
+}
+
+interface ProductoFrontend {
+  id_sku: string;
+  nombre: string;
+  descripcion: string;
+  precio: number;
+  imagen_url: string;
+  disponible: boolean;
+  especificaciones: Record<string, unknown>;
+  marca: string;
+  subcategoria: string;
+  categoria: string;
+}
+
+export async function getProductos(): Promise<ProductoFrontend[]> {
   const { data: productos, error } = await supabase
     .from('productos')
     .select(`
@@ -12,8 +50,8 @@ export async function getProductos() {
       imagen_principal,
       activo,
       especificaciones,
-      marcas(nombre),
-      subcategoria_nivel2(nombre, subcategoria_nivel1(nombre))
+      marcas:id_marca(nombre),
+      subcategoria_nivel2:id_subcategoria2(nombre, subcategoria_nivel1:subcategoria_nivel1(nombre))
     `)
     .eq('activo', true)
     .order('nombre', { ascending: true });
@@ -23,7 +61,7 @@ export async function getProductos() {
     return [];
   }
 
-  return productos.map(producto => ({
+  return (productos as unknown as ProductoDB[]).map(producto => ({
     id_sku: producto.id_sku,
     nombre: producto.nombre,
     descripcion: producto.descripcion,
