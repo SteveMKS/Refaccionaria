@@ -1,20 +1,21 @@
 import { supabase } from '@/lib/supabase';
 
-// Definición de tipos para las relaciones
-type Marca = {
+// Tipos para las relaciones
+interface Marca {
   nombre: string;
-};
+}
 
-type SubcategoriaNivel1 = {
+interface SubcategoriaNivel1 {
   nombre: string;
-};
+}
 
-type SubcategoriaNivel2 = {
+interface SubcategoriaNivel2 {
   nombre: string;
   subcategoria_nivel1: SubcategoriaNivel1;
-};
+}
 
-type ProductoDB = {
+// Tipo para el producto completo que esperamos recibir
+interface ProductoResponse {
   id_sku: string;
   nombre: string;
   descripcion: string;
@@ -22,11 +23,14 @@ type ProductoDB = {
   imagen_principal: string;
   existencias: number;
   activo: boolean;
-  marcas: Marca;
-  subcategoria_nivel2: SubcategoriaNivel2;
-};
+  marcas: Marca | null;
+  subcategoria_nivel2: (SubcategoriaNivel2 & {
+    subcategoria_nivel1: SubcategoriaNivel1 | null;
+  }) | null;
+}
 
-export type ProductoFrontend = {
+// Tipo para el frontend
+export interface ProductoFrontend {
   id: string;
   nombre: string;
   descripcion: string;
@@ -37,7 +41,7 @@ export type ProductoFrontend = {
   disponible: boolean;
   categoria: string;
   subcategoria: string;
-};
+}
 
 export async function getProductos(): Promise<ProductoFrontend[]> {
   const { data, error } = await supabase
@@ -51,7 +55,9 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
       existencias,
       activo,
       marcas: id_marca (nombre),
-      subcategoria_nivel2: id_subcategoria2 (nombre, subcategoria_nivel1: id_subcategoria1 (nombre))
+      subcategoria_nivel2: id_subcategoria2 (
+        nombre, 
+        subcategoria_nivel1: id_subcategoria1 (nombre)
     `)
     .eq('activo', true)
     .order('nombre', { ascending: true });
@@ -61,8 +67,8 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
     return [];
   }
 
-  // Transformación segura de tipos
-  return data.map((producto: any) => ({
+  // Función de ayuda para el mapeo seguro
+  const mapProducto = (producto: ProductoResponse): ProductoFrontend => ({
     id: producto.id_sku,
     nombre: producto.nombre,
     descripcion: producto.descripcion,
@@ -73,5 +79,7 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
     disponible: producto.activo && producto.existencias > 0,
     categoria: producto.subcategoria_nivel2?.subcategoria_nivel1?.nombre || '',
     subcategoria: producto.subcategoria_nivel2?.nombre || ''
-  }));
+  });
+
+  return data.map(mapProducto);
 }
