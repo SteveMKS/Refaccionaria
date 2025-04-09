@@ -1,86 +1,68 @@
-import { supabase } from '@/lib/supabase';
-import { useState, useEffect } from 'react'
+// types/productos.d.ts
 
-// Tipos para las relaciones
-interface Marca {
+// Tipo para la categoría principal
+export interface CategoriaMain {
+  id_categoria_main: number;
   nombre: string;
+  slug: string;
+  descripcion: string | null;
+  imagen_url: string | null;
 }
 
-interface SubcategoriaNivel1 {
+// Tipo para subcategoría nivel 1
+export interface SubcategoriaNivel1 {
+  id_subcategoria1: number;
+  id_categoria_main: number;
   nombre: string;
+  slug: string;
+  descripcion: string | null;
+  imagen_url: string | null;
 }
 
-interface SubcategoriaNivel2 {
+// Tipo para subcategoría nivel 2
+export interface SubcategoriaNivel2 {
+  id_subcategoria2: number;
+  id_subcategoria1: number;
   nombre: string;
-  subcategoria_nivel1: SubcategoriaNivel1;
+  slug: string;
+  descripcion: string | null;
+  imagen_url: string | null;
 }
 
-// Tipo para el producto completo que esperamos recibir
-interface ProductoResponse {
+// Tipo para marcas
+export interface Marca {
+  id_marca: number;
+  nombre: string;
+  slug: string;
+  logo_url: string | null;
+  descripcion: string | null;
+}
+
+// Tipo principal para productos
+export interface Producto {
   id_sku: string;
+  id_subcategoria2: number;
+  id_marca: number;
   nombre: string;
-  descripcion: string;
+  slug: string;
+  descripcion: string | null;
   precio: number;
+  existencias: number;
   imagen_principal: string;
-  existencias: number;
+  fecha_creacion: string;
+  fecha_actualizacion: string;
   activo: boolean;
-  marcas: Marca | null;
-  subcategoria_nivel2: (SubcategoriaNivel2 & {
-    subcategoria_nivel1: SubcategoriaNivel1 | null;
-  }) | null;
+  destacado: boolean;
+  
+  // Relaciones (pueden ser opcionales dependiendo de tu consulta)
+  marcas?: Marca;
+  subcategoria_nivel2?: SubcategoriaNivel2;
+  subcategoria_nivel1?: SubcategoriaNivel1; // Si haces join hasta nivel 1
+  categoria_main?: CategoriaMain; // Si haces join hasta categoría principal
 }
 
-// Tipo para el frontend
-export interface ProductoFrontend {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  precio: number;
-  imagen_url: string;
-  marca: string;
-  existencias: number;
-  disponible: boolean;
-  categoria: string;
-  subcategoria: string;
-}
-
-export async function getProductos(): Promise<ProductoFrontend[]> {
-  const { data, error } = await supabase
-    .from('productos')
-    .select(`
-      id_sku,
-      nombre,
-      descripcion,
-      precio,
-      existencias,
-      imagen_principal,
-      activo,
-      marcas: id_marca (nombre),
-      subcategoria_nivel2: id_subcategoria2 (
-        nombre, 
-        subcategoria_nivel1: id_subcategoria1 (nombre)
-      )
-    `)
-    .eq('activo', true)
-    .order('nombre', { ascending: true });
-
-  if (error || !data) {
-    console.error('Error al buscar los productos:', error);
-    return [];
-  }
-
-  const mapProducto = (producto: ProductoResponse): ProductoFrontend => ({
-    id: producto.id_sku,
-    nombre: producto.nombre,
-    descripcion: producto.descripcion,
-    precio: producto.precio,
-    imagen_url: producto.imagen_principal || '/placeholder-product.jpg',
-    marca: producto.marcas?.nombre || 'Sin marca',
-    existencias: producto.existencias,
-    disponible: producto.activo && producto.existencias > 0,
-    categoria: producto.subcategoria_nivel2?.subcategoria_nivel1?.nombre || '',
-    subcategoria: producto.subcategoria_nivel2?.nombre || ''
-  });
-
-  return data.map(mapProducto);
+// Tipo para las consultas de productos con relaciones
+export interface ProductoConRelaciones extends Producto {
+  marcas: Marca;
+  subcategoria_nivel2: SubcategoriaNivel2;
 }

@@ -1,4 +1,4 @@
-"use client";
+/*"use client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
@@ -70,3 +70,4 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
     <span>{value}</span>
   </div>
 );
+*/
