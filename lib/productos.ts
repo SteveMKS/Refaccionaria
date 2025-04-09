@@ -1,4 +1,5 @@
-import { supabase } from '@/lib/supabase';
+/*import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from 'react'
 
 // Tipos para las relaciones
 interface Marca {
@@ -51,8 +52,8 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
       nombre,
       descripcion,
       precio,
-      imagen_principal,
       existencias,
+      imagen_principal,
       activo,
       marcas: id_marca (nombre),
       subcategoria_nivel2: id_subcategoria2 (
@@ -63,7 +64,7 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
     .order('nombre', { ascending: true });
 
   if (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error al buscar los productos:', error);
     return [];
   }
 
@@ -82,4 +83,4 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
   });
 
   return data.map(mapProducto);
-}
+}*/
