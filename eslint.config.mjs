@@ -20,7 +20,7 @@ const eslintConfig = [
           ignoreRestArgs: false
         }
       ],
-      // 👇 Desactiva el error por variables no usadas (como useState, etc.)
+      //Desactiva el error por variables no usadas (como useState, etc.)
       "@typescript-eslint/no-unused-vars": [
         "warn", // o "off" si no quieres ni advertencias
         {

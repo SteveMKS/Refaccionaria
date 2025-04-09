@@ -59,16 +59,16 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
       subcategoria_nivel2: id_subcategoria2 (
         nombre, 
         subcategoria_nivel1: id_subcategoria1 (nombre)
+      )
     `)
     .eq('activo', true)
     .order('nombre', { ascending: true });
 
-  if (error) {
+  if (error || !data) {
     console.error('Error al buscar los productos:', error);
     return [];
   }
 
-  // Función de ayuda para el mapeo seguro
   const mapProducto = (producto: ProductoResponse): ProductoFrontend => ({
     id: producto.id_sku,
     nombre: producto.nombre,
