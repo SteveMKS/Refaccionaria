@@ -11,16 +11,13 @@ interface Producto {
   descripcion: string;
   existencias: number;
   slug: string;
-  marcas: {
-    nombre: string;
-  };
+  marcas: { nombre: string } | { nombre: string }[] | null;
   subcategoria_nivel2: {
     nombre: string;
-  };
+  } | null;
 }
 
 export default async function ProductosPage() {
-  // Obtener productos con sus relaciones
   const { data: productos, error } = await supabase
     .from('productos')
     .select(`
@@ -70,7 +67,11 @@ export default async function ProductosPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-600">Marca:</span>
-                  <span>{producto.marcas?.nombre || 'Sin marca'}</span>
+                  <span>
+                    {Array.isArray(producto.marcas)
+                      ? producto.marcas[0]?.nombre || 'Sin marca'
+                      : producto.marcas?.nombre || 'Sin marca'}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between">
