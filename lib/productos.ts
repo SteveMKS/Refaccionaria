@@ -1,4 +1,4 @@
-/*import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useState, useEffect } from 'react'
 
 // Tipos para las relaciones
@@ -83,4 +83,4 @@ export async function getProductos(): Promise<ProductoFrontend[]> {
   });
 
   return data.map(mapProducto);
-}*/
+}
