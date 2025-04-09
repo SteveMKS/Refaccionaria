@@ -14,19 +14,28 @@ const eslintConfig = [
   {
     rules: {
       "@typescript-eslint/no-explicit-any": [
-        "warn", // Puedes cambiar a "error" si prefieres que falle el lint
+        "warn",
         {
-          "fixToUnknown": true, // Sugiere usar 'unknown' en lugar de 'any'
-          "ignoreRestArgs": false // Controla si se permiten 'any' en parámetros rest
+          fixToUnknown: true,
+          ignoreRestArgs: false
+        }
+      ],
+      // 👇 Desactiva el error por variables no usadas (como useState, etc.)
+      "@typescript-eslint/no-unused-vars": [
+        "warn", // o "off" si no quieres ni advertencias
+        {
+          vars: "all",
+          args: "after-used",
+          ignoreRestSiblings: true
         }
       ]
     }
   },
   {
-    // Opcional: Configuración para permitir 'any' en archivos específicos
     files: ["**/*.d.ts", "**/*.test.ts", "**/*.spec.ts"],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off"
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "off"
     }
   }
 ];
