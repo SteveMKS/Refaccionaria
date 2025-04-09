@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
-import { getProductos } from "@/lib/productos";
+import { getProductos, ProductoFrontend } from "@/lib/productos";
 
 export default async function ProductosPage() {
   const productos = await getProductos();
@@ -16,12 +16,12 @@ export default async function ProductosPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {productos.map((producto) => (
+          {productos.map((producto: ProductoFrontend) => (
             <Card key={producto.id} className="hover:shadow-lg transition-shadow h-full flex flex-col">
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">{producto.nombre}</CardTitle>
               </CardHeader>
-              
+
               <CardContent className="flex-grow space-y-3">
                 <div className="relative mx-auto w-40 h-40 bg-gray-100 rounded-md mb-3">
                   <Image
