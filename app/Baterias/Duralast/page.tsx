@@ -3,30 +3,8 @@
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
-import { PostgrestError } from '@supabase/supabase-js'
+//import { PostgrestError } from '@supabase/supabase-js'
 
-// Definición de tipos (igual que antes)
-type CategoriaMain = {  
-  id: number;
-  nombre: string;
-  };
-
-type Subcategoria1 = { 
-  id: number;
-  nombre: string;
-  id_categoria_main: CategoriaMain;
- };
-
-type Subcategoria2 = {   
-  id: number;
-  nombre: string;
-  id_subcategoria1: Subcategoria1;
- };
-
-type Marca = {   
-  id: number;
-  nombre: string; 
-};
 type Producto = {   
   id: number;
   nombre: string;
@@ -46,52 +24,31 @@ export default function Producto() {
   const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
 
   useEffect(() => {
-    console.log('Slug obtenido:', slug); // Debug 1
-
-    const cargarProducto = async () => {
+    const cargarProductos = async () => {
       try {
         setLoading(true);
-        console.log('Iniciando carga...'); // Debug 2
-
+        
         const { data, error } = await supabase
           .from('productos')
-          .select(`
-            *,
-            marcas: id_marca (*),
-            subcategoria: id_subcategoria2 (
-              *,
-              subcategoria_padre: id_subcategoria1 (
-                *,
-                categoria_padre: id_categoria_main (*)
-              )
-            )
-          `)
-          .eq('slug', slug)
-          .single();
-
-        console.log('Respuesta Supabase:', { data, error }); // Debug 3
+          .select('*')
+          .eq('categoria', 'Baterias') // Filtra por categoría
+          .eq('marca', marca) // Filtra por marca
+          .order('nombre', { ascending: true });
 
         if (error) throw error;
-        if (!data) throw new Error('No se encontró el producto');
         
-        setProducto(data);
+        setProductos(data || []);
       } catch (error) {
-        console.error('Error completo:', error); // Debug 4
-        if (error instanceof Error) {
-          console.error('Error cargando producto:', error.message);
-        }
+        console.error('Error cargando productos:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) {
-      cargarProducto();
-    } else {
-      console.error('Slug no definido');
-      setLoading(false);
-    }
-  }, [slug]);
+    if (marca) cargarProductos();
+  }, [marca]);
+
+  if (loading) return <div>Cargando...</div>;
 
   // Debug final
   console.log('Estado actual:', { loading, producto });
