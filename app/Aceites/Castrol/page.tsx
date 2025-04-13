@@ -1,53 +1,41 @@
 "use client";
 
-import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { PostgrestError } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase'; // Ajusta esta ruta
 
-export default function Producto() {
-  const [producto, setProducto] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-  const { slug } = router.query
+// Tipos
+type CategoriaMain = {
+  id: number;
+  nombre: string;
+};
 
-  import { PostgrestError } from '@supabase/supabase-js';
+type Subcategoria1 = {
+  id_categoria_main: CategoriaMain;
+  // ...
+};
 
-  // Define tipos para las relaciones
-  type Marca = {
-    id: number;
+type Subcategoria2 = {
+  id_subcategoria1: Subcategoria1;
+  // ...
+};
+
+type Producto = {
+  id_marca: {
     nombre: string;
-    // ... otras propiedades de marca
+    // ...
   };
-  
-  type CategoriaMain = {
-    id: number;
-    nombre: string;
-    // ... otras propiedades de categoría principal
-  };
-  
-  type Subcategoria1 = {
-    id: number;
-    nombre: string;
-    id_categoria_main: CategoriaMain;
-    // ... otras propiedades
-  };
-  
-  type Subcategoria2 = {
-    id: number;
-    nombre: string;
-    id_subcategoria1: Subcategoria1;
-    // ... otras propiedades
-  };
-  
-  type Producto = {
-    id: number;
-    nombre: string;
-    slug: string;
-    id_marca: Marca;
-    id_subcategoria2: Subcategoria2;
-    // ... otras propiedades del producto
-  };
-  
+  id_subcategoria2: Subcategoria2;
+  // ...
+};
+
+export default function ProductoPage() {
+  const [producto, setProducto] = useState<Producto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { slug } = router.query;
+
   useEffect(() => {
     const cargarProducto = async () => {
       try {
@@ -67,37 +55,19 @@ export default function Producto() {
           `)
           .eq('slug', slug)
           .single();
-  
+
         if (error) throw error;
-        
-        // Validación de tipo para data
-        if (!data) {
-          throw new Error('No se encontró el producto');
-        }
-  
-        // Aquí TypeScript ya sabe que data es de tipo Producto
-        setProducto(data as Producto);
-  
+        setProducto(data);
       } catch (error) {
-        // Manejo seguro de errores
-        if (typeof error === 'object' && error !== null && 'message' in error) {
-          const err = error as PostgrestError | Error;
-          console.error('Error cargando producto:', err.message);
-          
-          // Puedes acceder a propiedades específicas de PostgrestError
-          if ('code' in err) {
-            console.error('Código de error Supabase:', err.code);
-          }
-        } else {
-          console.error('Error inesperado:', error);
-        }
+        console.error('Error:', (error as PostgrestError).message);
       } finally {
         setLoading(false);
       }
     };
-  
-    cargarProducto();
+
+    if (slug) cargarProducto();
   }, [slug]);
+}
 
   if (loading) return <div>Cargando...</div>
   if (!producto) return <div>Producto no encontrado</div>
