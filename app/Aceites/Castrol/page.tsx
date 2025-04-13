@@ -2,8 +2,8 @@
 
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { PostgrestError } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation'
+import { PostgrestError } from '@supabase/supabase-js'
 
 // Definición de tipos FUERA del componente
 type CategoriaMain = {
