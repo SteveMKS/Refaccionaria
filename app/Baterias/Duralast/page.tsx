@@ -84,7 +84,10 @@ export default function BateriasMarca() {
 
   if (loading) return <div>Cargando...</div>;
 
-  return (        
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid md:grid-cols-2 gap-8">
+        
         <div>
           <h1 className="text-3xl font-bold mb-2">{productos.nombre}</h1>
           
