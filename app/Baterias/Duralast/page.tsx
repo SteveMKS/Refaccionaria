@@ -89,8 +89,8 @@ export default function BateriasMarca() {
       <div className="grid md:grid-cols-2 gap-8">
         <div>
           <img 
-            src={productos.imagen_principal} 
-            alt={productos.nombre}
+            src={producto.imagen_principal} 
+            alt={producto.nombre}
             className="w-full rounded-lg"
           />
         </div>
