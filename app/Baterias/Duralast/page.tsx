@@ -5,6 +5,29 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
 //import { PostgrestError } from '@supabase/supabase-js'
 
+type CategoriaMain = {
+  id: number;
+  nombre: string;
+};
+
+type Subcategoria1 = {
+  id: number;
+  nombre: string;
+  id_categoria_main: CategoriaMain;
+};
+
+type Subcategoria2 = {
+  id: number;
+  nombre: string;
+  id_subcategoria1: Subcategoria1;
+};
+
+// 2. Define el tipo Marca que falta
+type Marca = {
+  id: number;
+  nombre: string;
+};
+
 type Producto = {   
   id: number;
   nombre: string;
