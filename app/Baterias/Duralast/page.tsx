@@ -55,7 +55,7 @@ export default function Producto() {
           .from('productos')
           .select('*')
           .eq('categorias', 'Baterias') // Filtra por categoría
-          .eq('marcas', marca) // Filtra por marca
+          .eq('marcas', Marca) // Filtra por marca
           .order('nombre', { ascending: true });
 
         if (error) throw error;
