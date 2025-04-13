@@ -40,11 +40,11 @@ type Producto = {
   id_subcategoria2: Subcategoria2;
 };
 
-export default function Producto() {
-  const [producto, setProducto] = useState<Producto | null>(null);
+export default function BateriasMarca() {
+  const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const params = useParams();
-  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  const marca = params.marca as string; // "Duralast" en tu URL
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -53,9 +53,20 @@ export default function Producto() {
         
         const { data, error } = await supabase
           .from('productos')
-          .select('*')
-          .eq('categorias', 'Baterias') // Filtra por categoría
-          .eq('marcas', Marca) // Filtra por marca
+          .select(`
+            *,
+            marcas: id_marca (*),
+            subcategoria: id_subcategoria2 (
+              *,
+              subcategoria_padre: id_subcategoria1 (
+                *,
+                categoria_padre: id_categoria_main (*)
+              )
+            )
+          `)
+          // Filtros corregidos:
+          .eq('id_subcategoria2.nombre', 'Baterias') // Filtra por categoría
+          .eq('id_marca.nombre', marca) // Filtra por marca (usa la variable)
           .order('nombre', { ascending: true });
 
         if (error) throw error;
@@ -72,12 +83,6 @@ export default function Producto() {
   }, [marca]);
 
   if (loading) return <div>Cargando...</div>;
-
-  // Debug final
-  console.log('Estado actual:', { loading, producto });
-
-  if (loading) return <div>Cargando...</div>;
-  if (!producto) return <div>Producto no encontrado (slug: {slug})</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
