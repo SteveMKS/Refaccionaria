@@ -10,6 +10,44 @@ export default function Producto() {
   const router = useRouter()
   const { slug } = router.query
 
+  import { PostgrestError } from '@supabase/supabase-js';
+
+  // Define tipos para las relaciones
+  type Marca = {
+    id: number;
+    nombre: string;
+    // ... otras propiedades de marca
+  };
+  
+  type CategoriaMain = {
+    id: number;
+    nombre: string;
+    // ... otras propiedades de categoría principal
+  };
+  
+  type Subcategoria1 = {
+    id: number;
+    nombre: string;
+    id_categoria_main: CategoriaMain;
+    // ... otras propiedades
+  };
+  
+  type Subcategoria2 = {
+    id: number;
+    nombre: string;
+    id_subcategoria1: Subcategoria1;
+    // ... otras propiedades
+  };
+  
+  type Producto = {
+    id: number;
+    nombre: string;
+    slug: string;
+    id_marca: Marca;
+    id_subcategoria2: Subcategoria2;
+    // ... otras propiedades del producto
+  };
+  
   useEffect(() => {
     const cargarProducto = async () => {
       try {
@@ -31,12 +69,27 @@ export default function Producto() {
           .single();
   
         if (error) throw error;
-        setProducto(data);
+        
+        // Validación de tipo para data
+        if (!data) {
+          throw new Error('No se encontró el producto');
+        }
+  
+        // Aquí TypeScript ya sabe que data es de tipo Producto
+        setProducto(data as Producto);
+  
       } catch (error) {
-        if (error instanceof Error) {
-          console.error('Error cargando producto:', error.message);
+        // Manejo seguro de errores
+        if (typeof error === 'object' && error !== null && 'message' in error) {
+          const err = error as PostgrestError | Error;
+          console.error('Error cargando producto:', err.message);
+          
+          // Puedes acceder a propiedades específicas de PostgrestError
+          if ('code' in err) {
+            console.error('Código de error Supabase:', err.code);
+          }
         } else {
-          console.error('Error desconocido al cargar producto:', error);
+          console.error('Error inesperado:', error);
         }
       } finally {
         setLoading(false);
