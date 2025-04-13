@@ -13,7 +13,7 @@ export default function Producto() {
   useEffect(() => {
     const cargarProducto = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
         const { data, error } = await supabase
           .from('productos')
           .select(`
@@ -28,19 +28,23 @@ export default function Producto() {
             )
           `)
           .eq('slug', slug)
-          .single()
-
-        if (error) throw error
-        setProducto(data)
+          .single();
+  
+        if (error) throw error;
+        setProducto(data);
       } catch (error) {
-        console.error('Error cargando producto:', error.message)
+        if (error instanceof Error) {
+          console.error('Error cargando producto:', error.message);
+        } else {
+          console.error('Error desconocido al cargar producto:', error);
+        }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-
-    if (slug) cargarProducto()
-  }, [slug])
+    };
+  
+    cargarProducto();
+  }, [slug]);
 
   if (loading) return <div>Cargando...</div>
   if (!producto) return <div>Producto no encontrado</div>
