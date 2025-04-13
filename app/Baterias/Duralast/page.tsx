@@ -31,8 +31,8 @@ export default function Producto() {
         const { data, error } = await supabase
           .from('productos')
           .select('*')
-          .eq('categoria', 'Baterias') // Filtra por categoría
-          .eq('marca', marca) // Filtra por marca
+          .eq('categorias', 'Baterias') // Filtra por categoría
+          .eq('marcas', marca) // Filtra por marca
           .order('nombre', { ascending: true });
 
         if (error) throw error;
