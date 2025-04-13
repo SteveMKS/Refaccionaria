@@ -5,47 +5,46 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { PostgrestError } from '@supabase/supabase-js';
 
+// Definición de tipos FUERA del componente
+type CategoriaMain = {
+  id: number;
+  nombre: string;
+};
+
+type Subcategoria1 = {
+  id: number;
+  nombre: string;
+  id_categoria_main: CategoriaMain;
+};
+
+type Subcategoria2 = {
+  id: number;
+  nombre: string;
+  id_subcategoria1: Subcategoria1;
+};
+
+type Marca = {
+  id: number;
+  nombre: string;
+};
+
+type Producto = {
+  id: number;
+  nombre: string;
+  slug: string;
+  imagen_principal: string;
+  descripcion: string;
+  precio: number;
+  existencias: number;
+  id_marca: Marca;
+  id_subcategoria2: Subcategoria2;
+};
+
 export default function Producto() {
-  const [producto, setProducto] = useState(null)
+  const [producto, setProducto] = useState<Producto | null>(null); // <-- Cambio clave aquí
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const { slug } = router.query
-
-  // Define tipos para las relaciones
-  type Marca = {
-    id: number;
-    nombre: string;
-    // ... otras propiedades de marca
-  };
-  
-  type CategoriaMain = {
-    id: number;
-    nombre: string;
-    // ... otras propiedades de categoría principal
-  };
-  
-  type Subcategoria1 = {
-    id: number;
-    nombre: string;
-    id_categoria_main: CategoriaMain;
-    // ... otras propiedades
-  };
-  
-  type Subcategoria2 = {
-    id: number;
-    nombre: string;
-    id_subcategoria1: Subcategoria1;
-    // ... otras propiedades
-  };
-  
-  type Producto = {
-    id: number;
-    nombre: string;
-    slug: string;
-    id_marca: Marca;
-    id_subcategoria2: Subcategoria2;
-    // ... otras propiedades del producto
-  };
   
   useEffect(() => {
     const cargarProducto = async () => {
@@ -69,24 +68,15 @@ export default function Producto() {
   
         if (error) throw error;
         
-        // Validación de tipo para data
         if (!data) {
           throw new Error('No se encontró el producto');
         }
   
-        // Aquí TypeScript ya sabe que data es de tipo Producto
-        setProducto(data as Producto);
+        setProducto(data); // <-- Ya no necesitas el "as Producto"
   
       } catch (error) {
-        // Manejo seguro de errores
-        if (typeof error === 'object' && error !== null && 'message' in error) {
-          const err = error as PostgrestError | Error;
-          console.error('Error cargando producto:', err.message);
-          
-          // Puedes acceder a propiedades específicas de PostgrestError
-          if ('code' in err) {
-            console.error('Código de error Supabase:', err.code);
-          }
+        if (error instanceof Error) {
+          console.error('Error cargando producto:', error.message);
         } else {
           console.error('Error inesperado:', error);
         }
@@ -95,7 +85,7 @@ export default function Producto() {
       }
     };
   
-    cargarProducto();
+    if (slug) cargarProducto(); // <-- Añadí validación de slug
   }, [slug]);
 
   if (loading) return <div>Cargando...</div>
@@ -104,7 +94,6 @@ export default function Producto() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Imagen del producto */}
         <div>
           <img 
             src={producto.imagen_principal} 
@@ -113,32 +102,26 @@ export default function Producto() {
           />
         </div>
         
-        {/* Información del producto */}
         <div>
           <h1 className="text-3xl font-bold mb-2">{producto.nombre}</h1>
           
-          {/* Ruta de categorías */}
           <div className="text-sm text-gray-500 mb-4">
-            {producto.subcategoria.subcategoria_padre.categoria_padre.nombre}{' > '}
-            {producto.subcategoria.subcategoria_padre.nombre}{' > '}
-            {producto.subcategoria.nombre}
+            {producto.id_subcategoria2.id_subcategoria1.id_categoria_main.nombre}{' > '}
+            {producto.id_subcategoria2.id_subcategoria1.nombre}{' > '}
+            {producto.id_subcategoria2.nombre}
           </div>
           
-          {/* Marca */}
           <div className="mb-4">
-            <span className="font-semibold">Marca:</span> {producto.marcas.nombre}
+            <span className="font-semibold">Marca:</span> {producto.id_marca.nombre}
           </div>
           
-          {/* Precio */}
           <div className="text-2xl font-bold mb-4">${producto.precio.toFixed(2)}</div>
           
-          {/* Descripción */}
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Descripción</h2>
             <p>{producto.descripcion}</p>
           </div>
           
-          {/* Stock */}
           <div className="mb-6">
             <span className="font-semibold">Disponibilidad:</span> 
             {producto.existencias > 0 
@@ -147,7 +130,6 @@ export default function Producto() {
             }
           </div>
           
-          {/* Botón de compra */}
           <button 
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded"
             disabled={producto.existencias <= 0}
