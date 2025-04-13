@@ -42,13 +42,17 @@ type Producto = {
 export default function Producto() {
   const [producto, setProducto] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(true);
-  const params = useParams(); // Cambiado a useParams
-  const slug = params.slug as string; // Obtenemos el slug directamente de params
+  const params = useParams();
+  const slug = Array.isArray(params.slug) ? params.slug[0] : params.slug;
 
   useEffect(() => {
+    console.log('Slug obtenido:', slug); // Debug 1
+
     const cargarProducto = async () => {
       try {
         setLoading(true);
+        console.log('Iniciando carga...'); // Debug 2
+
         const { data, error } = await supabase
           .from('productos')
           .select(`
@@ -65,26 +69,35 @@ export default function Producto() {
           .eq('slug', slug)
           .single();
 
+        console.log('Respuesta Supabase:', { data, error }); // Debug 3
+
         if (error) throw error;
         if (!data) throw new Error('No se encontró el producto');
         
         setProducto(data);
       } catch (error) {
+        console.error('Error completo:', error); // Debug 4
         if (error instanceof Error) {
           console.error('Error cargando producto:', error.message);
-        } else {
-          console.error('Error inesperado:', error);
         }
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) cargarProducto();
+    if (slug) {
+      cargarProducto();
+    } else {
+      console.error('Slug no definido');
+      setLoading(false);
+    }
   }, [slug]);
 
+  // Debug final
+  console.log('Estado actual:', { loading, producto });
+
   if (loading) return <div>Cargando...</div>;
-  if (!producto) return <div>Producto no encontrado</div>;
+  if (!producto) return <div>Producto no encontrado (slug: {slug})</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
