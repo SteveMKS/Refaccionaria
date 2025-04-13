@@ -85,7 +85,7 @@ export default function BateriasMarca() {
   if (loading) return <div>Cargando...</div>;
 
   return (
-    /*<div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-2 gap-8">
         <div>
           <img 
@@ -93,7 +93,7 @@ export default function BateriasMarca() {
             alt={productos.nombre}
             className="w-full rounded-lg"
           />
-        </div>*/
+        </div>
         
         <div>
           <h1 className="text-3xl font-bold mb-2">{productos.nombre}</h1>
