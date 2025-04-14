@@ -74,23 +74,23 @@ export default function BateriasMarca() {
         console.log('4 - Iniciando carga de productos...'); // Debug 4
         
         console.log('5 - Realizando consulta a Supabase...'); // Debug 5
-        const { data, error } = await supabase
-        .from('productos')
-        .select(`
-          *,
-          marcas: id_marca (*),
-          subcategoria_nivel2: id_subcategoria2 (
+        const { data, error: supabaseError } = await supabase
+          .from('productos')
+          .select(`
             *,
-            subcategoria_nivel1: id_subcategoria1 (
+            marcas: id_marca (*),
+            subcategoria_nivel2: id_subcategoria2 (
               *,
-              categoria_main: id_categoria_main (*)
+              subcategoria_nivel1: id_subcategoria1 (
+                *,
+                categoria_main: id_categoria_main (*)
+              )
             )
-          )
-        `)
-        .eq('marcas.nombre', marca)
-        .eq('subcategoria_nivel2.nombre', 'Baterias')
-        .order('nombre', { ascending: true });
-
+          `)
+          .eq('subcategoria_nivel2.nombre', 'Baterias')
+          .eq('marcas.nombre', marca)
+          .order('nombre', { ascending: true });
+                
         console.log('6 - Consulta completada, resultado:', { data, error: supabaseError }); // Debug 6
 
         if (supabaseError) {
