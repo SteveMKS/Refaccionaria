@@ -1,9 +1,12 @@
 "use client";
 
-import { supabase } from '@/lib/supabase';
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Image from "next/image";
+import { ShoppingCart } from "lucide-react";
 
-// Definición del tipo Producto simplificado para PruebaProducts
+// Definición del tipo Producto para datos reales desde Supabase
 type Producto = {
   id_sku: string;
   nombre: string;
@@ -12,7 +15,7 @@ type Producto = {
   descripcion: string;
   precio: number;
   existencias: number;
-  id_marca: number; // Solo el ID ya que no hay relación
+  id_marca: number;
   activo?: boolean;
   destacado?: boolean;
 };
@@ -27,24 +30,20 @@ export default function ProductosPage() {
       try {
         setLoading(true);
         setError(null);
-        
-        // Consulta directa a la tabla PruebaProducts
-        const { data, error: supabaseError } = await supabase
-          .from('PruebaProducts')
-          .select('*')
-          .order('nombre', { ascending: true });
 
-        console.log('Resultado de la consulta:', { data, error: supabaseError });
+        const { data, error: supabaseError } = await supabase
+          .from("PruebaProducts")
+          .select("*")
+          .order("nombre", { ascending: true });
 
         if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
-          throw new Error('No se encontraron productos');
+          throw new Error("No se encontraron productos");
         }
 
         setProductos(data);
       } catch (err) {
-        console.error('Error al cargar productos:', err);
-        setError(err instanceof Error ? err.message : 'Error desconocido');
+        setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {
         setLoading(false);
       }
@@ -55,11 +54,9 @@ export default function ProductosPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          <span className="ml-4">Cargando productos...</span>
-        </div>
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mr-4"></div>
+        <span>Cargando productos...</span>
       </div>
     );
   }
@@ -75,60 +72,73 @@ export default function ProductosPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Nuestros Productos</h1>
-      
-      {productos.length === 0 ? (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
-          No se encontraron productos
-        </div>
-      ) : (
-        <div className="grid md:grid-cols-2 gap-8">
-          {productos.map((producto) => (
-            <div key={producto.id_sku} className="border rounded-lg p-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <img 
-                    src={producto.imagen_principal} 
-                    alt={producto.nombre}
-                    className="w-full rounded-lg"
-                  />
+    <div className="container mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold mb-6">Catálogo de Productos</h1>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {productos.map((producto) => (
+          <Card key={producto.id_sku} className="hover:shadow-lg transition-shadow h-full flex flex-col">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">{producto.nombre}</CardTitle>
+            </CardHeader>
+
+            <CardContent className="flex-grow space-y-3">
+              {/* Imagen del producto */}
+              <div className="relative mx-auto w-40 h-40 bg-gray-100 rounded-md mb-3">
+                <Image
+                  src={producto.imagen_principal}
+                  alt={producto.nombre}
+                  fill
+                  className="object-contain p-3"
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                />
+              </div>
+
+              {/* SKU e ID Marca */}
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-600">SKU:</span>
+                  <span className="font-mono">#{producto.id_sku}</span>
                 </div>
-                
-                <div>
-                  <h2 className="text-3xl font-bold mb-2">{producto.nombre}</h2>
-                  
-                  <div className="mb-4">
-                    <span className="font-semibold">Código SKU:</span> {producto.id_sku}
-                  </div>
-                  
-                  <div className="text-2xl font-bold mb-4">${producto.precio.toFixed(2)}</div>
-                  
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold mb-2">Descripción</h3>
-                    <p>{producto.descripcion}</p>
-                  </div>
-                  
-                  <div className="mb-6">
-                    <span className="font-semibold">Disponibilidad:</span> 
-                    {producto.existencias > 0 
-                      ? <span className="text-green-600"> En stock ({producto.existencias} unidades)</span>
-                      : <span className="text-red-600"> Agotado</span>
-                    }
-                  </div>
-                  
-                  <button 
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded"
+                <div className="flex justify-between">
+                  <span className="font-medium text-gray-600">Marca (ID):</span>
+                  <span>{producto.id_marca}</span>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <p className="text-xs text-gray-500 line-clamp-2 mt-2">
+                {producto.descripcion}
+              </p>
+
+              {/* Precio y botón */}
+              <div className="flex items-center justify-between mt-3 pt-2 border-t">
+                <span className="text-lg font-bold text-blue-600">
+                  ${producto.precio.toLocaleString("es-MX")}
+                </span>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-0.5 text-xs rounded-full ${
+                      producto.existencias > 0
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {producto.existencias > 0 ? "Disponible" : "Agotado"}
+                  </span>
+                  <button
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                    aria-label="Agregar al carrito"
                     disabled={producto.existencias <= 0}
                   >
-                    {producto.existencias > 0 ? 'Añadir al carrito' : 'No disponible'}
+                    <ShoppingCart className="h-5 w-5" />
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
