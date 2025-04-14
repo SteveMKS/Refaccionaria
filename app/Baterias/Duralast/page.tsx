@@ -6,18 +6,19 @@ import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
 //import { PostgrestError } from '@supabase/supabase-js'
 
 type CategoriaMain = {
-  id: number;
+  id_categoria_main: number;
   nombre: string;
+  slug: string;
 };
 
 type Subcategoria1 = {
-  id: number;
+  id_subcategoria1: number;
   nombre: string;
   id_categoria_main: CategoriaMain;
 };
 
 type Subcategoria2 = {
-  id: number;
+  id_subcategoria2: number;
   nombre: string;
   id_subcategoria1: Subcategoria1;
 };
@@ -26,10 +27,11 @@ type Subcategoria2 = {
 type Marca = {
   id: number;
   nombre: string;
+  slug: string;
 };
 
 type Producto = {   
-  id: number;
+  id_sku: number;
   nombre: string;
   slug: string;
   imagen_principal: string;
@@ -56,11 +58,11 @@ export default function BateriasMarca() {
           .select(`
             *,
             marcas: id_marca (*),
-            subcategoria: id_subcategoria2 (
+            subcategoria_nivel2: id_subcategoria2 (
               *,
-              subcategoria_padre: id_subcategoria1 (
+              subcategoria_nivel1: id_subcategoria1 (
                 *,
-                categoria_padre: id_categoria_main (*)
+                categoria_main: id_categoria_main (*)
               )
             )
           `)
