@@ -121,7 +121,7 @@ export default function BateriasMarca() {
     if (marcas) cargarProductos();
   }, [marcas]);
 
-  console.log('14 - Estado actual:', { loading, productos, error });
+  console.log('14 - Estado actual:', { loading, producto, error });
 
   if (loading) {
     console.log('15 - Mostrando estado de carga...');
