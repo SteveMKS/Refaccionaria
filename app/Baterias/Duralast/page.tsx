@@ -97,7 +97,7 @@ export default function BateriasMarca() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Baterías {marca}</h1>
+      <h1 className="text-3xl font-bold mb-6">Baterias {marca}</h1>
       
       <div className="grid md:grid-cols-2 gap-8">
         {productos.map((producto) => ( // Mapea cada producto individual
@@ -115,9 +115,9 @@ export default function BateriasMarca() {
                 <h2 className="text-3xl font-bold mb-2">{producto.nombre}</h2>
                 
                 <div className="text-sm text-gray-500 mb-4">
-                  {producto.id_subcategoria2.id_subcategoria1.id_categoria_main.nombre}{' > '}
-                  {producto.id_subcategoria2.id_subcategoria1.nombre}{' > '}
-                  {producto.id_subcategoria2.nombre}
+                  {producto.id_subcategoria_nivel2.id_subcategoria_nivel1.id_categoria_main.nombre}{' > '}
+                  {producto.id_subcategoria_nivel2.id_subcategoria_nivel1.nombre}{' > '}
+                  {producto.id_subcategoria_nivel2.nombre}
                 </div>
                 
                 <div className="mb-4">
