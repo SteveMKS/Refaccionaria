@@ -75,7 +75,7 @@ export default function BateriasMarca() {
         
         console.log('5 - Realizando consulta a Supabase...'); // Debug 5
 
-        const { data, error: supabaseError } = await supabase
+        /*const { data, error: supabaseError } = await supabase
           .from('productos')
           .select(`
             *,
@@ -86,7 +86,32 @@ export default function BateriasMarca() {
           `)
           .eq('subcategoria_nivel2.nombre', 'Baterias')
           .eq('marcas.nombre', marca)
-          .order('nombre', { ascending: true });
+          .order('nombre', { ascending: true });*/
+
+          const { data: subcatData } = await supabase
+            .from('subcategoria_nivel2')
+            .select('id')
+            .eq('nombre', 'Baterias')
+            .single();
+
+            if (!subcatData) {
+            console.error('No se encontró la subcategoría');
+            return;
+            }
+
+            const { data, error } = await supabase
+            .from('productos')
+            .select(`
+              *,
+              marcas: id_marca (*),
+              subcategoria_nivel2: id_subcategoria2 (*),
+              subcategoria_nivel1: id_subcategoria1 (*),
+              categoria_main: id_categoria_main (*)
+            `)
+            .eq('id_subcategoria2', subcatData.id)
+            .eq('marcas.nombre', marca)
+            .order('nombre', { ascending: true });
+
                 
         console.log('6 - Consulta completada, resultado:', { data, error: supabaseError }); // Debug 6
 
