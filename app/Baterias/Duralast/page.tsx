@@ -91,7 +91,7 @@ export default function BateriasMarca() {
 const { data: subcatData, error: subcatError } = await supabase
   .from('subcategoria_nivel2')
   .select('id')
-  .eq('nombre', 'Baterias')
+  .ilike('nombre', '%bater%')
   .single();
 
 if (!subcatData || subcatError) {
@@ -109,7 +109,7 @@ const { data: productosData, error: productosError } = await supabase
     categoria_main: id_categoria_main (*)
   `)
   .eq('id_subcategoria2', subcatData.id)
-  .eq('marcas.nombre', marca)
+  .ilike('marcas.nombre', `%${marca}%`)
   .order('nombre', { ascending: true });
 
 console.log('6 - Consulta completada, resultado:', { productosData, productosError });
