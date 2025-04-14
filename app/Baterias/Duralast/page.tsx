@@ -80,13 +80,9 @@ export default function BateriasMarca() {
           .select(`
             *,
             marcas: id_marca (*),
-            ,
-            subcategoria_nivel2: id_subcategoria2 (*,
-            )
-            subcategoria_nivel1: id_subcategoria1 (*,
-            )
-            categoria_main: id_categoria_main (*
-            )
+            subcategoria_nivel2: id_subcategoria2 (*),
+            subcategoria_nivel1: id_subcategoria1 (*),
+            categoria_main: id_categoria_main (*)
           `)
           .eq('subcategoria_nivel2.nombre', 'Baterias')
           .eq('marcas.nombre', marca)
