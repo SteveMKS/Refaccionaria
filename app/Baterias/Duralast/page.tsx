@@ -88,7 +88,7 @@ export default function BateriasMarca() {
           .eq('marcas.nombre', marca)
           .order('nombre', { ascending: true });*/
 
-          const { data: subcatData } = await supabase
+          const { data, error: subcatData, supabaseError } = await supabase
             .from('subcategoria_nivel2')
             .select('id')
             .eq('nombre', 'Baterias')
