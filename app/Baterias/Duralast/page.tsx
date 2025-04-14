@@ -88,45 +88,45 @@ export default function BateriasMarca() {
           .eq('marcas.nombre', marca)
           .order('nombre', { ascending: true });*/
 
-          const { data, error: subcatData, supabaseError } = await supabase
-            .from('subcategoria_nivel2')
-            .select('id')
-            .eq('nombre', 'Baterias')
-            .single();
+const { data: subcatData, error: subcatError } = await supabase
+  .from('subcategoria_nivel2')
+  .select('id')
+  .eq('nombre', 'Baterias')
+  .single();
 
-            if (!subcatData) {
-            console.error('No se encontró la subcategoría');
-            return;
-            }
+if (!subcatData || subcatError) {
+  console.error('No se encontró la subcategoría o hubo un error:', subcatError);
+  return;
+}
 
-            const { data, error } = await supabase
-            .from('productos')
-            .select(`
-              *,
-              marcas: id_marca (*),
-              subcategoria_nivel2: id_subcategoria2 (*),
-              subcategoria_nivel1: id_subcategoria1 (*),
-              categoria_main: id_categoria_main (*)
-            `)
-            .eq('id_subcategoria2', subcatData.id)
-            .eq('marcas.nombre', marca)
-            .order('nombre', { ascending: true });
+const { data: productosData, error: productosError } = await supabase
+  .from('productos')
+  .select(`
+    *,
+    marcas: id_marca (*),
+    subcategoria_nivel2: id_subcategoria2 (*),
+    subcategoria_nivel1: id_subcategoria1 (*),
+    categoria_main: id_categoria_main (*)
+  `)
+  .eq('id_subcategoria2', subcatData.id)
+  .eq('marcas.nombre', marca)
+  .order('nombre', { ascending: true });
 
-                
-        console.log('6 - Consulta completada, resultado:', { data, error: supabaseError }); // Debug 6
+console.log('6 - Consulta completada, resultado:', { productosData, productosError });
 
-        if (supabaseError) {
-          console.error('7 - Error de Supabase:', supabaseError); // Debug 7
-          throw supabaseError;
-        }
+if (productosError) {
+  console.error('7 - Error de Supabase:', productosError);
+  throw productosError;
+}
 
-        if (!data || data.length === 0) {
-          console.warn('8 - No se encontraron productos'); // Debug 8
-          setError(`No se encontraron baterías de la marca ${marca}`);
-        } else {
-          console.log('9 - Productos encontrados:', data); // Debug 9
-          setProductos(data);
-        }
+if (!productosData || productosData.length === 0) {
+  console.warn('8 - No se encontraron productos');
+  setError(`No se encontraron baterías de la marca ${marca}`);
+} else {
+  console.log('9 - Productos encontrados:', productosData);
+  setProductos(productosData);
+}
+
       } catch (err) {
         console.error('10 - Error en cargaProductos:', err); // Debug 10
         setError('Error al cargar los productos');
