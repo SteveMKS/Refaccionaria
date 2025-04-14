@@ -1,11 +1,5 @@
 "use client";
 
-
-import { supabase } from '@/lib/supabase'
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
-//import { PostgrestError } from '@supabase/supabase-js'
-
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
