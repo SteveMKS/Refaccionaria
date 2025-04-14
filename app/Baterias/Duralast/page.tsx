@@ -74,6 +74,13 @@ export default function BateriasMarca() {
         console.log('4 - Iniciando carga de productos...'); // Debug 4
         
         console.log('5 - Realizando consulta a Supabase...'); // Debug 5
+        const { data, error } = await supabase
+        .from('productos')
+        .select('id_sku, nombre')
+        .limit(2);
+      
+        console.log('Consulta simplificada:', { data, error });
+        
         const { data, error: supabaseError } = await supabase
           .from('productos')
           .select(`
