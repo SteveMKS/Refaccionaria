@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-type CategoriaMain = {
+type categoria_main = {
   id_categoria_main: number;
   nombre: string;
   slug: string;
@@ -12,25 +12,25 @@ type CategoriaMain = {
   imagen_url?: string;
 };
 
-type Subcategoria1 = {
+type subcategoria_nivel1 = {
   id_subcategoria1: number;
   nombre: string;
   slug: string;
   descripcion?: string;
   imagen_url?: string;
-  categoria_main: CategoriaMain;
+  id_categoria_main: categoria_main;
 };
 
-type Subcategoria2 = {
+type subcategoria_nivel2 = {
   id_subcategoria2: number;
   nombre: string;
   slug: string;
   descripcion?: string;
   imagen_url?: string;
-  subcategoria_nivel1: Subcategoria1;
+  id_subcategoria1: subcategoria_nivel1;
 };
 
-type Marca = {
+type marcas = {
   id_marca: number;
   nombre: string;
   slug: string;
@@ -38,7 +38,7 @@ type Marca = {
   descripcion?: string;
 };
 
-type Producto = {
+type productos = {
   id_sku: string;
   nombre: string;
   slug: string;
@@ -46,8 +46,8 @@ type Producto = {
   descripcion: string;
   precio: number;
   existencias: number;
-  id_marca: Marca;
-  subcategoria_nivel2: Subcategoria2;
+  id_marca: marcas;
+  id_subcategoria2: subcategoria_nivel2;
   activo?: boolean;
   destacado?: boolean;
 };
@@ -58,7 +58,7 @@ export default function BateriasMarca() {
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
 
-  const marca = params.marca as string;
+  const marcas = params.marca as string;
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -70,7 +70,7 @@ export default function BateriasMarca() {
         const { data: marcaExistente } = await supabase
           .from('marcas')
           .select('id_marca')
-          .ilike('nombre', marca)
+          .ilike('nombre', marcas)
           .single();
 
         const { data: subcatExistente } = await supabase
@@ -118,8 +118,8 @@ export default function BateriasMarca() {
       }
     };
 
-    if (marca) cargarProductos();
-  }, [marca]);
+    if (marcas) cargarProductos();
+  }, [marcas]);
 
   console.log('14 - Estado actual:', { loading, productos, error });
 
