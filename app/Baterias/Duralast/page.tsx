@@ -53,7 +53,7 @@ type productos = {
 };
 
 export default function BateriasMarca() {
-  const [productos, setProductos] = useState<productos[]>([]);
+  const [producto, setProducto] = useState<productos[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
@@ -149,7 +149,7 @@ export default function BateriasMarca() {
   console.log('17 - Renderizando productos...');
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Baterías {marca}</h1>
+      <h1 className="text-3xl font-bold mb-6">Baterías {marcas}</h1>
       
       {productos.length === 0 ? (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
