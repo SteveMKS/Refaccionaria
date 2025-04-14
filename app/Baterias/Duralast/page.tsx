@@ -172,9 +172,9 @@ export default function BateriasMarca() {
                   <h2 className="text-3xl font-bold mb-2">{producto.nombre}</h2>
                   
                   <div className="text-sm text-gray-500 mb-4">
-                    {producto.subcategoria_nivel2?.subcategoria_nivel1?.categoria_main?.nombre}{' > '}
-                    {producto.subcategoria_nivel2?.subcategoria_nivel1?.nombre}{' > '}
-                    {producto.subcategoria_nivel2?.nombre}
+                    {producto.id_subcategoria2.id_subcategoria_nivel1.id_categoria_main.nombre}{' > '}
+                    {producto.id_subcategoria2.id_subcategoria_nivel1.nombre}{' > '}
+                    {producto.id_subcategoria2.nombre}
                   </div>
                   
                   <div className="mb-4">
