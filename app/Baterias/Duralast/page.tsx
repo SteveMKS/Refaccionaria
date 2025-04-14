@@ -109,7 +109,7 @@ export default function BateriasMarca() {
           throw new Error('Consulta exitosa pero sin resultados');
         }
 
-        setProductos(data);
+        setProducto(data);
       } catch (err) {
         console.error('Error completo:', err);
         setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -151,13 +151,13 @@ export default function BateriasMarca() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Baterías {marcas}</h1>
       
-      {productos.length === 0 ? (
+      {producto.length === 0 ? (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
           No se encontraron productos para esta marca
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-8">
-          {productos.map((producto) => (
+          {producto.map((producto) => (
             <div key={producto.id_sku} className="border rounded-lg p-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
