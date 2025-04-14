@@ -14,18 +14,20 @@ type CategoriaMain = {
 type Subcategoria1 = {
   id_subcategoria1: number;
   nombre: string;
+  slug: string;
   id_categoria_main: CategoriaMain;
 };
 
 type Subcategoria2 = {
   id_subcategoria2: number;
   nombre: string;
+  slug: string;
   id_subcategoria1: Subcategoria1;
 };
 
 // 2. Define el tipo Marca que falta
 type Marca = {
-  id: number;
+  id_marca: number;
   nombre: string;
   slug: string;
 };
@@ -90,7 +92,7 @@ export default function BateriasMarca() {
       
       <div className="grid md:grid-cols-2 gap-8">
         {productos.map((producto) => ( // Mapea cada producto individual
-          <div key={producto.id} className="border rounded-lg p-6">
+          <div key={producto.id_sku} className="border rounded-lg p-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <img 
