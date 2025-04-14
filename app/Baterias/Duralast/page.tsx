@@ -58,113 +58,67 @@ export default function BateriasMarca() {
   const [error, setError] = useState<string | null>(null);
   const params = useParams();
 
-  console.log('1 - Parámetros de ruta:', params);
-
   const marca = params.marca as string;
-  console.log('2 - Marca extraída:', marca);
-
-  const verifyRelations = async () => {
-    console.log('Verificando relaciones...');
-    
-    try {
-      // Verifica marca
-      const { data: marcaData, error: marcaError } = await supabase
-        .from('marcas')
-        .select('id_marca, nombre')
-        .ilike('nombre', marca);
-      
-      if (marcaError) throw marcaError;
-      console.log('Marca encontrada:', marcaData);
-
-      // Verifica subcategoría
-      const { data: subcatData, error: subcatError } = await supabase
-        .from('subcategoria_nivel2')
-        .select('id_subcategoria2, nombre, id_subcategoria1')
-        .ilike('nombre', 'Baterias');
-      
-      if (subcatError) throw subcatError;
-      console.log('Subcategoría nivel 2:', subcatData);
-      
-      // Verifica productos que cumplirían
-      if (marcaData?.length && subcatData?.length) {
-        const { data: productSample, error: productError } = await supabase
-          .from('productos')
-          .select('id_sku, nombre')
-          .eq('id_marca', marcaData[0].id_marca)
-          .eq('id_subcategoria2', subcatData[0].id_subcategoria2)
-          .limit(1);
-        
-        if (productError) throw productError;
-        console.log('Ejemplo de producto que debería aparecer:', productSample);
-      } else {
-        console.warn('No se encontró la marca o subcategoría especificada');
-      }
-    } catch (error) {
-      console.error('Error en verifyRelations:', error);
-      throw error;
-    }
-  };
 
   useEffect(() => {
-    console.log('3 - Iniciando useEffect, marca:', marca);
-
     const cargarProductos = async () => {
       try {
         setLoading(true);
         setError(null);
-        console.log('4 - Iniciando carga de productos...');
-
-        // Primero verificamos las relaciones
-        await verifyRelations();
         
-        console.log('5 - Realizando consulta a Supabase...');
+        // PRIMERO: Verificar existencia de marca y categoría
+        const { data: marcaExistente } = await supabase
+          .from('marcas')
+          .select('id_marca')
+          .ilike('nombre', marca)
+          .single();
+
+        const { data: subcatExistente } = await supabase
+          .from('subcategoria_nivel2')
+          .select('id_subcategoria2')
+          .ilike('nombre', 'baterias')
+          .single();
+
+        if (!marcaExistente || !subcatExistente) {
+          throw new Error('Marca o categoría no encontrada');
+        }
+
+        // SEGUNDO: Consulta principal con debug avanzado
         const { data, error: supabaseError } = await supabase
           .from('productos')
           .select(`
             *,
             marcas!inner(*),
-            subcategoria_nivel2!inner(
-              *,
-              subcategoria_nivel1!inner(
-                *,
-                categoria_main!inner(*)
-              )
-            )
+            subcategoria_nivel2!inner(*)
           `)
-          .ilike('subcategoria_nivel2.nombre', 'Baterias')
-          .ilike('marcas.nombre', marca)
+          .eq('id_marca', marcaExistente.id_marca)
+          .eq('id_subcategoria2', subcatExistente.id_subcategoria2)
           .order('nombre', { ascending: true });
 
-        console.log('6 - Consulta completada, resultado:', { data, error: supabaseError });
+        console.log('Resultado completo de la consulta:', {
+          data, 
+          error: supabaseError,
+          filters: {
+            id_marca: marcaExistente.id_marca,
+            id_subcategoria2: subcatExistente.id_subcategoria2
+          }
+        });
 
-        if (supabaseError) {
-          console.error('7 - Error de Supabase:', supabaseError);
-          throw supabaseError;
-        }
-
+        if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
-          console.warn('8 - No se encontraron productos');
-          setError(`No se encontraron baterías de la marca ${marca}`);
-        } else {
-          console.log('9 - Productos encontrados:', data);
-          setProductos(data);
+          throw new Error('Consulta exitosa pero sin resultados');
         }
+
+        setProductos(data);
       } catch (err) {
-        console.error('10 - Error en cargaProductos:', err);
-        setError('Error al cargar los productos. Verifica la consola para más detalles.');
+        console.error('Error completo:', err);
+        setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
-        console.log('11 - Finalizando carga (finally)');
         setLoading(false);
       }
     };
 
-    if (marca) {
-      console.log('12 - Marca válida, ejecutando cargarProductos');
-      cargarProductos();
-    } else {
-      console.log('13 - No hay marca definida');
-      setLoading(false);
-    }
+    if (marca) cargarProductos();
   }, [marca]);
 
   console.log('14 - Estado actual:', { loading, productos, error });
