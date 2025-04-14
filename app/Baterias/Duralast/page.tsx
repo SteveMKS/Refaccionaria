@@ -9,31 +9,38 @@ type CategoriaMain = {
   id_categoria_main: number;
   nombre: string;
   slug: string;
+  descripcion?: string; // Opcional según tu DB
+  imagen_url?: string;  // Opcional según tu DB
 };
 
 type Subcategoria1 = {
   id_subcategoria1: number;
   nombre: string;
   slug: string;
-  id_categoria_main: CategoriaMain;
+  descripcion?: string;
+  imagen_url?: string;
+  categoria_main: CategoriaMain; // Relación con nombre corregido
 };
 
 type Subcategoria2 = {
   id_subcategoria2: number;
   nombre: string;
   slug: string;
-  id_subcategoria1: Subcategoria1;
+  descripcion?: string;
+  imagen_url?: string;
+  subcategoria_nivel1: Subcategoria1; // Relación con nombre corregido
 };
 
-// 2. Define el tipo Marca que falta
 type Marca = {
   id_marca: number;
   nombre: string;
   slug: string;
+  logo_url?: string;
+  descripcion?: string;
 };
 
-type Producto = {   
-  id_sku: number;
+type Producto = {
+  id_sku: string; // Corregido a string
   nombre: string;
   slug: string;
   imagen_principal: string;
@@ -41,7 +48,9 @@ type Producto = {
   precio: number;
   existencias: number;
   id_marca: Marca;
-  id_subcategoria2: Subcategoria2;
+  subcategoria_nivel2: Subcategoria2; // Nombre corregido para coincidir con la consulta
+  activo?: boolean;     // Campos adicionales de tu DB
+  destacado?: boolean;
 };
 
 export default function BateriasMarca() {
@@ -56,21 +65,21 @@ export default function BateriasMarca() {
         setLoading(true);
         
         const { data, error } = await supabase
-          .from('productos')
-          .select(`
+        .from('productos')
+        .select(`
+          *,
+          marcas: id_marca (*),
+          subcategoria_nivel2: id_subcategoria2 (
             *,
-            marcas: id_marca (*),
-            subcategoria_nivel2: id_subcategoria2 (
+            subcategoria_nivel1: id_subcategoria1 (
               *,
-              subcategoria_nivel1: id_subcategoria1 (
-                *,
-                categoria_main: id_categoria_main (*)
-              )
+              categoria_main: id_categoria_main (*)
             )
-          `)
-          .eq('id_subcategoria2.nombre', 'Baterias')
-          .eq('id_marca.nombre', marca)
-          .order('nombre', { ascending: true });
+          )
+        `)
+        .eq('subcategoria_nivel2.nombre', 'Baterias')
+        .eq('marcas.nombre', marca)
+        .order('nombre', { ascending: true });
 
         if (error) throw error;
         setProductos(data || []);
