@@ -56,48 +56,82 @@ type Producto = {
 export default function BateriasMarca() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const params = useParams();
+
+  console.log('1 - Parámetros de ruta:', params); // Debug 1
+
   const marca = params.marca as string;
+  console.log('2 - Marca extraída:', marca); // Debug 2
 
   useEffect(() => {
+    console.log('3 - Iniciando useEffect, marca:', marca); // Debug 3
+
     const cargarProductos = async () => {
       try {
         setLoading(true);
+        setError(null);
+        console.log('4 - Iniciando carga de productos...'); // Debug 4
         
-        const { data, error } = await supabase
-        .from('productos')
-        .select(`
-          *,
-          marcas: id_marca (*),
-          subcategoria_nivel2: id_subcategoria2 (
+        console.log('5 - Realizando consulta a Supabase...'); // Debug 5
+        const { data, error: supabaseError } = await supabase
+          .from('productos')
+          .select(`
             *,
-            subcategoria_nivel1: id_subcategoria1 (
+            marcas: id_marca (*),
+            subcategoria_nivel2: id_subcategoria2 (
               *,
-              categoria_main: id_categoria_main (*)
+              subcategoria_nivel1: id_subcategoria1 (
+                *,
+                categoria_main: id_categoria_main (*)
+              )
             )
-          )
-        `)
-        .eq('subcategoria_nivel2.nombre', 'Baterias')
-        .eq('marcas.nombre', marca)
-        .order('nombre', { ascending: true });
+          `)
+          .eq('subcategoria_nivel2.nombre', 'Baterias')
+          .eq('marcas.nombre', marca)
+          .order('nombre', { ascending: true });
 
-        if (error) throw error;
-        setProductos(data || []);
-      } catch (error) {
-        console.error('Error:', error);
+        console.log('6 - Consulta completada, resultado:', { data, error: supabaseError }); // Debug 6
+
+        if (supabaseError) {
+          console.error('7 - Error de Supabase:', supabaseError); // Debug 7
+          throw supabaseError;
+        }
+
+        if (!data || data.length === 0) {
+          console.warn('8 - No se encontraron productos'); // Debug 8
+          setError(`No se encontraron baterías de la marca ${marca}`);
+        } else {
+          console.log('9 - Productos encontrados:', data); // Debug 9
+          setProductos(data);
+        }
+      } catch (err) {
+        console.error('10 - Error en cargaProductos:', err); // Debug 10
+        setError('Error al cargar los productos');
       } finally {
+        console.log('11 - Finalizando carga (finally)'); // Debug 11
         setLoading(false);
       }
     };
 
-    if (marca) cargarProductos();
+    if (marca) {
+      console.log('12 - Marca válida, ejecutando cargarProductos'); // Debug 12
+      cargarProductos();
+    } else {
+      console.log('13 - No hay marca definida'); // Debug 13
+      setLoading(false);
+    }
   }, [marca]);
+}
+  console.log('14 - Estado actual:', { loading, productos, error }); // Debug 14
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) {
+    console.log('15 - Mostrando estado de carga...'); // Debug 15
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Baterías {marca}</h1>
+    console.log('17 - Renderizando productos...'); // Debug 17
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Baterías {marca}</h1>
       
       <div className="grid md:grid-cols-2 gap-8">
         {productos.map((producto) => (
