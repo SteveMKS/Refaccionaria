@@ -1,5 +1,11 @@
 "use client";
 
+
+import { supabase } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
+import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
+//import { PostgrestError } from '@supabase/supabase-js'
+
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
@@ -242,6 +248,7 @@ if (!productosData || productosData.length === 0) {
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+>>>>>>> 1ee2565ccab86efb58c1a48ceac17548307c91a0
 
 type categoria_main = {
   id_categoria_main: number;
@@ -448,6 +455,4 @@ export default function BateriasMarca() {
         </div>
       )}
     </div>
-  );
-}*/
-
+  );*/
