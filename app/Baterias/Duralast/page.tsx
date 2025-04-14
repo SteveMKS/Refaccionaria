@@ -1,5 +1,265 @@
 "use client";
 
+import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
+
+type CategoriaMain = {
+  id_categoria_main: number;
+  nombre: string;
+  slug: string;
+  descripcion?: string;
+  imagen_url?: string;
+};
+
+type Subcategoria1 = {
+  id_subcategoria1: number;
+  nombre: string;
+  slug: string;
+  descripcion?: string;
+  imagen_url?: string;
+  categoria_main: CategoriaMain;
+};
+
+type Subcategoria2 = {
+  id_subcategoria2: number;
+  nombre: string;
+  slug: string;
+  descripcion?: string;
+  imagen_url?: string;
+  subcategoria_nivel1: Subcategoria1;
+};
+
+type Marca = {
+  id_marca: number;
+  nombre: string;
+  slug: string;
+  logo_url?: string;
+  descripcion?: string;
+};
+
+type Producto = {
+  id_sku: string;
+  nombre: string;
+  slug: string;
+  imagen_principal: string;
+  descripcion: string;
+  precio: number;
+  existencias: number;
+  id_marca: Marca;
+  subcategoria_nivel2: Subcategoria2;
+  activo?: boolean;
+  destacado?: boolean;
+};
+
+export default function BateriasMarca() {
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const params = useParams();
+
+  console.log('1 - Parámetros de ruta:', params);
+
+  const marca = params.marca as string;
+  console.log('2 - Marca extraída:', marca);
+
+  const verifyRelations = async () => {
+    console.log('Verificando relaciones...');
+    
+    try {
+      // Verifica marca
+      const { data: marcaData, error: marcaError } = await supabase
+        .from('marcas')
+        .select('id_marca, nombre')
+        .ilike('nombre', marca);
+      
+      if (marcaError) throw marcaError;
+      console.log('Marca encontrada:', marcaData);
+
+      // Verifica subcategoría
+      const { data: subcatData, error: subcatError } = await supabase
+        .from('subcategoria_nivel2')
+        .select('id_subcategoria2, nombre, id_subcategoria1')
+        .ilike('nombre', 'Baterias');
+      
+      if (subcatError) throw subcatError;
+      console.log('Subcategoría nivel 2:', subcatData);
+      
+      // Verifica productos que cumplirían
+      if (marcaData?.length && subcatData?.length) {
+        const { data: productSample, error: productError } = await supabase
+          .from('productos')
+          .select('id_sku, nombre')
+          .eq('id_marca', marcaData[0].id_marca)
+          .eq('id_subcategoria2', subcatData[0].id_subcategoria2)
+          .limit(1);
+        
+        if (productError) throw productError;
+        console.log('Ejemplo de producto que debería aparecer:', productSample);
+      } else {
+        console.warn('No se encontró la marca o subcategoría especificada');
+      }
+    } catch (error) {
+      console.error('Error en verifyRelations:', error);
+      throw error;
+    }
+  };
+
+  useEffect(() => {
+    console.log('3 - Iniciando useEffect, marca:', marca);
+
+    const cargarProductos = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('4 - Iniciando carga de productos...');
+
+        // Primero verificamos las relaciones
+        await verifyRelations();
+        
+        console.log('5 - Realizando consulta a Supabase...');
+        const { data, error: supabaseError } = await supabase
+          .from('productos')
+          .select(`
+            *,
+            marcas!inner(*),
+            subcategoria_nivel2!inner(
+              *,
+              subcategoria_nivel1!inner(
+                *,
+                categoria_main!inner(*)
+              )
+            )
+          `)
+          .ilike('subcategoria_nivel2.nombre', 'Baterias')
+          .ilike('marcas.nombre', marca)
+          .order('nombre', { ascending: true });
+
+        console.log('6 - Consulta completada, resultado:', { data, error: supabaseError });
+
+        if (supabaseError) {
+          console.error('7 - Error de Supabase:', supabaseError);
+          throw supabaseError;
+        }
+
+        if (!data || data.length === 0) {
+          console.warn('8 - No se encontraron productos');
+          setError(`No se encontraron baterías de la marca ${marca}`);
+        } else {
+          console.log('9 - Productos encontrados:', data);
+          setProductos(data);
+        }
+      } catch (err) {
+        console.error('10 - Error en cargaProductos:', err);
+        setError('Error al cargar los productos. Verifica la consola para más detalles.');
+      } finally {
+        console.log('11 - Finalizando carga (finally)');
+        setLoading(false);
+      }
+    };
+
+    if (marca) {
+      console.log('12 - Marca válida, ejecutando cargarProductos');
+      cargarProductos();
+    } else {
+      console.log('13 - No hay marca definida');
+      setLoading(false);
+    }
+  }, [marca]);
+
+  console.log('14 - Estado actual:', { loading, productos, error });
+
+  if (loading) {
+    console.log('15 - Mostrando estado de carga...');
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          <span className="ml-4">Cargando productos...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.log('16 - Mostrando error:', error);
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  console.log('17 - Renderizando productos...');
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Baterías {marca}</h1>
+      
+      {productos.length === 0 ? (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
+          No se encontraron productos para esta marca
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-8">
+          {productos.map((producto) => (
+            <div key={producto.id_sku} className="border rounded-lg p-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <img 
+                    src={producto.imagen_principal} 
+                    alt={producto.nombre}
+                    className="w-full rounded-lg"
+                  />
+                </div>
+                
+                <div>
+                  <h2 className="text-3xl font-bold mb-2">{producto.nombre}</h2>
+                  
+                  <div className="text-sm text-gray-500 mb-4">
+                    {producto.subcategoria_nivel2?.subcategoria_nivel1?.categoria_main?.nombre}{' > '}
+                    {producto.subcategoria_nivel2?.subcategoria_nivel1?.nombre}{' > '}
+                    {producto.subcategoria_nivel2?.nombre}
+                  </div>
+                  
+                  <div className="mb-4">
+                    <span className="font-semibold">Marca:</span> {producto.id_marca.nombre}
+                  </div>
+                  
+                  <div className="text-2xl font-bold mb-4">${producto.precio.toFixed(2)}</div>
+                  
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">Descripción</h3>
+                    <p>{producto.descripcion}</p>
+                  </div>
+                  
+                  <div className="mb-6">
+                    <span className="font-semibold">Disponibilidad:</span> 
+                    {producto.existencias > 0 
+                      ? <span className="text-green-600"> En stock ({producto.existencias} unidades)</span>
+                      : <span className="text-red-600"> Agotado</span>
+                    }
+                  </div>
+                  
+                  <button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded"
+                    disabled={producto.existencias <= 0}
+                  >
+                    {producto.existencias > 0 ? 'Añadir al carrito' : 'No disponible'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/*"use client";
+
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation' // Cambiado de useRouter a useParams
@@ -214,4 +474,4 @@ export default function BateriasMarca() {
       )}
     </div>
   );
-} // <-- Este cierre corresponde a la función BateriasMarca
+} // <-- Este cierre corresponde a la función BateriasMarca*/
