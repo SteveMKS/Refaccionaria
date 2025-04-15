@@ -1,17 +1,17 @@
 "use client";
-import { create } from 'zustand';
-
-const useTestStore = create((set) => ({
-  count: 0,
-  increment: () => set((state) => ({ count: state.count + 1 })),
-}));
+import { useTestStore } from '@/hooks/useTestStore';
 
 export default function TestPage() {
   const { count, increment } = useTestStore();
   return (
-    <div>
+    <div className="p-4">
       <p>Contador: {count}</p>
-      <button onClick={increment}>+1</button>
+      <button 
+        onClick={increment}
+        className="bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        +1
+      </button>
     </div>
   );
 }
