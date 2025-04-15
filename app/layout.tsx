@@ -36,6 +36,37 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider>
+            <AppSidebar />
+            <main className="flex-1">
+              <SidebarTrigger />
+              <ModeToggle />
+              <SyncCart />
+              {children}
+            </main>
+          </SidebarProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
+/*export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
@@ -54,11 +85,11 @@ export default function RootLayout({
             <main className="flex-1">
               <SidebarTrigger />
                <ModeToggle />
-               <SyncCart /> {/* <- Aquí se monta solo en cliente */}
+               <SyncCart /> 
               {children}
             </main>
           </ThemeProvider>
       </body>
     </html>
   );
-}
+}*/
