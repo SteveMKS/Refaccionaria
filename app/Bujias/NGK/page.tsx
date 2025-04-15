@@ -9,9 +9,16 @@ import { Cart } from "@/components/cart/Cart"; // Importa el componente Cart
 import { useCart } from "@/hooks/useCart"; // Importa el hook del carrito
 
 // Definición del tipo Producto
+type Marca = {
+  id_marca: string;
+  nombre: string;
+  slug: string;
+  descripcion: string;
+};
+
 type Producto = {
   id_sku: string;
-  id_marca: string;
+  id_marca: Marca;
   nombre: string;
   slug: string;
   imagen_principal: string;
@@ -21,6 +28,7 @@ type Producto = {
   activo?: boolean;
   destacado?: boolean;
 };
+
 
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
