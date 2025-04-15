@@ -15,13 +15,12 @@ type Producto = {
   descripcion: string;
   precio: number;
   existencias: number;
-  id_marca: number;
   activo?: boolean;
   destacado?: boolean;
 };
 
 export default function ProductosPage() {
-  const [productos, setProductos] = useState<Producto[]>([]);
+  const [productos, setProductos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,8 +31,16 @@ export default function ProductosPage() {
         setError(null);
 
         const { data, error: supabaseError } = await supabase
-          .from("PruebaProducts")
-          .select("*")
+          .from("pruebaproducts")
+          .select(`
+            *,
+            marcas (
+              id_marca,
+              nombre,
+              slug,
+              descripcion
+            )
+          `)
           .order("nombre", { ascending: true });
 
         if (supabaseError) throw supabaseError;
@@ -99,10 +106,6 @@ export default function ProductosPage() {
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-600">SKU:</span>
                   <span className="font-mono">#{producto.id_sku}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Marca (ID):</span>
-                  <span>{producto.id_marca}</span>
                 </div>
               </div>
 
