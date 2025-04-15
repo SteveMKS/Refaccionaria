@@ -34,10 +34,15 @@ export default function ProductosPage() {
           .from("pruebaproducts")
           .select(`
             *,
-            marcaspruebas (
+            marcas (
               id_marca,
               nombre,
               slug,
+              descripcion
+            ),
+            subcategorias (
+              id_subcategoria,
+              nombre,
               descripcion
             )
           `)
