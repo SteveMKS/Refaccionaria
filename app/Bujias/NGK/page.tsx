@@ -9,6 +9,7 @@ import { ShoppingCart } from "lucide-react";
 // Definición del tipo Producto para datos reales desde Supabase
 type Producto = {
   id_sku: string;
+  id_marca: string;
   nombre: string;
   slug: string;
   imagen_principal: string;
@@ -47,12 +48,16 @@ export default function ProductosPage() {
             id_categoria (
               id_categoria,
               nombre,
-              descripcion
+              descripcion,
+              id_categoria_main (
+                id_categoria_main,
+                nombre,
+                descripcion
+              )
             )
           )
         `)
-        .order("nombre", { ascending: true });
-      
+        .order("nombre", { ascending: true });      
 
         if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
@@ -115,8 +120,12 @@ export default function ProductosPage() {
               {/* SKU e ID Marca */}
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
+                  <span className="font-medium text-gray-600">Marca:</span>
+                  <span className="font-mono">#{producto.id_marca.nombre}</span>
                   <span className="font-medium text-gray-600">SKU:</span>
                   <span className="font-mono">#{producto.id_sku}</span>
+                  <span className="font-medium text-gray-600">Cantidad:</span>
+                  <span className="font-mono">#{producto.existencias}</span>
                 </div>
               </div>
 
