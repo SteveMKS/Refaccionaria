@@ -34,7 +34,7 @@ export default function ProductosPage() {
           .from("pruebaproducts")
           .select(`
             *,
-            marcas (
+            marcaspruebas (
               id_marca,
               nombre,
               slug,
