@@ -31,22 +31,28 @@ export default function ProductosPage() {
         setError(null);
 
         const { data, error: supabaseError } = await supabase
-          .from("pruebaproducts")
-          .select(`
-            *,
-            id_marca (
-              id_marca,
-              nombre,
-              slug,
-              descripcion
-            ),
-            id_subcategoria (
-              id_subcategoria,
+        .from("pruebaproducts")
+        .select(`
+          *,
+          id_marca (
+            id_marca,
+            nombre,
+            slug,
+            descripcion
+          ),
+          id_subcategoria (
+            id_subcategoria,
+            nombre,
+            descripcion,
+            id_categoria (
+              id_categoria,
               nombre,
               descripcion
             )
-          `)
-          .order("nombre", { ascending: true });
+          )
+        `)
+        .order("nombre", { ascending: true });
+      
 
         if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
