@@ -22,18 +22,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
+
   const setCartFromDB = useCart((state) => state.setCartFromDB);
   const clearCart = useCart((state) => state.clearCart);
   const clearCartState = useCart((state) => state.clearCartState);
 
-
   const fetchUserAndCart = async (session: Session | null) => {
     if (!session?.user) {
       setUser(null);
-      clearCart(); // Limpia el carrito si no hay sesión
+      clearCartState(); // ✅ Limpia solo el carrito en memoria si no hay sesión
       return;
     }
 
+    // Obtener perfil del usuario
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("nombre, apellido, avatar")
@@ -47,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ ...session.user, ...profile });
     }
 
+    // Obtener carrito del usuario
     const { data: carritoDB, error: carritoError } = await supabase
       .from("carritos")
       .select("producto_id, nombre, precio, cantidad, imagen_principal, descripcion")
@@ -63,8 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           descripcion: item.descripcion,
         }))
       );
-    } else {
-      clearCart(); // Asegura que no se mantenga el carrito si no hay datos válidos
     }
   };
 
@@ -77,22 +77,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      fetchUserAndCart(session);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        fetchUserAndCart(session);
+      }
+    );
 
     return () => {
       listener.subscription.unsubscribe();
     };
   }, []);
 
-    const logout = async () => {
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-      clearCartState(); // Limpia el carrito en frontend aunque no haya usuario activo
-    };
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setUser(null);
+    clearCartState(); // ✅ Limpia el carrito del frontend
+  };
 
   return (
     <AuthContext.Provider value={{ user, session, logout }}>
@@ -108,3 +110,4 @@ export function useAuth() {
   }
   return context;
 }
+
