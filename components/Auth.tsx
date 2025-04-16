@@ -24,6 +24,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<(User & Users) | null>(null);
   const setCartFromDB = useCart((state) => state.setCartFromDB);
   const clearCart = useCart((state) => state.clearCart);
+  const clearCartState = useCart((state) => state.clearCartState);
+
 
   const fetchUserAndCart = async (session: Session | null) => {
     if (!session?.user) {
@@ -85,12 +87,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    clearCart(); // 🧼 Limpia el carrito directamente
-  };
+    const logout = async () => {
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+      clearCartState(); // Limpia el carrito en frontend aunque no haya usuario activo
+    };
 
   return (
     <AuthContext.Provider value={{ user, session, logout }}>
