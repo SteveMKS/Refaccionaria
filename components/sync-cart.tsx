@@ -23,6 +23,8 @@ export const SyncCart = () => {
           name: item.nombre,
           price: item.precio,
           quantity: item.cantidad,
+          imagen_principal: item.imagen_principal,
+          descripcion: item.descripcion
         }));
         setCartFromDB(items);
       }
