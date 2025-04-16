@@ -162,8 +162,11 @@ export default function ProductosPage() {
                   aria-label="Agregar al carrito"
                   disabled={producto.existencias <= 0}
                   onClick={() => addToCart({
+                    
+                    imagen_principal: producto.imagen_principal,
                     id: producto.id_sku,
                     name: producto.nombre,
+                    descripcion: producto.descripcion,
                     price: producto.precio,
                   })}
                 >
