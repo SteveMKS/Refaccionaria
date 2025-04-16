@@ -15,6 +15,7 @@ interface AuthContextType {
   user: (User & Users) | null;
   session: Session | null;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +23,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const setCartFromDB = useCart((state) => state.setCartFromDB);
   const clearCart = useCart((state) => state.clearCart);
@@ -30,11 +32,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserAndCart = async (session: Session | null) => {
     if (!session?.user) {
       setUser(null);
-      clearCartState(); // ✅ Limpia solo el carrito en memoria si no hay sesión
+      clearCartState();
       return;
     }
 
-    // Obtener perfil del usuario
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("nombre, apellido, avatar")
@@ -48,7 +49,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ ...session.user, ...profile });
     }
 
-    // Obtener carrito del usuario
     const { data: carritoDB, error: carritoError } = await supabase
       .from("carritos")
       .select("producto_id, nombre, precio, cantidad, imagen_principal, descripcion")
@@ -65,6 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           descripcion: item.descripcion,
         }))
       );
+    } else {
+      clearCartState();
     }
   };
 
@@ -73,16 +75,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       await fetchUserAndCart(data.session);
+      setLoading(false); // 👈 Aquí marcamos que ya terminó de cargar
     };
 
     initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        fetchUserAndCart(session);
-      }
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      fetchUserAndCart(session);
+    });
 
     return () => {
       listener.subscription.unsubscribe();
@@ -93,11 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    clearCartState(); // ✅ Limpia el carrito del frontend
+    clearCartState();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, logout }}>
+    <AuthContext.Provider value={{ user, session, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,4 +111,3 @@ export function useAuth() {
   }
   return context;
 }
-
