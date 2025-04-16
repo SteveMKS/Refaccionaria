@@ -17,12 +17,16 @@ type CartStore = {
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  clearCartState: () => void; // NUEVO
   setCartFromDB: (items: CartItem[]) => void;
 };
 
 export const useCart = create<CartStore>((set, get) => ({
   cart: [],
   total: 0,
+
+  // ✅ Limpia solo el estado local (sin tocar supabase)
+  clearCartState: () => set({ cart: [], total: 0 }),
 
   // ✅ Establece el carrito desde Supabase al iniciar sesión
   setCartFromDB: (items) => {
