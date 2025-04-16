@@ -22,16 +22,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
+  const setCartFromDB = useCart((state) => state.setCartFromDB);
+  const clearCart = useCart((state) => state.clearCart);
 
-  const fetchUser = async (session: Session | null) => {
-    const { setCartFromDB } = useCart.getState();
-
+  const fetchUserAndCart = async (session: Session | null) => {
     if (!session?.user) {
       setUser(null);
+      clearCart(); // Limpia el carrito si no hay sesión
       return;
     }
 
-    // 🔹 Consultamos la información adicional del usuario desde Supabase
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("nombre, apellido, avatar")
@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser({ ...session.user, ...profile });
     }
 
-    // 🔸 Obtenemos el carrito del usuario
     const { data: carritoDB, error: carritoError } = await supabase
       .from("carritos")
       .select("producto_id, nombre, precio, cantidad, imagen_principal, descripcion")
@@ -62,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           descripcion: item.descripcion,
         }))
       );
+    } else {
+      clearCart(); // Asegura que no se mantenga el carrito si no hay datos válidos
     }
   };
 
@@ -69,14 +70,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
-      await fetchUser(data.session);
+      await fetchUserAndCart(data.session);
     };
 
     initAuth();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      fetchUser(session);
+      fetchUserAndCart(session);
     });
 
     return () => {
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    useCart.getState().clearCart(); // 🧹 Vacía el carrito en memoria al cerrar sesión
+    clearCart(); // 🧼 Limpia el carrito directamente
   };
 
   return (
