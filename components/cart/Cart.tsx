@@ -25,8 +25,8 @@ export const Cart = () => {
           ) : (
             <>
               {cart.map((item) => (
-                <CartItem key={item.imagen_principal} item={item} />
-                <CartItem key={item.id} item={item} />
+                <CartItem key={item.id} item={item} />,
+                <CartItem key={item.imagen_principal} item={item} />,
                 <CartItem key={item.descripcion} item={item} />
               ))}
               <div className="border-t pt-4">
