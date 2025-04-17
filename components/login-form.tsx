@@ -48,7 +48,7 @@ export function LoginForm({
       console.log("Usuario:", data.user);
       console.log("Sesión:", data.session);
 
-      Console.message("Login exitoso");
+      alert("Login exitoso");
 
       await registrarLogin(data.user.id); // Registrar el inicio de sesión
       router.push("/Perfil");
