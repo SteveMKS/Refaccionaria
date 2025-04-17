@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useCart } from '@/hooks/useCart';
-import { createClient } from '@/lib/supabase-browser';
+import { supabase } from '@/lib/supabase-browser';
 
 export function HydrateUser() {
   const setUser = useCart((state) => state.setUser);

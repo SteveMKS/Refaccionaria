@@ -8,7 +8,8 @@ import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { SupabaseProvider } from "@/components/supabase-provider"; // ✅ Nuevo wrapper
 import { HydrateUser } from "@/components/hydrate-user"; // ✅ Nuevo archivo también
-import { createClient } from "@/lib/supabase-browser"; // ✅ Usa el cliente correcto
+import { supabase } from '@/lib/supabase-browser'; // ✅ Correcto
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
