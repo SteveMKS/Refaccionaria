@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";  // Asegúrate de que uses 'useRouter'
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-browser';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

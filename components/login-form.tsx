@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase"; // 🔹 Importamos Supabase correctamente
+import { supabase } from '@/lib/supabase-browser'; // 🔹 Importamos Supabase correctamente
 import { registrarLogin } from "@/hooks/registrarLogin"; // 🔹 Importa la función para registrar el login
 
 export function LoginForm({

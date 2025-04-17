@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase"; // Importa Supabase correctamente
+import { supabase } from '@/lib/supabase-browser';
 
 const useAuth = () => {
   const [session, setSession] = useState<any>(null);

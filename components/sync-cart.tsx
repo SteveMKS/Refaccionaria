@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
-import { supabase } from "@/lib/supabase";
+import { supabase } from '@/lib/supabase-browser';
 import type { CartItem } from "@/hooks/useCart"; // importante si no está ya
 
 export const SyncCart = () => {

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase"; // Cliente de Supabase
+import { supabase } from '@/lib/supabase-browser';
 import router from "next/router";
 
 export function RegistroForm({
