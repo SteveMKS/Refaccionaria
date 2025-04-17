@@ -6,10 +6,9 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
-import { AuthProvider as SupabaseAuthProvider } from "@supabase/auth-helpers-react";
-import { createClient } from "@/lib/supabase";
-import { useEffect } from "react";
-import { useCart } from "@/hooks/useCart";
+import { SupabaseProvider } from "@/components/supabase-provider"; // ✅ Nuevo wrapper
+import { HydrateUser } from "@/components/hydrate-user"; // ✅ Nuevo archivo también
+import { createClient } from "@/lib/supabase-browser"; // ✅ Usa el cliente correcto
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,16 +34,14 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <SupabaseAuthProvider client={supabase}>
+          <SupabaseProvider client={supabase}>
             <HydrateUser />
             <SidebarProvider>
               <AppSidebar />
@@ -55,41 +52,13 @@ export default function RootLayout({
                 {children}
               </main>
             </SidebarProvider>
-          </SupabaseAuthProvider>
+          </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
 
-// 🔄 Este componente sincroniza la sesión de Supabase con Zustand
-function HydrateUser() {
-  const setUser = useCart((state) => state.setUser);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const getSession = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-
-    getSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [setUser, supabase]);
-
-  return null;
-}
 
 
 /*export default function RootLayout({
