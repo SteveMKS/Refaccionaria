@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useCart } from '@/hooks/useCart';
 import { supabase } from '@/lib/supabase-browser';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export function HydrateUser() {
   const setUser = useCart((state) => state.setUser);
@@ -17,14 +18,16 @@ export function HydrateUser() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    } = supabase.auth.onAuthStateChange(
+      (_event: AuthChangeEvent, session: Session | null) => {
+        setUser(session?.user ?? null);
+      }
+    );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [setUser, supabase]);
+  }, [setUser]);
 
   return null;
 }
