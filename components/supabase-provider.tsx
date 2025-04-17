@@ -2,7 +2,7 @@
 
 import { createContext } from 'react';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase';
 
 type Props = {
   children: React.ReactNode;
