@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase-browser';
 
 export function HydrateUser() {
   const setUser = useCart((state) => state.setUser);
-  const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
