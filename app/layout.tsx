@@ -6,7 +6,10 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
-import { AuthProvider } from "@/components/Auth"; // ✅ Aquí añadimos el AuthProvider
+import { AuthProvider as SupabaseAuthProvider } from "@supabase/auth-helpers-react";
+import { createClient } from "@/lib/supabase";
+import { useEffect } from "react";
+import { useCart } from "@/hooks/useCart";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +31,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = createClient();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -39,7 +44,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider> {/* ✅ Aquí envolvemos todo con AuthProvider */}
+          <SupabaseAuthProvider client={supabase}>
+            <HydrateUser />
             <SidebarProvider>
               <AppSidebar />
               <main className="flex-1">
@@ -49,12 +55,42 @@ export default function RootLayout({
                 {children}
               </main>
             </SidebarProvider>
-          </AuthProvider>
+          </SupabaseAuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
+// 🔄 Este componente sincroniza la sesión de Supabase con Zustand
+function HydrateUser() {
+  const setUser = useCart((state) => state.setUser);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const getSession = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+
+    getSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [setUser, supabase]);
+
+  return null;
+}
+
 
 /*export default function RootLayout({
   children,

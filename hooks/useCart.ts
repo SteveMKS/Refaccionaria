@@ -2,6 +2,7 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
 type CartItem = {
   id: string;
@@ -15,6 +16,9 @@ type CartItem = {
 type CartStore = {
   cart: CartItem[];
   total: number;
+  user: User | null;
+  initUser: () => void;
+  setUser: (user: User | null) => void;
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
@@ -26,19 +30,24 @@ type CartStore = {
 export const useCart = create<CartStore>((set, get) => ({
   cart: [],
   total: 0,
+  user: null,
+
+  initUser: async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    set({ user });
+  },
+
+  setUser: (user) => set({ user }),
 
   clearCartState: () => set({ cart: [], total: 0 }),
 
   setCartFromDB: (items) => {
-    const total = items.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     set({ cart: items, total });
   },
 
   addToCart: async (product) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = get().user;
     if (!user) return;
 
     const { cart, total } = get();
@@ -75,7 +84,7 @@ export const useCart = create<CartStore>((set, get) => ({
   },
 
   removeFromCart: async (id) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = get().user;
     if (!user) return;
 
     const { cart } = get();
@@ -95,7 +104,7 @@ export const useCart = create<CartStore>((set, get) => ({
   },
 
   updateQuantity: async (id, quantity) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = get().user;
     if (!user) return;
 
     const { cart } = get();
@@ -117,7 +126,7 @@ export const useCart = create<CartStore>((set, get) => ({
   },
 
   clearCart: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = get().user;
     if (!user) return;
 
     await supabase
@@ -128,6 +137,7 @@ export const useCart = create<CartStore>((set, get) => ({
     set({ cart: [], total: 0 });
   },
 }));
+
 
 /*import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
