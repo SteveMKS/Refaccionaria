@@ -5,10 +5,8 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
-import { useEffect } from "react";
-import { useCart } from "@/hooks/useCart";
-import { supabase } from "@/lib/supabase";
 import { SyncCart } from "@/components/sync-cart";
+import { AuthProvider } from "@/components/Auth"; // ✅ Aquí añadimos el AuthProvider
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,15 +39,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1">
-              <SidebarTrigger />
-              <ModeToggle />
-              <SyncCart />
-              {children}
-            </main>
-          </SidebarProvider>
+          <AuthProvider> {/* ✅ Aquí envolvemos todo con AuthProvider */}
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1">
+                <SidebarTrigger />
+                <ModeToggle />
+                <SyncCart />
+                {children}
+              </main>
+            </SidebarProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

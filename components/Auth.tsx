@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { Session, User } from "@supabase/supabase-js";
-import { useCart } from "@/hooks/useCart";
+import {createContext,useContext,useEffect,useState,ReactNode,} from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
+import { useCart } from '@/hooks/useCart';
 
 interface Users {
   nombre: string;
@@ -17,18 +17,9 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-type CarritoDBItem = {
-  producto_id: string;
-  nombre: string;
-  precio: number;
-  cantidad: number;
-  imagen_principal: string;
-  descripcion: string;
-};
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
 
@@ -40,29 +31,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // 🔹 Consultamos la información adicional del usuario desde Supabase
     const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("nombre, apellido, avatar")
-      .eq("id", session.user.id)
+      .from('profiles')
+      .select('nombre, apellido, avatar')
+      .eq('id', session.user.id)
       .single();
 
     if (profileError) {
-      console.error("Error obteniendo perfil:", profileError);
+      console.error('Error obteniendo perfil:', profileError);
       setUser(session.user as User & Users);
     } else {
       setUser({ ...session.user, ...profile });
     }
 
-    // 🔸 Obtenemos el carrito del usuario
     const { data: carritoDB, error: carritoError } = await supabase
-      .from("carritos")
-      .select("producto_id, nombre, precio, cantidad, imagen_principal, descripcion")
-      .eq("user_id", session.user.id);
+      .from('carritos')
+      .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
+      .eq('user_id', session.user.id);
 
     if (!carritoError && carritoDB) {
       setCartFromDB(
-        (carritoDB as CarritoDBItem[]).map((item) => ({
+        carritoDB.map((item: any) => ({
           id: item.producto_id,
           name: item.nombre,
           price: item.precio,
@@ -83,13 +72,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      fetchUser(session);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event: string, session: Session | null) => {
+        setSession(session);
+        fetchUser(session);
+      }
+    );
 
     return () => {
-      listener.subscription.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
   }, []);
 
@@ -97,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
-    useCart.getState().clearCart(); // 🧹 Vacía el carrito en memoria al cerrar sesión
+    useCart.getState().clearCart();
   };
 
   return (
@@ -110,7 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
   }
   return context;
 }
