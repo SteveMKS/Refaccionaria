@@ -35,7 +35,7 @@ export const CartItem = ({ item }: CartItemProps) => {
         <h3 className="text-sm font-semibold">{item.name}</h3>
         <p className="text-xs text-muted-foreground">{item.descripcion}</p>
         <p className="text-sm font-medium">
-          ${item.price} MXN x {item.quantity}
+          ${item.price} MXN
         </p>
 
         {/* Controles de cantidad */}

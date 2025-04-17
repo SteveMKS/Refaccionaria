@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Session, User } from "@supabase/supabase-js";
+import { useCart } from "@/hooks/useCart";
 
 interface Users {
   nombre: string;
@@ -22,28 +23,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
 
+  const fetchUser = async (session: Session | null) => {
+    const { setCartFromDB } = useCart.getState();
+
+    if (!session?.user) {
+      setUser(null);
+      return;
+    }
+
+    // 🔹 Consultamos la información adicional del usuario desde Supabase
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("nombre, apellido, avatar")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profileError) {
+      console.error("Error obteniendo perfil:", profileError);
+      setUser(session.user as User & Users);
+    } else {
+      setUser({ ...session.user, ...profile });
+    }
+
+    // 🔸 Obtenemos el carrito del usuario
+    const { data: carritoDB, error: carritoError } = await supabase
+      .from("carritos")
+      .select("producto_id, nombre, precio, cantidad, imagen_principal, descripcion")
+      .eq("user_id", session.user.id);
+
+    if (!carritoError && carritoDB) {
+      setCartFromDB(
+        carritoDB.map((item) => ({
+          id: item.producto_id,
+          name: item.nombre,
+          price: item.precio,
+          quantity: item.cantidad,
+          imagen_principal: item.imagen_principal,
+          descripcion: item.descripcion,
+        }))
+      );
+    }
+  };
+
   useEffect(() => {
-    const fetchUser = async (session: Session | null) => {
-      if (!session?.user) {
-        setUser(null);
-        return;
-      }
-
-      // 🔹 Consultamos la información adicional del usuario desde Supabase
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("nombre, apellido, avatar")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error) {
-        console.error("Error obteniendo perfil:", error);
-        setUser(session.user as User & Users);
-      } else {
-        setUser({ ...session.user, ...data });
-      }
-    };
-
     const initAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
@@ -66,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
+    useCart.getState().clearCart(); // 🧹 Vacía el carrito en memoria al cerrar sesión
   };
 
   return (

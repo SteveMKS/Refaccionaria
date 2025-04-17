@@ -5,11 +5,10 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
-
 import { useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from "@/lib/supabase";
-import { SyncCart } from "@/components/sync-cart"; // o donde lo hayas guardado
+import { SyncCart } from "@/components/sync-cart";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
