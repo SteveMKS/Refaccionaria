@@ -46,7 +46,7 @@ export function LoginForm({
 
     if (data?.session) {
       // Almacena el token en el almacenamiento local
-      .setItem("supabase-token", data.session.access_token);
+      setItem("supabase-token", data.session.access_token);
 
       console.log("Usuario:", data.user);
       console.log("Sesión:", data.session);
