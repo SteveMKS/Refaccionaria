@@ -6,10 +6,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
-import { SupabaseProvider } from "@/components/supabase-provider"; // ✅ Nuevo wrapper
-import { HydrateUser } from "@/components/hydrate-user"; // ✅ Nuevo archivo también
-import { supabase } from '@/lib/supabase-browser'; // ✅ Correcto
-
+import { AuthProvider } from "@/components/Auth";
+import { supabase } from "@/lib/supabase-browser"; // ✅ IMPORTACIÓN CORRECTA
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,8 +29,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createClient();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -42,8 +38,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SupabaseProvider client={supabase}>
-            <HydrateUser />
+          <AuthProvider>
             <SidebarProvider>
               <AppSidebar />
               <main className="flex-1">
@@ -53,7 +48,7 @@ export default function RootLayout({
                 {children}
               </main>
             </SidebarProvider>
-          </SupabaseProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
