@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase-browser';
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 const useAuth = () => {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -10,7 +11,6 @@ const useAuth = () => {
     const getSessionData = async () => {
       setLoading(true);
 
-      // 🔹 Obtiene la sesión actual
       const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
 
@@ -25,9 +25,8 @@ const useAuth = () => {
 
     getSessionData();
 
-    // 🔹 Escuchar cambios en la autenticación
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         setSession(session);
         if (session?.user) {
           await fetchUserData(session.user.id);
@@ -42,18 +41,17 @@ const useAuth = () => {
     };
   }, []);
 
-  // 🔹 Función para obtener los datos del usuario desde la BD
   const fetchUserData = async (userId: string) => {
     const { data, error } = await supabase
-      .from("users") // Asegúrate de que esta es la tabla correcta
-      .select("nombre, apellido, correo") // Selecciona solo lo necesario
+      .from("users")
+      .select("nombre, apellido, correo")
       .eq("id", userId)
       .single();
 
     if (error) {
       console.error("Error obteniendo usuario:", error);
     } else {
-      setUser({ ...data, id: userId }); // 🔹 Fusionamos el ID con los datos obtenidos
+      setUser({ ...data, id: userId });
     }
   };
 
