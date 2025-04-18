@@ -1,6 +1,6 @@
 'use client';
 
-import {createContext,useContext,useEffect,useState,ReactNode,} from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase-browser';
 import { useCart } from '@/hooks/useCart';
@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Solo obtendrás el perfil si es necesario, evitando una consulta innecesaria
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('nombre, apellido, avatar')
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ ...session.user, ...profile });
     }
 
+    // Solo sincronizas el carrito si la sesión está activa
     const { data: carritoDB, error: carritoError } = await supabase
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
@@ -105,6 +107,7 @@ export function useAuth() {
   }
   return context;
 }
+
 
 /*"use client";
 

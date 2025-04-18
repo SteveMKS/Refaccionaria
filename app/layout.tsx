@@ -7,7 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
-import { supabase } from "@/lib/supabase-browser"; // ✅ IMPORTACIÓN CORRECTA
+import { supabase } from "@/lib/supabase-browser"; 
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,23 +38,24 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="flex-1">
-                <SidebarTrigger />
-                <ModeToggle />
-                <SyncCart />
-                {children}
-              </main>
-            </SidebarProvider>
-          </AuthProvider>
+          <SessionContextProvider supabaseClient={supabase}>  {/* Añadido el SessionContextProvider aquí */}
+            <AuthProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <main className="flex-1">
+                  <SidebarTrigger />
+                  <ModeToggle />
+                  <SyncCart />
+                  {children}
+                </main>
+              </SidebarProvider>
+            </AuthProvider>
+          </SessionContextProvider>  {/* Cerramos el SessionContextProvider */}
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
 
 
 /*export default function RootLayout({
