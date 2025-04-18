@@ -8,6 +8,7 @@ import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
 import { supabase } from "@/lib/supabase-browser"; 
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
