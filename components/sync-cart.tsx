@@ -1,12 +1,30 @@
-"use client";
+'use client';
 
 import { useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
 import { supabase } from '@/lib/supabase-browser';
-import type { CartItem } from "@/hooks/useCart"; // importante si no está ya
 
 export const SyncCart = () => {
   const setCartFromDB = useCart((state) => state.setCartFromDB);
+
+  // Definir los tipos directamente dentro de este archivo
+  type CartItem = {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    imagen_principal: string;
+    descripcion: string;
+  };
+
+  type CarritoDB = {
+    producto_id: string;
+    nombre: string;
+    precio: number;
+    cantidad: number;
+    imagen_principal: string;
+    descripcion: string;
+  };
 
   useEffect(() => {
     const cargarCarrito = async () => {
@@ -19,7 +37,7 @@ export const SyncCart = () => {
         .eq("user_id", user.id);
 
       if (data) {
-        const items: CartItem[] = data.map((item) => ({
+        const items: CartItem[] = (data as CarritoDB[]).map((item) => ({
           id: item.producto_id,
           name: item.nombre,
           price: item.precio,
