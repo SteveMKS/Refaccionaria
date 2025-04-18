@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { supabase } from '@/lib/supabase-browser';
 import type { User } from '@supabase/supabase-js';
 
-type CartItem = {
+export type CartItem = {
   id: string;
   name: string;
   price: number;
@@ -137,7 +137,6 @@ export const useCart = create<CartStore>((set, get) => ({
     set({ cart: [], total: 0 });
   },
 }));
-
 
 /*import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
