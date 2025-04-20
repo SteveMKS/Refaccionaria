@@ -11,11 +11,7 @@ type SupabaseContext = {
 
 const Context = createContext<SupabaseContext | undefined>(undefined)
 
-export default function SupabaseProvider({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [supabase] = useState(() => createBrowserClient())
 
   return (
