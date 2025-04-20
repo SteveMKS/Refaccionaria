@@ -2,9 +2,8 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase-browser';
+import { useSupabase } from '@/context/supabase'; // Cambiamos la importación
 import { useCart } from '@/hooks/useCart';
-
 
 interface Users {
   nombre: string;
@@ -21,6 +20,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const supabase = useSupabase(); // Obtenemos supabase del contexto
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
 
@@ -32,7 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Solo obtendrás el perfil si es necesario, evitando una consulta innecesaria
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('nombre, apellido, avatar')
@@ -46,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({ ...session.user, ...profile });
     }
 
-    // Solo sincronizas el carrito si la sesión está activa
     const { data: carritoDB, error: carritoError } = await supabase
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
@@ -68,14 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      await fetchUser(data.session);
+      const { data: { session } } = await supabase.auth.getSession(); // Nueva sintaxis
+      setSession(session);
+      await fetchUser(session);
     };
 
     initAuth();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {
         setSession(session);
         fetchUser(session);
@@ -83,9 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      listener?.subscription?.unsubscribe();
+      subscription?.unsubscribe();
     };
-  }, []);
+  }, [supabase]); // Añadimos supabase como dependencia
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -108,7 +106,6 @@ export function useAuth() {
   }
   return context;
 }
-
 
 /*"use client";
 

@@ -7,8 +7,8 @@ import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
-import { supabase } from "@/lib/supabase-browser"; 
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { createClient } from "@/lib/supabase/client"; // Cambiado a la nueva implementación
+import { SupabaseProvider } from "@/context/supabase"; // Nuevo provider para SSR
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +30,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Creamos el cliente Supabase para el cliente (browser)
+  const supabaseClient = createClient();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -39,7 +42,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SessionContextProvider supabaseClient={supabase}>  {/* Añadido el SessionContextProvider aquí */}
+          <SupabaseProvider> {/* Nuevo provider basado en SSR */}
             <AuthProvider>
               <SidebarProvider>
                 <AppSidebar />
@@ -51,13 +54,12 @@ export default function RootLayout({
                 </main>
               </SidebarProvider>
             </AuthProvider>
-          </SessionContextProvider>  {/* Cerramos el SessionContextProvider */}
+          </SupabaseProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
-
 
 /*export default function RootLayout({
   children,
