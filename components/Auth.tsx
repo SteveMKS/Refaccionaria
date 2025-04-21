@@ -26,6 +26,7 @@ interface AuthContextType {
   user: (User & Users) | null;
   session: Session | null;
   logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const fetchUser = async (session: Session | null) => {
     const { setCartFromDB } = useCart.getState();
@@ -79,21 +81,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       await fetchUser(data.session);
+      setLoading(false);
     };
-
+  
     initAuth();
-
+  
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {
         setSession(session);
         fetchUser(session);
       }
     );
-
+  
     return () => {
       listener?.subscription?.unsubscribe();
     };
   }, []);
+  
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -104,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <SessionContextProvider supabaseClient={supabase}>
-      <AuthContext.Provider value={{ user, session, logout }}>
+      <AuthContext.Provider value={{ user, session, logout, loading }}>
         {children}
       </AuthContext.Provider>
     </SessionContextProvider>
