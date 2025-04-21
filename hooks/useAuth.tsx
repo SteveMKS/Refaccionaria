@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase-browser';
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 const useAuth = () => {

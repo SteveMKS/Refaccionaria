@@ -7,8 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
-import { createClient } from "@/lib/supabase/client"; // Cambiado a la nueva implementación
-import { SupabaseProvider } from "@/src/context/supabase"; // Nuevo provider para SSR
+import { supabase } from "@/lib/supabase-browser"; // ✅ IMPORTACIÓN CORRECTA
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +29,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Creamos el cliente Supabase para el cliente (browser)
-  const supabaseClient = createClient();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
@@ -42,24 +38,24 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SupabaseProvider> {/* Nuevo provider basado en SSR */}
-            <AuthProvider>
-              <SidebarProvider>
-                <AppSidebar />
-                <main className="flex-1">
-                  <SidebarTrigger />
-                  <ModeToggle />
-                  <SyncCart />
-                  {children}
-                </main>
-              </SidebarProvider>
-            </AuthProvider>
-          </SupabaseProvider>
+          <AuthProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1">
+                <SidebarTrigger />
+                <ModeToggle />
+                <SyncCart />
+                {children}
+              </main>
+            </SidebarProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
   );
 }
+
+
 
 /*export default function RootLayout({
   children,

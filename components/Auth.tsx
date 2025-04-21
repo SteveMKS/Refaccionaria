@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {createContext,useContext,useEffect,useState,ReactNode,} from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { useSupabase } from '@/src/context/supabase'; // Cambiamos la importación
+import { supabase } from '@/lib/supabase-browser';
 import { useCart } from '@/hooks/useCart';
 
 interface Users {
@@ -20,7 +20,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = useSupabase(); // Obtenemos supabase del contexto
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<(User & Users) | null>(null);
 
@@ -66,14 +65,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession(); // Nueva sintaxis
-      setSession(session);
-      await fetchUser(session);
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      await fetchUser(data.session);
     };
 
     initAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {
         setSession(session);
         fetchUser(session);
@@ -81,9 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => {
-      subscription?.unsubscribe();
+      listener?.subscription?.unsubscribe();
     };
-  }, [supabase]); // Añadimos supabase como dependencia
+  }, []);
 
   const logout = async () => {
     await supabase.auth.signOut();

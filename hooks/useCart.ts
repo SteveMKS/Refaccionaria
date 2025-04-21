@@ -1,7 +1,7 @@
 'use client';
 
 import { create } from 'zustand';
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from '@/lib/supabase-browser';
 import type { User } from '@supabase/supabase-js';
 
 export type CartItem = {

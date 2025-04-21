@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase-browser';
 
 export async function registrarLogin(userId: string) {
   try {

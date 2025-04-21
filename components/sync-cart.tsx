@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useCart } from "@/hooks/useCart";
-import { createClient } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase-browser';
 
 export const SyncCart = () => {
   const setCartFromDB = useCart((state) => state.setCartFromDB);
