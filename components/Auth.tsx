@@ -29,13 +29,6 @@ interface AuthContextType {
   loading: boolean;
 }
 
-interface AuthContextType {
-  user: (User & Users) | null;
-  session: Session | null;
-  logout: () => Promise<void>;
-  loading: boolean;
-}
-
 type UserWithProfile = User & Users;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
