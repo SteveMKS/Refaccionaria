@@ -34,11 +34,7 @@ import {
 
 export function NavUser() {
   const router = useRouter();
-  const { user, loading } = useAuth(); // Ahora `user` tiene nombre y apellido
-
-  if (loading) {
-    return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
-  }
+  const { user } = useAuth(); // Eliminamos `loading` ya que no lo usaremos
 
   if (!user) {
     return (
@@ -57,7 +53,7 @@ export function NavUser() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
-    router.refresh(); // 🔹 Forzar actualización del estado del usuario
+    router.refresh();
   };
 
   return (
