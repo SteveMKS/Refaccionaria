@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuth } from '@/components/Auth';
 import { useRouter } from "next/navigation";
 import { supabase } from '@/lib/supabase-browser';
+import { getExtendedUser } from "@/lib/getExtendedUser";
 
 import {
   Avatar,
@@ -34,11 +35,26 @@ import {
 
 export function NavUser() {
   const router = useRouter();
-  const { user, loading } = useAuth();
-  console.log("🧠 Usuario cargado en NavUser:", user);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const fullUser = await getExtendedUser();
+      setUser(fullUser);
+      setLoading(false);
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   if (loading) {
-    return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
+    return <p>Cargando...</p>;
   }
 
   if (!user) {
@@ -54,12 +70,6 @@ export function NavUser() {
       </SidebarMenu>
     );
   }
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  };
 
   return (
     <SidebarMenu>
@@ -107,10 +117,10 @@ export function NavUser() {
                 </DropdownMenuItem>
               </Link>
               <Link href="/Compras" passHref>
-              <DropdownMenuItem>
-                <ShoppingCart />
-                Mis compras
-              </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <ShoppingCart />
+                  Mis compras
+                </DropdownMenuItem>
               </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
