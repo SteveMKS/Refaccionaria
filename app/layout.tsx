@@ -1,3 +1,4 @@
+// layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -7,57 +8,54 @@ import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
-import { supabase } from "@/lib/supabase-browser";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { HydrateUser } from "@/components/hydrate-user"; // ✅ Asegúrate de importar esto
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Frontera APP",
-  description: "Refacciones de Calidad",
+    title: "Frontera APP",
+    description: "Refacciones de Calidad",
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <SessionContextProvider supabaseClient={supabase}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <AuthProvider>
-              <SidebarProvider>
-                <AppSidebar />
-                <main className="flex-1">
-                  <SidebarTrigger />
-                  <ModeToggle />
-                  <SyncCart />
-                  {children}
-                </main>
-              </SidebarProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </SessionContextProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <AuthProvider>
+                        <HydrateUser /> {/* ✅ AQUI debes hidratar al usuario */}
+                        <SidebarProvider>
+                            <AppSidebar />
+                            <main className="flex-1">
+                                <SidebarTrigger />
+                                <ModeToggle />
+                                <SyncCart />
+                                {children}
+                            </main>
+                        </SidebarProvider>
+                    </AuthProvider>
+                </ThemeProvider>
+            </body>
+        </html>
+    );
 }
-
 
 /*export default function RootLayout({
   children,

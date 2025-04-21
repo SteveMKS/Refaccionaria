@@ -1,15 +1,25 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import {
+  SessionContextProvider,
+} from '@supabase/auth-helpers-react';
 import { supabase } from '@/lib/supabase-browser';
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { useCart } from '@/hooks/useCart';
 
 interface Users {
   nombre: string;
   apellido: string;
-  correo: string;
-  avatar: string;
+  correo: string;  
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -33,8 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('nombre, apellido, email, avatar')
+      .from('users')
+      .select('nombre, apellido, correo, avatar')
       .eq('id', session.user.id)
       .single();
 
@@ -93,20 +103,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <SessionContextProvider supabaseClient={supabase}>
+      <AuthContext.Provider value={{ user, session, logout }}>
+        {children}
+      </AuthContext.Provider>
+    </SessionContextProvider>
   );
 }
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider');
-  }
-  return context;
-};
-
 
 /*"use client";
 

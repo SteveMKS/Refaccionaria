@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "@/components/Auth";
+import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { supabase } from '@/lib/supabase-browser';
 
@@ -34,7 +34,11 @@ import {
 
 export function NavUser() {
   const router = useRouter();
-  const { user } = useAuth(); // Eliminamos `loading` ya que no lo usaremos
+  const { user, loading } = useAuth(); // Ahora `user` tiene nombre y apellido
+
+  if (loading) {
+    return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
+  }
 
   if (!user) {
     return (
@@ -53,7 +57,7 @@ export function NavUser() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
-    router.refresh();
+    router.refresh(); // 🔹 Forzar actualización del estado del usuario
   };
 
   return (
@@ -72,7 +76,7 @@ export function NavUser() {
                 <span className="truncate font-semibold">
                   {user.nombre} {user.apellido}
                 </span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate text-xs">{user.correo}</span>
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -89,7 +93,7 @@ export function NavUser() {
                   <span className="truncate font-semibold">
                     {user.nombre} {user.apellido}
                   </span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate text-xs">{user.correo}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
