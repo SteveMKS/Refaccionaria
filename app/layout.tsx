@@ -8,7 +8,7 @@ import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
 import { createClient } from "@/lib/supabase/client"; // Cambiado a la nueva implementación
-import { SupabaseProvider } from "@/context/supabase"; // Nuevo provider para SSR
+import { SupabaseProvider } from "@/src/context/supabase"; // Nuevo provider para SSR
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
