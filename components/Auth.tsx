@@ -23,17 +23,25 @@ interface Users {
 }
 
 interface AuthContextType {
+  user: UserWithProfile | null;
+  session: Session | null;
+  logout: () => Promise<void>;
+  loading: boolean;
+}
+
+interface AuthContextType {
   user: (User & Users) | null;
   session: Session | null;
   logout: () => Promise<void>;
   loading: boolean;
 }
 
+type UserWithProfile = User & Users;
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<(User & Users) | null>(null);
+  const [user, setUser] = useState<UserWithProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchUser = async (session: Session | null) => {
@@ -45,10 +53,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('nombre, apellido, correo, avatar')
-      .eq('id', session.user.id)
-      .single();
+    .from('users')
+    .select('nombre, apellido, correo, avatar')
+    .eq('id', session.user.id)
+    .single<Users>();
+  
 
     if (profileError) {
       console.error('Error obteniendo perfil:', profileError);
