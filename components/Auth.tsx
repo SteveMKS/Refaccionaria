@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
-import { useSupabase } from '@src/context/supabase'; // Cambiamos la importación
+import { useSupabase } from '@/src/context/supabase'; // Cambiamos la importación
 import { useCart } from '@/hooks/useCart';
 
 interface Users {

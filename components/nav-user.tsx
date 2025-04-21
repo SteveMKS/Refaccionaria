@@ -3,7 +3,8 @@
 import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { supabase } from '@/lib/supabase-browser';
+import { createClient } from '@/lib/supabase/client';
+
 
 import {
   Avatar,

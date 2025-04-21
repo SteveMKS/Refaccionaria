@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useCart } from '@/hooks/useCart';
-import { supabase } from '@/lib/supabase-browser';
+import { createClient } from '@/lib/supabase/client';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 
 export function HydrateUser() {
