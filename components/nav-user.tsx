@@ -40,7 +40,7 @@ export function NavUser() {
     return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
   }
 
-  if (!users) {
+  if (!user) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
