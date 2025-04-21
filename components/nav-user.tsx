@@ -34,13 +34,13 @@ import {
 
 export function NavUser() {
   const router = useRouter();
-  const { Users, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
   }
 
-  if (!Users) {
+  if (!users) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
