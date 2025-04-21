@@ -1,18 +1,8 @@
 'use client';
 
-import {
-  SessionContextProvider,
-} from '@supabase/auth-helpers-react';
-import { supabase } from '@/lib/supabase-browser';
-
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase-browser';
 import { useCart } from '@/hooks/useCart';
 
 interface Users {
@@ -102,13 +92,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <AuthContext.Provider value={{ user, session, logout }}>
-        {children}
-      </AuthContext.Provider>
-    </SessionContextProvider>
+    <AuthContext.Provider value={{ user, session, logout }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth debe usarse dentro de un AuthProvider');
+  }
+  return context;
+};
+
 
 /*"use client";
 
