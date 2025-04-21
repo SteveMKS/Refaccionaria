@@ -8,6 +8,7 @@ import { useCart } from '@/hooks/useCart';
 interface Users {
   nombre: string;
   apellido: string;
+  correo: string;
   avatar: string;
 }
 
@@ -33,7 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('nombre, apellido, avatar')
+      .select('nombre, apellido, email, avatar')
       .eq('id', session.user.id)
       .single();
 
