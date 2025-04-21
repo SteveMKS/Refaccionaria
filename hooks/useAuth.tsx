@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+/*import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase-browser';
 import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
@@ -58,4 +58,4 @@ const useAuth = () => {
   return { session, user, loading };
 };
 
-export default useAuth;
+export default useAuth;*/
