@@ -7,7 +7,8 @@ import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
-import { supabase } from "@/lib/supabase-browser"; // ✅ IMPORTACIÓN CORRECTA
+import { supabase } from "@/lib/supabase-browser";
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,29 +33,30 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="flex-1">
-                <SidebarTrigger />
-                <ModeToggle />
-                <SyncCart />
-                {children}
-              </main>
-            </SidebarProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <SessionContextProvider supabaseClient={supabase}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <main className="flex-1">
+                  <SidebarTrigger />
+                  <ModeToggle />
+                  <SyncCart />
+                  {children}
+                </main>
+              </SidebarProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </SessionContextProvider>
       </body>
     </html>
   );
 }
-
 
 
 /*export default function RootLayout({
