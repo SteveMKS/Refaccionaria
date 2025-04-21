@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     .from('users')
     .select('nombre, apellido, correo, avatar')
     .eq('id', session.user.id)
-    .single<Users>();
+    .single();
   
 
     if (profileError) {
@@ -62,7 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: carritoDB, error: carritoError } = await supabase
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
-      .eq('user_id', session.user.id);
+      .eq('user_id', session.user.id)
+      .eq('id', session.user.id);
+
 
     if (!carritoError && carritoDB) {
       setCartFromDB(

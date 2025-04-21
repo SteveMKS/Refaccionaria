@@ -35,6 +35,7 @@ import {
 export function NavUser() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  console.log("🧠 Usuario cargado en NavUser:", user);
 
   if (loading) {
     return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
