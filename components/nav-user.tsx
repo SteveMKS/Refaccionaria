@@ -34,13 +34,13 @@ import {
 
 export function NavUser() {
   const router = useRouter();
-  const { user, loading } = useAuth(); // Ahora `user` tiene nombre y apellido
+  const { Users, loading } = useAuth();
 
   if (loading) {
     return <p>Cargando...</p>; // 🔹 Evita mostrar datos incompletos
   }
 
-  if (!user) {
+  if (!Users) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>
@@ -57,7 +57,7 @@ export function NavUser() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
-    router.refresh(); // 🔹 Forzar actualización del estado del usuario
+    router.refresh();
   };
 
   return (
@@ -67,16 +67,16 @@ export function NavUser() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton size="lg">
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar || ""} alt={user.nombre || "Usuario"} />
+                <AvatarImage src={Users.avatar || ""} alt={Users.nombre || "Usuario"} />
                 <AvatarFallback className="rounded-lg">
-                  {user?.nombre?.[0] || "U"}{user?.apellido?.[0] || "S"}
+                  {Users?.nombre?.[0] || "U"}{Users?.apellido?.[0] || "S"}
                 </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">
-                  {user.nombre} {user.apellido}
+                  {Users.nombre} {Users.apellido}
                 </span>
-                <span className="truncate text-xs">{user.correo}</span>
+                <span className="truncate text-xs">{Users.correo}</span>
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
@@ -84,16 +84,16 @@ export function NavUser() {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar || ""} alt={user.nombre || "Usuario"} />
+                  <AvatarImage src={Users.avatar || ""} alt={Users.nombre || "Usuario"} />
                   <AvatarFallback className="rounded-lg">
-                    {user?.nombre?.[0] || "U"}{user?.apellido?.[0] || "S"}
+                    {Users?.nombre?.[0] || "U"}{Users?.apellido?.[0] || "S"}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    {user.nombre} {user.apellido}
+                    {Users.nombre} {Users.apellido}
                   </span>
-                  <span className="truncate text-xs">{user.correo}</span>
+                  <span className="truncate text-xs">{Users.correo}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
