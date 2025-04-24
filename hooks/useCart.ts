@@ -2,6 +2,8 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase-browser';
+import { numeroALetras } from '@/hooks/numeroALetras';
+import jsPDF from "jspdf";
 import type { User } from '@supabase/supabase-js';
 
 export type CartItem = {
@@ -25,6 +27,7 @@ type CartStore = {
   clearCart: () => void;
   clearCartState: () => void;
   setCartFromDB: (items: CartItem[]) => void;
+  checkoutEfectivo: () => Promise<void | { error: string }>;
 };
 
 export const useCart = create<CartStore>((set, get) => ({
@@ -136,6 +139,72 @@ export const useCart = create<CartStore>((set, get) => ({
 
     set({ cart: [], total: 0 });
   },
+  
+  checkoutEfectivo: async () => {
+    const { cart, total, user, clearCart } = get();
+    if (!user || cart.length === 0) return;
+  
+    const now = new Date();
+    const fecha = now.toISOString().split("T")[0]; // Formato: YYYY-MM-DD
+    const hora = now.toTimeString().split(" ")[0]; // Formato: HH:MM:SS
+    const status = "Pagado"; // O puedes manejar "Pendiente" si es el caso
+  
+    // Guarda la orden en la base de datos
+    const { data: order, error } = await supabase
+      .from("recibos")
+      .insert({
+        id_user: user.id,
+        status,
+        fecha,
+        hora,
+        total,
+        metodo_pago: "Efectivo",
+        productos: cart, // Asegúrate que el campo `productos` en tu tabla sea de tipo `json`
+      })
+      .select()
+      .single();
+  
+    if (error) {
+      console.error("Error al guardar la orden:", error);
+      return;
+    }
+  
+    // Generar recibo como string
+    const productosTxt = cart.map(item =>
+      `- ${item.name} x${item.quantity} @ $${item.price} = $${(item.price * item.quantity).toFixed(2)}`
+    ).join('\n');
+  
+    const totalLetra = numeroALetras(total);
+  
+    const recibo = `
+  RECIBO DE COMPRA
+  
+  Fecha: ${fecha}
+  Hora: ${hora}
+  Cliente: ${user.email}
+  
+  Productos:
+  ${productosTxt}
+  
+  TOTAL: $${total.toFixed(2)} (${totalLetra})
+  
+  Gracias por su compra.
+    `;
+  
+    // Crear PDF y descargarlo
+    const doc = new jsPDF();
+    const lineas = recibo.trim().split("\n");
+  
+    lineas.forEach((linea, i) => {
+      doc.text(linea.trim(), 10, 10 + i * 8); // Posición inicial + espaciado
+    });
+  
+    const fileName = `recibo_${fecha.replace(/-/g, "")}_${hora.replace(/:/g, "")}.pdf`;
+    doc.save(fileName);
+  
+    clearCart(); // Limpia el carrito
+  }
+  
 }));
 
 /*import { create } from 'zustand';

@@ -4,9 +4,20 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { CartItem } from "./CartItem";
+import { toast } from "sonner";
 
 export const Cart = () => {
-  const { cart, total, clearCart } = useCart();
+  const { cart, total, clearCart, checkoutEfectivo } = useCart();
+
+  const handleCheckout = async () => {
+    try {
+      await checkoutEfectivo();
+      toast.success("Compra realizada con éxito");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error al procesar la compra");
+    }
+  };
 
   return (
     <Sheet>
@@ -27,13 +38,19 @@ export const Cart = () => {
               {cart.map((item) => (
                 <CartItem key={item.id} item={item} />
               ))}
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 space-y-2">
                 <p className="font-bold">Total: ${total.toFixed(2)} MXN</p>
                 <Button
                   onClick={clearCart}
-                  className="mt-2 w-full bg-red-600 hover:bg-red-700"
+                  className="w-full bg-red-600 hover:bg-red-700"
                 >
                   Vaciar Carrito
+                </Button>
+                <Button
+                  onClick={handleCheckout}
+                  className="w-full bg-green-600 hover:bg-green-700"
+                >
+                  Pagar en efectivo
                 </Button>
               </div>
             </>
