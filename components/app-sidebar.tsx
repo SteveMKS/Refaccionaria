@@ -18,6 +18,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
+export const categories = data.categories
 const data = {
   teams: [
     {
