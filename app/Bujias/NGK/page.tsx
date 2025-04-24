@@ -25,6 +25,7 @@ type Producto = {
   existencias: number;
   activo?: boolean;
   destacado?: boolean;
+  id_subsubcategoria?: string;
 };
 
 
@@ -41,47 +42,47 @@ export default function ProductosPage() {
         setError(null);
 
         const { data, error: supabaseError } = await supabase
-        .from("productos")
-        .select(`
-          id_sku,
-          num_parte,
-          id_marca (
-            id_marca,
-            nombre,
-            descripcion
-          ),
-          nombre,
-          descripcion,
-          precio,
-          existencias,
-          imagen_principal,
-          fecha_creacion,
-          fecha_actualizacion,
-          activo,
-          destacado,
-          id_subsubcategoria (
-            id_subsubcategoria,
+          .from("productos")
+          .select(`
+            id_sku,
+            num_parte,
             nombre,
             descripcion,
-            id_subcategoria (
-              id_subcategoria,
+            precio,
+            existencias,
+            imagen_principal,
+            fecha_creacion,
+            fecha_actualizacion,
+            activo,
+            destacado,
+            id_marca (
+              id_marca,
+              nombre,
+              descripcion
+            ),
+            id_subsubcategoria (
+              id_subsubcategoria,
               nombre,
               descripcion,
-              id_categoria (
-                id_categoria,
+              id_subcategoria (
+                id_subcategoria,
                 nombre,
                 descripcion,
-                id_categoria_main (
-                  id_categoria_main,
+                id_categoria (
+                  id_categoria,
                   nombre,
-                  descripcion
+                  descripcion,
+                  id_categoria_main (
+                    id_categoria_main,
+                    nombre,
+                    descripcion
+                  )
                 )
               )
             )
-          )
-        `)
-        .order("nombre", { ascending: true });      
-      
+          `)
+          .order("nombre", { ascending: true });
+
         if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
           throw new Error("No se encontraron productos");
