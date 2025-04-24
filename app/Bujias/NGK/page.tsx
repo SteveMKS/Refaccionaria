@@ -40,7 +40,7 @@ export default function ProductosPage() {
         setLoading(true);
         setError(null);
 
-        const { data, error } = await supabase
+        const { data, error: supabaseError } = await supabase
         .from("productos")
         .select(`
           id_sku,
@@ -80,10 +80,8 @@ export default function ProductosPage() {
             )
           )
         `)
-        .order("nombre", { ascending: true });
+        .order("nombre", { ascending: true });      
       
-      
-
         if (supabaseError) throw supabaseError;
         if (!data || data.length === 0) {
           throw new Error("No se encontraron productos");
