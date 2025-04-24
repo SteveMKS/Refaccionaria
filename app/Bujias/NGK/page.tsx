@@ -40,37 +40,48 @@ export default function ProductosPage() {
         setLoading(true);
         setError(null);
 
-        const { data, error: supabaseError } = await supabase
+        const { data, error } = await supabase
         .from("productos")
         .select(`
-          *,
+          id_sku,
+          num_parte,
           id_marca (
             id_marca,
             nombre,
             descripcion
           ),
+          nombre,
+          descripcion,
+          precio,
+          existencias,
+          imagen_principal,
+          fecha_creacion,
+          fecha_actualizacion,
+          activo,
+          destacado,
           id_subsubcategoria (
             id_subsubcategoria,
             nombre,
-            descripcion
-          ),
-          id_subcategoria (
-            id_subcategoria,
-            nombre,
-            descripcion
-          ),
-          id_categorias (
-            id_categoria,
-            nombre,
-            descripcion
-          ),
-          id_categoria_main (
-            id_categoria_main,
-            nombre,
-            descripcion
+            descripcion,
+            id_subcategoria (
+              id_subcategoria,
+              nombre,
+              descripcion,
+              id_categoria (
+                id_categoria,
+                nombre,
+                descripcion,
+                id_categoria_main (
+                  id_categoria_main,
+                  nombre,
+                  descripcion
+                )
+              )
+            )
           )
         `)
         .order("nombre", { ascending: true });
+      
       
 
         if (supabaseError) throw supabaseError;
