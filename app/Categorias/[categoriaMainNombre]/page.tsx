@@ -1,16 +1,10 @@
-import { supabase } from '@/lib/supabase-browser';
 import { notFound } from 'next/navigation';
+import { supabase } from '@/lib/supabase-browser';
 
-interface PageProps {
-  params: {
-    categoriaMainNombre: string;
-  };
-}
-
-export default async function CategoriaMainPage({ params }: PageProps) {
+// ✅ Usa el tipo correcto de Next.js
+export default async function Page({ params }: { params: { categoriaMainNombre: string } }) {
   const { categoriaMainNombre } = params;
 
-  // Buscar la categoría principal
   const { data: categoriaMain, error: mainError } = await supabase
     .from('categoria_main')
     .select('id')
@@ -18,10 +12,9 @@ export default async function CategoriaMainPage({ params }: PageProps) {
     .single();
 
   if (mainError || !categoriaMain) {
-    notFound();
+    return notFound(); // ✅ Asegúrate de retornar esto
   }
 
-  // Buscar las categorías (subniveles) que pertenecen a esta main
   const { data: categorias, error: categoriasError } = await supabase
     .from('categorias')
     .select('id, nombre')
@@ -33,7 +26,9 @@ export default async function CategoriaMainPage({ params }: PageProps) {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Subcategorías de {categoriaMainNombre}</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        Subcategorías de {categoriaMainNombre}
+      </h1>
       <ul className="grid gap-4">
         {categorias.map((categoria) => (
           <li
