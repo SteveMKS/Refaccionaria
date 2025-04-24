@@ -43,7 +43,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const { data: categoriaMain, error: mainError } = await supabase
     .from('categoria_main')
-    .select('id')
+    .select('id_categoria_main')
     .ilike('nombre', categoriaMainNombre)
     .single();
 
@@ -55,7 +55,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const { data: categorias, error: categoriasError } = await supabase
     .from('categorias')
-    .select('id, nombre')
+    .select('id_categoria, nombre')
     .eq('id_categoria_main', categoriaMain.id);
 
   return {
