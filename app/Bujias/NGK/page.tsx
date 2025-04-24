@@ -12,7 +12,6 @@ import { useCart } from "@/hooks/useCart"; // Importa el hook del carrito
 type Marca = {
   id_marca: string;
   nombre: string;
-  slug: string;
   descripcion: string;
 };
 
@@ -20,7 +19,6 @@ type Producto = {
   id_sku: string;
   id_marca: Marca;
   nombre: string;
-  slug: string;
   imagen_principal: string;
   descripcion: string;
   precio: number;
@@ -43,23 +41,26 @@ export default function ProductosPage() {
         setError(null);
 
         const { data, error: supabaseError } = await supabase
-        .from("pruebaproducts")
+        .from("productos")
         .select(`
           *,
           id_marca (
             id_marca,
             nombre,
-            slug,
             descripcion
           ),
-          id_subcategoria (
-            id_subcategoria,
+          id_subsubcategoria (
+            id_subsubcategoria,
             nombre,
             descripcion,
-            id_categoria (
-              id_categoria,
+            id_subcategoria (
+              id_subcategoria,
               nombre,
               descripcion,
+              id_categoria (
+                id_categoria,
+                nombre,
+                descripcion
               id_categoria_main (
                 id_categoria_main,
                 nombre,
