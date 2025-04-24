@@ -70,6 +70,7 @@ export default function ProductosPage() {
               )
             )
           `)
+          .eq("id_marca", "e50868cc-ef7f-44f8-9e47-885aa04e8b16")
           .order("nombre", { ascending: true });
 
         if (supabaseError) throw supabaseError;
