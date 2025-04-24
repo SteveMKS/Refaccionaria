@@ -61,9 +61,12 @@ const data = {
       items: [
         { title: "AutoLite", url: "/Bujias/AutoLite" },
         { title: "Bosch", url: "/Bujias/Bosch" },
+        { title: "Bosch Platinum", url: "/Bujias/Bosch Platinum" },
         { title: "Champion", url: "/Bujias/Champion" },
         { title: "Denso", url: "/Bujias/Denso" },
+        { title: "Denso Iridium TT", url: "/Bujias/Denso Iridium TT" },
         { title: "NGK", url: "/Bujias/NGK" },
+        { title: "NGK Laser Iridium", url: "/Bujias/NGK Laser Iridium" },
       ],
     },
     {
