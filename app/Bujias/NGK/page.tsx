@@ -25,9 +25,8 @@ type Producto = {
   existencias: number;
   activo?: boolean;
   destacado?: boolean;
-  id_subsubcategoria?: string;
+  //id_subsubcategoria?: string;
 };
-
 
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -44,17 +43,7 @@ export default function ProductosPage() {
         const { data, error: supabaseError } = await supabase
           .from("productos")
           .select(`
-            id_sku,
-            num_parte,
-            nombre,
-            descripcion,
-            precio,
-            existencias,
-            imagen_principal,
-            fecha_creacion,
-            fecha_actualizacion,
-            activo,
-            destacado,
+            *,
             id_marca (
               id_marca,
               nombre,
