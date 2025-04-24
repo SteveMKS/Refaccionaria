@@ -56,7 +56,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   const { data: categorias, error: categoriasError } = await supabase
     .from('categorias')
     .select('id_categoria, nombre')
-    .eq('id_categoria_main', categoriaMain.id);
+    .eq('id_categoria_main', categoriaMain.id_categoria_main);
 
   return {
     props: {
