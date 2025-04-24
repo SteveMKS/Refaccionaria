@@ -18,7 +18,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-export const categories = data.categories
 const data = {
   teams: [
     {
@@ -86,17 +85,19 @@ const data = {
       title: "Categorias",
       url: "/Categorias",
       icon: BookOpen,
-      isActive: false, 
+      isActive: false,
       items: [
-        { title: "Refacciones", url: "/Categorias/Refacciones" }, 
-        { title: "Interiores", url: "/Categorias/Interiores" }, 
-        { title: "Exteriores", url: "/Categorias/Exteriores" }, 
+        { title: "Refacciones", url: "/Categorias/Refacciones" },
+        { title: "Interiores", url: "/Categorias/Interiores" },
+        { title: "Exteriores", url: "/Categorias/Exteriores" },
         { title: "Herramientas", url: "/Categorias/Herramientas" },
         { title: "Otros", url: "/Categorias/Otros" },
       ],
     },
   ],
 };
+
+export const categories = data.categories;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
