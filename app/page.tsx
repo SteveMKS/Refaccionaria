@@ -12,12 +12,12 @@ export default function Home() {
           Explora nuestra tienda y encuentra los mejores productos para tu vehículo.
         </p>
         {/* Botón de acción */}
-        <a
+        <Link
           href="/Categorias/Refacciones"
           className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 transition-colors text-white font-semibold py-3 px-6 rounded-lg text-lg shadow-lg"
         >
           Ver Refacciones
-        </a>
+        </Link>
       </main>
     </div>
   );
