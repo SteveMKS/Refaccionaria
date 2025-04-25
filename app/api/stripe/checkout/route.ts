@@ -14,7 +14,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2022-11-15", // ✅ versión estable
+  apiVersion: "2025-03-31.basil",
 });
 
 export async function POST(req: Request) {
