@@ -9,7 +9,6 @@ import { ModeToggle } from "@/components/mode-toogle";
 import { SyncCart } from "@/components/sync-cart";
 import { AuthProvider } from "@/components/Auth";
 import { HydrateUser } from "@/components/hydrate-user";
-import MenuCategorias from "@/components/ui/Button Refacciones";
 
 
 const geistSans = Geist({
