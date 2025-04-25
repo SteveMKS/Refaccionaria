@@ -14,7 +14,7 @@ if (!stripeSecretKey) {
 }
 
 const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2025-03-31.basil", // Usa una versión estable, "2025-03-31.basil" puede causar problemas si no existe oficialmente.
+  apiVersion: "2022-11-15", // ✅ versión estable
 });
 
 export async function POST(req: Request) {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const line_items = body.cartItems.map((item: CartItem) => {
-      if (!item.name || typeof item.price !== "number" || typeof item.quantity !== "number") {
+      if (!item.name || typeof item.price !== "number" || typeof item.quantity !== "number" || item.price <= 0) {
         throw new Error("Datos del producto inválidos");
       }
 
@@ -42,12 +42,14 @@ export async function POST(req: Request) {
       };
     });
 
+    const siteURL = process.env.NEXT_PUBLIC_SITE_URL ?? req.headers.get("origin");
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       line_items,
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/cancel`,
+      success_url: `${siteURL}/Payments/success`,
+      cancel_url: `${siteURL}/Payments/cancel`,
     });
 
     return NextResponse.json({ url: session.url });
