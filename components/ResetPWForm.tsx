@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +27,21 @@ export function ResetPasswordForm({
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const accessToken = searchParams.get("access_token"); // Token que Supabase envía en el link
+  const accessToken = searchParams.get("access_token");
+
+  // Redirección si no hay token ni sesión iniciada
+  useEffect(() => {
+    const validateAccess = async () => {
+      const token = searchParams.get("access_token");
+      const { data } = await supabase.auth.getUser();
+
+      if (!token && !data.user) {
+        router.replace("/login");
+      }
+    };
+
+    validateAccess();
+  }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +61,7 @@ export function ResetPasswordForm({
       return;
     }
 
-    const { data, error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabase.auth.updateUser({
       password,
     });
 
@@ -74,9 +88,7 @@ export function ResetPasswordForm({
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Restablecer Contraseña</CardTitle>
-          <CardDescription>
-            Ingresa tu nueva contraseña.
-          </CardDescription>
+          <CardDescription>Ingresa tu nueva contraseña.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleResetPassword}>
