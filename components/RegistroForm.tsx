@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/lib/supabase-browser';
 import router from "next/router";
+import { useEffect } from "react";
 
 export function RegistroForm({
   className,
@@ -27,6 +28,17 @@ export function RegistroForm({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session }, } = await supabase.auth.getSession();
+          if (session?.user) {
+            router.push("/Perfil");
+          }
+        }
+      checkSession();
+    }, []);
 
   // Función de registro con Supabase
   const handleRegister = async (e: React.FormEvent) => {
