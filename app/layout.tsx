@@ -1,14 +1,13 @@
-// layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeProvider } from "next-themes";
-import { ModeToggle } from "@/components/mode-toogle";
-import { SyncCart } from "@/components/sync-cart";
+import { ModeToggle } from "@/components/ModeToogle";
+import { SyncCart } from "@/components/CartSync";
 import { AuthProvider } from "@/components/Auth";
-import { HydrateUser } from "@/components/hydrate-user";
+import { HydrateUser } from "@/components/HydrateUser";
 
 
 const geistSans = Geist({
@@ -41,7 +40,7 @@ export default function RootLayout({
                     disableTransitionOnChange
                 >
                     <AuthProvider>
-                        <HydrateUser /> {/* ✅ AQUI debes hidratar al usuario */}
+                        <HydrateUser />
                         <SidebarProvider>
                             <AppSidebar />
                             <main className="flex-1">
@@ -57,40 +56,3 @@ export default function RootLayout({
         </html>
     );
 }
-
-/*export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-            >
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1">
-              <SidebarTrigger />
-              <ModeToggle />
-              {children}
-              </main>
-            </SidebarProvider>
-
-            <main className="flex-1">
-              <SidebarTrigger />
-               <ModeToggle />
-               <SyncCart /> 
-              {children}
-            </main>
-          </ThemeProvider>
-      </body>
-    </html>
-  );
-}*/

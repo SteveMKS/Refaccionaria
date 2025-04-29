@@ -1,4 +1,4 @@
-import { RecuperacionContraseña } from "@/components/Recuperacion-form"
+import { RecuperacionContraseña } from "@/components/RecuperacionForm"
 
 export default function Page() {
   return (

@@ -20,7 +20,6 @@ export const CartItem = ({ item }: CartItemProps) => {
 
   return (
     <div className="flex items-start gap-4 border-b pb-4">
-      {/* Imagen del producto */}
       <div className="w-20 h-20 relative">
         <Image
           src={item.imagen_principal}
@@ -30,7 +29,6 @@ export const CartItem = ({ item }: CartItemProps) => {
         />
       </div>
 
-      {/* Detalles del producto */}
       <div className="flex-1">
         <h3 className="text-sm font-semibold">{item.name}</h3>
         <p className="text-xs text-muted-foreground">{item.descripcion}</p>
@@ -38,7 +36,6 @@ export const CartItem = ({ item }: CartItemProps) => {
           ${item.price} MXN
         </p>
 
-        {/* Controles de cantidad */}
         <div className="flex gap-2 mt-2 items-center">
           <Button
             size="sm"

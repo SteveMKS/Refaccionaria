@@ -1,9 +1,9 @@
 'use client';
 
-import {
-  SessionContextProvider,
-} from '@supabase/auth-helpers-react';
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/lib/supabase-browser';
+import { Session, User } from '@supabase/supabase-js';
+import { useCart } from '@/hooks/useCart';
 
 import {
   createContext,
@@ -12,8 +12,6 @@ import {
   useState,
   ReactNode,
 } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { useCart } from '@/hooks/useCart';
 
 interface Users {
   nombre: string;
@@ -34,8 +32,8 @@ interface CarritoItemFromDB {
 interface AuthContextType {
   user: UserWithProfile | null;
   session: Session | null;
-  logout: () => Promise<void>;
   loading: boolean;
+  logout: () => Promise<void>;
 }
 
 type UserWithProfile = User & Users;
