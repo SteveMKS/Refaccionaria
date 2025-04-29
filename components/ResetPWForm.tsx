@@ -29,17 +29,14 @@ export function ResetPasswordForm({
   const searchParams = useSearchParams();
   const accessToken = searchParams.get("access_token");
 
-  // Redirección si no hay token ni sesión iniciada
+  // En useEffect (como ya lo haces), verificas si hay usuario:
   useEffect(() => {
     const validateAccess = async () => {
-      const token = searchParams.get("access_token");
       const { data } = await supabase.auth.getUser();
-
-      if (!token && !data.user) {
+      if (!data.user) {
         router.replace("/login");
       }
     };
-
     validateAccess();
   }, []);
 
@@ -48,12 +45,6 @@ export function ResetPasswordForm({
     setError(null);
     setSuccess(null);
     setLoading(true);
-
-    if (!accessToken) {
-      setError("Token inválido o expirado.");
-      setLoading(false);
-      return;
-    }
 
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden.");
@@ -98,7 +89,7 @@ export function ResetPasswordForm({
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Clic Aquí"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -110,7 +101,7 @@ export function ResetPasswordForm({
                 <Input
                   id="confirm-password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Clic Aquí"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
