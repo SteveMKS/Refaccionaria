@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";  // Asegúrate de que uses 'useRouter'
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase-browser';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ interface LoginHistory {
 }
 
 const PerfilUsuario = () => {
-  const router = useRouter(); // Usa useRouter para las redirecciones
+  const router = useRouter();
   const pathname = usePathname();  
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -30,8 +30,8 @@ const PerfilUsuario = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login"); // Usa router.push para redirigir
-    router.refresh(); // Forzar actualización del estado
+    router.push("/login");
+    router.refresh();
   };
 
   useEffect(() => {
@@ -39,7 +39,7 @@ const PerfilUsuario = () => {
       const { data: { session }, error } = await supabase.auth.getSession();
   
       if (!session || error) {
-        router.push("/login"); // Si no hay sesión, redirige al login
+        router.push("/login");
         return;
       }
   
@@ -66,7 +66,7 @@ const PerfilUsuario = () => {
       const { data: history, error: historyError } = await supabase
       .from("login")
       .select("id, fecha_hora, ip")
-      .eq("user_id", profile.id)  // Cambia `id_usuario` por el nombre correcto
+      .eq("user_id", profile.id)
       .order("fecha_hora", { ascending: false })
       .limit(5);    
 
@@ -79,7 +79,7 @@ const PerfilUsuario = () => {
     };
 
     checkSession();
-  }, [pathname, router]); // Asegúrate de agregar 'router' a las dependencias
+  }, [pathname, router]);
 
   if (loading) {
     return (
@@ -121,7 +121,7 @@ const PerfilUsuario = () => {
             <ul className="list-disc pl-5 text-sm text-gray-700">
               {loginHistory.map((log) => (
                 <li key={log.id}>
-                  {new Date(log.fecha_hora).toLocaleString()} - IP: {log.ip}
+                  {new Date(log.fecha_hora).toLocaleString()}
                 </li>
               ))}
             </ul>
