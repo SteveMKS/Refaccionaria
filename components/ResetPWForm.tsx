@@ -34,7 +34,7 @@ export function ResetPasswordForm({
     const validateAccess = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
-        router.replace("/Perfil");
+        router.replace("/login");
       }
     };
     validateAccess();
@@ -61,8 +61,8 @@ export function ResetPasswordForm({
     } else {
       setSuccess("Contraseña actualizada correctamente.");
       setTimeout(() => {
-        router.push("/login");
-      }, 2500);
+        router.push("/Perfil");
+      }, 1500);
     }
 
     setLoading(false);
