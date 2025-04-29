@@ -1,3 +1,5 @@
+"use client";
+
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase-browser";
 import { toast } from "sonner";
