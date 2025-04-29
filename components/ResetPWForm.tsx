@@ -34,7 +34,7 @@ export function ResetPasswordForm({
     const validateAccess = async () => {
       const { data } = await supabase.auth.getUser();
       if (!data.user) {
-        router.replace("/login");
+        router.replace("/Perfil");
       }
     };
     validateAccess();
