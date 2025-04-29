@@ -2,7 +2,7 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase-browser';
-import { numeroALetras } from '@/hooks/numeroALetras';
+import { numeroALetras } from '@/hooks/NumerosaLetras';
 import jsPDF from "jspdf";
 import type { User } from '@supabase/supabase-js';
 
