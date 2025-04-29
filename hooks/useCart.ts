@@ -1,6 +1,5 @@
-// hooks/useCart.ts
 import { create } from "zustand";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase-browser";
 import { toast } from "sonner";
 
 interface CartItem {
