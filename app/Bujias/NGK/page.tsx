@@ -8,6 +8,7 @@ import { ShoppingCart } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
 import { useCart } from "@/hooks/useCart";
 import { Loader2 } from "lucide-react";
+import { LiveSearchBar } from "@/components/SearchBar"; // Importa el componente
 
 // Definición del tipo Producto
 type Marca = {
@@ -26,7 +27,6 @@ type Producto = {
   existencias: number;
   activo?: boolean;
   destacado?: boolean;
-  //id_subsubcategoria?: string;
 };
 
 export default function ProductosPage() {
@@ -43,8 +43,7 @@ export default function ProductosPage() {
 
         const { data, error: supabaseError } = await supabase
           .from("productos")
-          .select(`
-            *,
+          .select(`*,
             id_marca (
               id_marca,
               nombre,
@@ -92,6 +91,11 @@ export default function ProductosPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Barra de búsqueda centrada */}
+      <div className="flex justify-center mb-6">
+        <LiveSearchBar />
+      </div>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Catálogo de Productos</h1>
         <Cart />
@@ -162,11 +166,7 @@ export default function ProductosPage() {
                   </span>
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-2 py-0.5 text-xs rounded-full ${
-                        producto.existencias > 0
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
+                      className={`px-2 py-0.5 text-xs rounded-full ${producto.existencias > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
                     >
                       {producto.existencias > 0 ? "Disponible" : "Agotado"}
                     </span>

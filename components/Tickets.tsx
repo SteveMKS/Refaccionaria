@@ -29,8 +29,12 @@ export const TicketModal = ({ open, onClose, productos, total, fecha, hora, clie
       const uri = doc.output("datauristring");
       setPdfDoc(doc);
       setPdfUri(uri);
+    } else {
+      setPdfDoc(null);
+      setPdfUri("");
     }
   }, [open]);
+  
 
   const generarTicket = () => {
     const baseHeight = 80; // Altura base para header, fecha, cliente, totales
@@ -132,23 +136,25 @@ export const TicketModal = ({ open, onClose, productos, total, fecha, hora, clie
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Vista previa del Ticket</DialogTitle>
-        </DialogHeader>
-        {pdfUri && (
-          <iframe src={pdfUri} className="w-full h-96 border rounded" />
-        )}
-        <div className="flex justify-between gap-2 pt-4">
-          <Button variant="outline" onClick={descargarPDF} className="w-full">
-            Descargar
-          </Button>
-          <Button onClick={imprimirPDF} className="w-full">
-            Imprimir
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    open && (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Vista previa del Ticket</DialogTitle>
+          </DialogHeader>
+          {pdfUri && (
+            <iframe src={pdfUri} className="w-full h-96 border rounded" />
+          )}
+          <div className="flex justify-between gap-2 pt-4">
+            <Button variant="outline" onClick={descargarPDF} className="w-full">
+              Descargar
+            </Button>
+            <Button onClick={imprimirPDF} className="w-full">
+              Imprimir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    ) 
   );
 };

@@ -79,7 +79,9 @@ export const useCart = create<CartStore>((set, get) => ({
         producto_id: product.id,
         nombre: product.name,
         precio: product.price,
-        cantidad: 1,
+        imagen_principal: product.imagen_principal,
+        descripcion: product.descripcion,
+        cantidad: 1
       });
     }
 

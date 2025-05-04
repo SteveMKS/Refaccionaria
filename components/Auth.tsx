@@ -46,6 +46,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = async (session: Session | null) => {
     const { setCartFromDB } = useCart.getState();
+  
+    if (!session?.user) {
+      setUser(null);
+      return;
+    }
+  
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('nombre, apellido, correo, avatar')
+      .eq('id', session.user.id)
+      .single();
+  
+    if (profileError) {
+      console.error('Error obteniendo perfil:', profileError);
+      setUser(session.user as UserWithProfile);
+    } else {
+      setUser({ ...session.user, ...profile });
+    }
+  
+    // Cargar productos del carrito
+    const { data: carritoDB, error: carritoError } = await supabase
+      .from('carritos')
+      .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
+      .eq('user_id', session.user.id);
+  
+    if (carritoError) {
+      console.error('Error cargando carrito:', carritoError);
+    } else if (carritoDB) {
+      setCartFromDB(
+        carritoDB.map((item: CarritoItemFromDB) => ({
+          id: item.producto_id,
+          name: item.nombre,
+          price: item.precio,
+          quantity: item.cantidad,
+          imagen_principal: item.imagen_principal,
+          descripcion: item.descripcion,
+        }))
+      );
+    }
+  };
+  
+  /*const fetchUser = async (session: Session | null) => {
+    const { setCartFromDB } = useCart.getState();
 
     if (!session?.user) {
       setUser(null);
@@ -70,7 +113,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
       .eq('user_id', session.user.id)
-      .eq('id', session.user.id);
 
 
     if (!carritoError && carritoDB) {
@@ -85,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }))
       );
     }
-  }
+  }*/
 
   useEffect(() => {
     const initAuth = async () => {
