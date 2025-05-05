@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/lib/supabase-browser';
-import router from "next/router";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function RegistroForm({
   className,
@@ -29,18 +28,22 @@ export function RegistroForm({
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     const checkSession = async () => {
       const {
-        data: { session }, } = await supabase.auth.getSession();
-          if (session?.user) {
-            router.push("/Perfil");
-          }
-        }
-      checkSession();
-    }, []);
+        data: { session },
+      } = await supabase.auth.getSession();
 
-  // Función de registro con Supabase
+      // Verifica que estamos en el cliente antes de usar router.push
+      if (typeof window !== "undefined" && session?.user) {
+        router.push("/Perfil");
+      }
+    };
+    checkSession();
+  }, []);
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -55,49 +58,52 @@ export function RegistroForm({
 
     const lowerCaseEmail = email.toLowerCase();
 
-    const { data, error } = await supabase.auth.signUp({
-      email: lowerCaseEmail,
-      password,
-    });
-    
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-      return;
-    }
-    
-    const user = data.user;
-    
-    if (user) {
-      const { error: userError } = await supabase
-        .from("users")
-        .insert([
-          {
-            id: user.id,
-            nombre,
-            apellido,
-            correo: lowerCaseEmail,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-    
-      if (userError) {
-        setError("Error al guardar datos adicionales: " + userError.message);
-        setLoading(false);
+    try {
+      const { data, error: authError } = await supabase.auth.signUp({
+        email: lowerCaseEmail,
+        password,
+        options: {
+          data: { nombre, apellido },
+          emailRedirectTo: `${window.location.origin}/login`
+        }
+      });
+
+      if (authError) throw authError;
+
+      if (data.user && !data.session) {
+        setSuccess("Registro exitoso. Por favor verifica tu correo electrónico.");
+        router.push("/login");
         return;
       }
-    
-      if (data.session) {
-        console.log("Sesión iniciada:", data.session);
+
+      if (data.user && data.session) {
+        const { error: upsertError } = await supabase
+          .from("users")
+          .upsert({
+            id: data.user.id,
+            nombre,
+            apellido,
+            correo: lowerCaseEmail
+          }, { onConflict: 'id' });
+
+        if (upsertError) throw upsertError;
+
         setSuccess("Registro exitoso. Redirigiendo...");
-        router.push("/login");
-      } else {
-        setSuccess("Registro exitoso. Revisa tu correo para verificar tu cuenta.");
+        router.push("/dashboard");
       }
+
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else if (typeof error === 'string') {
+        setError(error);
+      } else {
+        setError("Ocurrió un error desconocido durante el registro.");
+        console.error("Error desconocido:", error);
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
-    
   };
 
   return (
@@ -147,7 +153,7 @@ export function RegistroForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Refas@example.com"
+                  placeholder="refas@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -159,7 +165,7 @@ export function RegistroForm({
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Clic Aquí"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -171,7 +177,7 @@ export function RegistroForm({
                 <Input
                   id="confirm-password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Clic Aquí"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
