@@ -27,9 +27,8 @@ export function ResetPasswordForm({
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const accessToken = searchParams.get("access_token");
+  //const accessToken = searchParams.get("access_token");
 
-  // En useEffect (como ya lo haces), verificas si hay usuario:
   useEffect(() => {
     const validateAccess = async () => {
       const { data } = await supabase.auth.getUser();

@@ -4,7 +4,6 @@ import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import { supabase } from '@/lib/supabase-browser';
 import { Session, User } from '@supabase/supabase-js';
 import { useCart } from '@/hooks/useCart';
-
 import {
   createContext,
   useContext,
@@ -18,6 +17,7 @@ interface Users {
   apellido: string;
   correo: string;  
   avatar?: string;
+  rol?: 'user' | 'empleado' | 'admin'; // Nuevo campo rol
 }
 
 interface CarritoItemFromDB {
@@ -34,6 +34,9 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   logout: () => Promise<void>;
+  isAdmin: boolean; // Nuevas propiedades
+  isEmployee: boolean;
+  userRole: string | null;
 }
 
 type UserWithProfile = User & Users;
@@ -43,29 +46,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<UserWithProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const fetchUser = async (session: Session | null) => {
     const { setCartFromDB } = useCart.getState();
   
     if (!session?.user) {
       setUser(null);
+      setUserRole(null);
       return;
     }
   
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('nombre, apellido, correo, avatar')
+      .select('nombre, apellido, correo, avatar, rol') // Incluir rol en la consulta
       .eq('id', session.user.id)
       .single();
   
     if (profileError) {
       console.error('Error obteniendo perfil:', profileError);
       setUser(session.user as UserWithProfile);
+      setUserRole('user'); // Valor por defecto
     } else {
-      setUser({ ...session.user, ...profile });
+      const userWithProfile = { 
+        ...session.user, 
+        ...profile,
+        rol: profile.rol || 'user' // Valor por defecto si no tiene rol
+      };
+      setUser(userWithProfile);
+      setUserRole(userWithProfile.rol);
     }
   
-    // Cargar productos del carrito
+    // Cargar productos del carrito (mantenemos esta lógica)
     const { data: carritoDB, error: carritoError } = await supabase
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
@@ -86,48 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
     }
   };
-  
-  /*const fetchUser = async (session: Session | null) => {
-    const { setCartFromDB } = useCart.getState();
-
-    if (!session?.user) {
-      setUser(null);
-      return;
-    }
-
-    const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('nombre, apellido, correo, avatar')
-    .eq('id', session.user.id)
-    .single();
-  
-
-    if (profileError) {
-      console.error('Error obteniendo perfil:', profileError);
-      setUser(session.user as User & Users);
-    } else {
-      setUser({ ...session.user, ...profile });
-    }
-
-    const { data: carritoDB, error: carritoError } = await supabase
-      .from('carritos')
-      .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
-      .eq('user_id', session.user.id)
-
-
-    if (!carritoError && carritoDB) {
-      setCartFromDB(
-        carritoDB.map((item: CarritoItemFromDB) => ({
-          id: item.producto_id,
-          name: item.nombre,
-          price: item.precio,
-          quantity: item.cantidad,
-          imagen_principal: item.imagen_principal,
-          descripcion: item.descripcion,
-        }))
-      );
-    }
-  }*/
 
   useEffect(() => {
     const initAuth = async () => {
@@ -150,18 +120,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       listener?.subscription?.unsubscribe();
     };
   }, []);
-  
 
   const logout = async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
+    setUserRole(null);
     useCart.getState().clearCart();
+  };
+
+  const value = {
+    user,
+    session,
+    loading,
+    logout,
+    isAdmin: userRole === 'admin',
+    isEmployee: userRole === 'empleado' || userRole === 'admin',
+    userRole
   };
 
   return (
     <SessionContextProvider supabaseClient={supabase}>
-      <AuthContext.Provider value={{ user, session, logout, loading }}>
+      <AuthContext.Provider value={value}>
         {children}
       </AuthContext.Provider>
     </SessionContextProvider>

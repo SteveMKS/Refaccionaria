@@ -31,17 +31,11 @@ export function RegistroForm({
   const router = useRouter();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      // Verifica que estamos en el cliente antes de usar router.push
-      if (typeof window !== "undefined" && session?.user) {
-        router.push("/Perfil");
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        router.replace('/Perfil'); // Usa `replace` para no acumular historial
       }
-    };
-    checkSession();
+    });
   }, []);
 
   const handleRegister = async (e: React.FormEvent) => {

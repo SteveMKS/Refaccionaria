@@ -169,7 +169,5 @@ export const useCart = create<CartStore>((set, get) => ({
       console.error("Error al guardar la orden:", error);
       return;
     }
-  },
-  
-  
+  }, 
 }));

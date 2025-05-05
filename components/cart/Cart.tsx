@@ -11,7 +11,7 @@ import { useAuth } from "@/components/Auth";
 import { ConfirmPurchaseDialog } from "@/components/ui/AlertConfirmBuy"
 
 export const Cart = () => {
-  const { user } = useAuth();
+  const { user, isEmployee, loading: authLoading } = useAuth();
   const { cart, total, clearCart, checkoutEfectivo } = useCart();
   const [ticketOpen, setTicketOpen] = useState(false);
   const [ticketInfo, setTicketInfo] = useState<{ fecha: string; hora: string; cliente: string } | null>(null);
@@ -113,7 +113,10 @@ export const Cart = () => {
                   >
                     Pagar con tarjeta
                   </Button>
-                  <ConfirmPurchaseDialog onConfirm={handleCheckout} />
+                  
+                  {isEmployee && (
+                    <ConfirmPurchaseDialog onConfirm={handleCheckout} />
+                  )} 
 
                   <Button
                     onClick={clearCart}
