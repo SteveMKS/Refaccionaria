@@ -64,7 +64,7 @@ export function RegistroForm({
         password,
         options: {
           data: { nombre, apellido },
-          emailRedirectTo: `${window.location.origin}/login`
+          emailRedirectTo: `${window.location.origin}/Perfil`
         }
       });
 
@@ -72,7 +72,9 @@ export function RegistroForm({
 
       if (data.user && !data.session) {
         setSuccess("Registro exitoso. Por favor verifica tu correo electrónico.");
-        router.push("/login");
+        setTimeout(() => {
+          router.push("/login");
+        }, 5000); // Espera 5 segundos antes de redirigir
         return;
       }
 
@@ -85,11 +87,13 @@ export function RegistroForm({
             apellido,
             correo: lowerCaseEmail
           }, { onConflict: 'id' });
-
+      
         if (upsertError) throw upsertError;
-
-        setSuccess("Registro exitoso. Redirigiendo...");
-        router.push("/dashboard");
+      
+        setSuccess("Registro exitoso. Redirigiendo en unos segundos...");
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 5000); // Espera 5 segundos antes de redirigir
       }
 
     } catch (error) {
