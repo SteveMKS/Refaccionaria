@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase-browser';
 import { numeroALetras } from '@/hooks/NumerosaLetras';
-import jsPDF from "jspdf";
+import { v4 as uuidv4 } from 'uuid';
 import type { User } from '@supabase/supabase-js';
 
 export type CartItem = {
@@ -15,10 +15,23 @@ export type CartItem = {
   descripcion: string;
 };
 
+type CheckoutResult = {
+  fecha: string;
+  hora: string;
+  cliente: string;
+  ticketId: string;
+  productos: CartItem[];
+  total: number;
+  metodoPago: string;
+} | { 
+  error: string 
+};
+
 type CartStore = {
   cart: CartItem[];
   total: number;
   user: User | null;
+  isCheckoutInProgress: boolean;
   initUser: () => void;
   setUser: (user: User | null) => void;
   addToCart: (product: Omit<CartItem, 'quantity'>) => void;
@@ -27,13 +40,14 @@ type CartStore = {
   clearCart: () => void;
   clearCartState: () => void;
   setCartFromDB: (items: CartItem[]) => void;
-  checkoutEfectivo: () => Promise<void | { error: string }>;
+  checkoutEfectivo: () => Promise<CheckoutResult>;
 };
 
 export const useCart = create<CartStore>((set, get) => ({
   cart: [],
   total: 0,
   user: null,
+  isCheckoutInProgress: false,
 
   initUser: async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -141,33 +155,63 @@ export const useCart = create<CartStore>((set, get) => ({
 
     set({ cart: [], total: 0 });
   },
-  
+
   checkoutEfectivo: async () => {
-    const { cart, total, user, clearCart } = get();
-    if (!user || cart.length === 0) return;
+    const { cart, total, user, isCheckoutInProgress } = get();
+    
+    if (isCheckoutInProgress) {
+      return { error: "Procesando compra, por favor espera" };
+    }
+    
+    if (!user || cart.length === 0) {
+      return { error: "Carrito vacío o usuario no autenticado" };
+    }
+    
+    set({ isCheckoutInProgress: true });
+    
+    try {
+      // Generación única del UUID
+      const ticketId = uuidv4();
+      const now = new Date();
+      const fecha = now.toISOString().split("T")[0];
+      const hora = now.toTimeString().split(" ")[0];
+      const metodoPago = "Efectivo";
   
-    const now = new Date();
-    const fecha = now.toISOString().split("T")[0]; // YYYY-MM-DD
-    const hora = now.toTimeString().split(" ")[0]; // HH:MM:SS
-    const status = "Pagado";
+      // Guardar en Supabase con el ticketId generado
+      const { error } = await supabase
+        .from("recibos")
+        .insert({
+          id_user: user.id,
+          status: "Pagado",
+          fecha,
+          hora,
+          total,
+          metodo_pago: metodoPago,
+          productos: cart,
+          ticket_id: ticketId, // Usamos el mismo UUID generado
+        });
   
-    const { data: order, error } = await supabase
-      .from("recibos")
-      .insert({
-        id_user: user.id,
-        status,
+      if (error) {
+        console.error("Error al guardar la orden:", error);
+        return { error: "Error al guardar el recibo" };
+      }
+  
+      await get().clearCart();
+  
+      return {
         fecha,
         hora,
+        cliente: user.email || user.user_metadata?.name || "Cliente",
+        ticketId, // Devolvemos el mismo UUID
+        productos: [...cart],
         total,
-        metodo_pago: "Efectivo",
-        productos: cart,
-      })
-      .select()
-      .single();
-  
-    if (error) {
-      console.error("Error al guardar la orden:", error);
-      return;
+        metodoPago
+      };
+    } catch (error) {
+      console.error("Error en checkoutEfectivo:", error);
+      return { error: "Error inesperado al procesar el pago" };
+    } finally {
+      set({ isCheckoutInProgress: false });
     }
-  }, 
+  },
 }));

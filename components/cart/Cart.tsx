@@ -8,42 +8,51 @@ import { TicketModal } from "@/components/Tickets";
 import { toast } from "sonner";
 import { useState } from "react";
 import { useAuth } from "@/components/Auth";
-import { ConfirmPurchaseDialog } from "@/components/ui/AlertConfirmBuy"
+import { ConfirmPurchaseDialog } from "@/components/ui/AlertConfirmBuy";
+
+type CheckoutResult = {
+  fecha: string;
+  hora: string;
+  cliente: string;
+  ticketId: string;
+  productos: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    imagen_principal?: string;
+    descripcion?: string;
+  }[];
+  total: number;
+  metodoPago: string;
+} | { 
+  error: string 
+};
 
 export const Cart = () => {
-  const { user, isEmployee, loading: authLoading } = useAuth();
+  const { user, isEmployee } = useAuth();
   const { cart, total, clearCart, checkoutEfectivo } = useCart();
-  const [ticketOpen, setTicketOpen] = useState(false);
-  const [ticketInfo, setTicketInfo] = useState<{ fecha: string; hora: string; cliente: string } | null>(null);
+  const [showTicket, setShowTicket] = useState(false);
+  const [ticketData, setTicketData] = useState<CheckoutResult | null>(null);
 
   const handleCheckout = async () => {
-    try {
-      await checkoutEfectivo();
-  
-      const now = new Date();
-      const fecha = now.toISOString().split("T")[0];
-      const hora = now.toTimeString().split(" ")[0];
-  
-      if (!user) {
-        toast.error("No se encontró información del usuario.");
-        return;
-      }
-  
-      setTicketInfo({
-        fecha,
-        hora,
-        cliente: user.correo,
-      });
-  
-      setTicketOpen(true);
-  
+    if (!user) {
+      toast.error("Debes iniciar sesión para realizar una compra");
+      return;
+    }
+
+    const result = await checkoutEfectivo();
+    
+    if ("error" in result) {
+      toast.error(result.error);
+    } else {
+      // Verificación del ticketId antes de mostrarlo
+      console.log("Ticket ID generado:", result.ticketId);
+      setTicketData(result);
+      setShowTicket(true);
       toast.success("Compra realizada con éxito");
-    } catch (error) {
-      console.error("Error al procesar compra en efectivo:", error);
-      toast.error("Error al procesar la compra en efectivo");
     }
   };
-  
 
   const handleStripeCheckout = async () => {
     try {
@@ -64,25 +73,16 @@ export const Cart = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Stripe API error:", data);
         toast.error(data.error || "Error en la creación de la sesión de pago");
         return;
       }
 
       if (data.url) {
         window.location.href = data.url;
-      } else {
-        toast.error("No se recibió la URL de redirección de Stripe.");
       }
     } catch (error) {
-      console.error("Error al procesar el pago con tarjeta:", error);
-      toast.error("Error al procesar el pago con tarjeta.");
+      toast.error("Error al procesar el pago con tarjeta");
     }
-  };
-
-  const handleCloseTicket = () => {
-    setTicketOpen(false);
-    clearCart();
   };
 
   return (
@@ -120,7 +120,8 @@ export const Cart = () => {
 
                   <Button
                     onClick={clearCart}
-                    className="w-full bg-red-600 hover:bg-red-700"
+                    variant="destructive"
+                    className="w-full"
                   >
                     Vaciar Carrito
                   </Button>
@@ -131,15 +132,20 @@ export const Cart = () => {
         </SheetContent>
       </Sheet>
 
-      {ticketInfo && (
+      {ticketData && !("error" in ticketData) && (
         <TicketModal
-          open={ticketOpen}
-          onClose={handleCloseTicket}
-          productos={cart}
-          total={total}
-          fecha={ticketInfo.fecha}
-          hora={ticketInfo.hora}
-          cliente={ticketInfo.cliente}
+          open={showTicket}
+          onClose={() => {
+            setShowTicket(false);
+            clearCart();
+          }}
+          productos={ticketData.productos}
+          total={ticketData.total}
+          fecha={ticketData.fecha}
+          hora={ticketData.hora}
+          cliente={ticketData.cliente}
+          ticketId={ticketData.ticketId}
+          metodoPago={ticketData.metodoPago}
         />
       )}
     </>
