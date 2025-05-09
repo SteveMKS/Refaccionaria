@@ -8,54 +8,56 @@ export async function middleware(req: NextRequest) {
   const { data: { session } } = await supabase.auth.getSession();
   const path = req.nextUrl.pathname;
 
-  // Definición de rutas
-  const publicRoutes = ['/login', '/Registro', '/'];
-  const authRoutes = ['/Perfil', '/Compras'];
-  const adminRoutes = ['/Admin'];
+  // Definir rutas
+  const publicRoutes = ['/', '/login', '/Registro'];
+  const protectedRoutes = ['/Perfil', '/Compras', '/Scan', '/recibos'];
+  const isAdminRoute = path.startsWith('/Admin');
 
-  // 1. Protección para usuarios no autenticados
+  // 🔒 Si no hay sesión y se intenta acceder a rutas protegidas o admin
   if (!session) {
-    // Bloquear acceso a rutas que requieren autenticación
-    if (authRoutes.some(route => path.startsWith(route))) {
-      return NextResponse.redirect(new URL(`/login?redirectTo=${encodeURIComponent(path)}`, req.url));
+    if (
+      protectedRoutes.some(route => path.startsWith(route)) ||
+      isAdminRoute
+    ) {
+      return NextResponse.redirect(
+        new URL(`/login?redirectTo=${encodeURIComponent(path)}`, req.url)
+      );
     }
-    
-    // Bloquear acceso a rutas admin si no hay sesión
-    if (adminRoutes.some(route => path.startsWith(route))) {
-      return NextResponse.redirect(new URL(`/login?redirectTo=${encodeURIComponent(path)}`, req.url));
-    }
-    
-    // Permitir continuar si es ruta pública
-    return res;
+    return res; // Ruta pública, continuar
   }
 
-  // 2. Redirigir usuarios autenticados que intentan acceder a rutas públicas
+  // 🔁 Si hay sesión y se intenta acceder a rutas públicas
   if (publicRoutes.includes(path)) {
     return NextResponse.redirect(new URL('/Perfil', req.url));
   }
 
-  // 3. Verificación de roles (solo para usuarios autenticados)
-  const { data: user } = await supabase
-    .from('users')
-    .select('rol')
-    .eq('id', session.user.id)
-    .single();
+  // ✅ Si es ruta /Admin, validar rol del usuario
+  if (isAdminRoute) {
+    const { data: user } = await supabase
+      .from('users')
+      .select('rol')
+      .eq('id', session.user.id)
+      .single();
 
-  // 3.1. Redirigir si no es admin en ruta /Admin
-  if (adminRoutes.some(route => path.startsWith(route)) && user?.rol !== 'admin') {
-    return NextResponse.redirect(new URL('/Perfil', req.url));
-  }
-
-  // 3.2. Opcional: Redirigir empleados desde /Admin
-  if (path.startsWith('/Admin') && user?.rol === 'empleado') {
-    return NextResponse.redirect(new URL('/Perfil', req.url));
+    // Solo permitir acceso a empleados y administradores
+    if (!user || (user.rol !== 'admin' && user.rol !== 'empleado')) {
+      return NextResponse.redirect(new URL('/Perfil', req.url));
+    }
   }
 
   return res;
 }
 
+// ⚙️ Configurar las rutas protegidas por el middleware
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/',              // Página principal
+    '/login',         // Login
+    '/Registro',      // Registro
+    '/Perfil',
+    '/Compras',
+    '/Scan',
+    '/recibos',
+    '/Admin/:path*',  // Protege todo lo que comience con /Admin
   ],
 };
