@@ -208,22 +208,22 @@ export default function VentasAdminPage() {
       )}
 
       {/* Modal de detalle de recibo */}
-      {selectedVenta && (
+ {selectedVenta && (
   <Dialog open={modalOpen} onOpenChange={setModalOpen}>
     <DialogContent
       className={cn(
-        "sm:max-w-2xl max-w-[95vw] max-h-[90vh] p-0 rounded-xl overflow-hidden",
+        "sm:max-w-2xl w-[95vw] h-[90vh] p-0 rounded-xl overflow-hidden flex flex-col",
         "bg-gradient-to-br from-white to-gray-50 dark:from-zinc-900 dark:to-zinc-800",
         "border border-gray-200 dark:border-zinc-700",
         "shadow-2xl dark:shadow-zinc-950/50",
         "transition-all animate-in fade-in-90 zoom-in-95"
       )}
     >
-      {/* Encabezado con fondo azul gradiente */}
+      {/* Encabezado con fondo azul gradiente - Fijo */}
       <div className={cn(
         "px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-500",
         "dark:from-indigo-800 dark:to-blue-700",
-        "text-white"
+        "text-white flex-shrink-0"
       )}>
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -243,8 +243,8 @@ export default function VentasAdminPage() {
         </DialogHeader>
       </div>
 
-      {/* Cuerpo del modal con scroll */}
-      <div className="p-6 overflow-y-auto">
+      {/* Cuerpo del modal - Scrollable */}
+      <div className="flex-1 overflow-y-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-50 dark:bg-zinc-800 p-4 rounded-lg border border-gray-200 dark:border-zinc-700">
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300 mb-1">
@@ -339,7 +339,7 @@ export default function VentasAdminPage() {
       </div>
 
       {/* Pie de página fijo */}
-      <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-zinc-700 flex justify-between items-center">
+      <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-zinc-700 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <Barcode className="w-4 h-4" />
           <span>Ticket ID: {selectedVenta.ticket_id}</span>
