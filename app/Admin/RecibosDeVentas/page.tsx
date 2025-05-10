@@ -72,7 +72,7 @@ export default function VentasAdminPage() {
       // Obtener ventas y calcular totales
       const { data: ventasData, error: ventasError } = await supabase
         .from("recibos")
-        .select("id_recibo, fecha, hora, total, metodo_pago, ticket_id, productos, creado_en")
+        .select("id_recibo, fecha, hora, total, metodo_pago, ticket_id, productos, creado_en, users: id_user (correo)")
         .order("creado_en", { ascending: false });
 
       if (!ventasError) {
@@ -238,7 +238,10 @@ export default function VentasAdminPage() {
             </span>
           </div>
           <DialogDescription className="text-blue-100 dark:text-blue-200">
-            Detalles completos de la transacción
+            <>
+              <span className="block text-sm">Cliente: {selectedVenta?.users?.correo || "No disponible"}</span>
+              <span className="block text-sm">Detalles completos de la transacción</span>
+            </>
           </DialogDescription>
         </DialogHeader>
       </div>

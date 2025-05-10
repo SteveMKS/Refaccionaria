@@ -104,7 +104,7 @@ export const TicketModal = ({
     // 3. Información del ticket
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    // ❌ Eliminamos esta línea: doc.text(`Ticket ID: ${uuid.substring(0, 8)}`, 50, y, { align: "center" });
+   
     // y += 6;
     doc.text(`Fecha: ${fecha}`, margin.left, y);
     doc.text(`Hora: ${hora}`, margin.left + 60, y); // Desplazar "Hora" a la derecha
