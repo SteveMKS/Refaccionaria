@@ -107,7 +107,7 @@ export default function RefaccionesPage() {
   const [breadcrumbs, setBreadcrumbs] = useState<{label: string, nivel: number}[]>([{label: 'Refacciones', nivel: 1}]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const { addToCart} = useCart();
+  const { addToCart, cart } = useCart(); // Modificado para usar cart en lugar de cartCount
   const { theme } = useTheme();
 
   // Efecto para cargar las categorías principales
@@ -234,6 +234,9 @@ export default function RefaccionesPage() {
     setNivel(5);
   };
 
+  // Calcular la cantidad total de artículos en el carrito
+  const cartCount = cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
   // Filtrar productos por término de búsqueda
   const filteredProductos = productos.filter(producto => 
     producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -311,6 +314,24 @@ export default function RefaccionesPage() {
               disabled={nivel !== 5}
             />
           </div>
+        </div>
+        
+        <div className="flex items-center space-x-2 w-full lg:w-auto justify-end">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="relative">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <Cart />
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 

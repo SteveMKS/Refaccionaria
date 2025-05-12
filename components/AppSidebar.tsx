@@ -104,6 +104,7 @@ const data = {
       items: [
         { title: "Gestion de Inventario", url: "/Admin/Inventario" },
         { title: "Recibos de Ventas", url: "/Admin/RecibosDeVentas" },
+        { title: "Scaneo de Código", url: "/Admin/Scan" },
       ],
     },
   ],
