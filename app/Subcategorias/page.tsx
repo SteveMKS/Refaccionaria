@@ -1,4 +1,4 @@
-"use client";
+/*"use client";
 
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase-browser';
@@ -232,4 +232,4 @@ export default function RefaccionesPage() {
       )}
     </div>
   );
-}
+}*/

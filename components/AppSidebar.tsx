@@ -95,6 +95,18 @@ const data = {
       ],
     },
   ],
+  Admin: [
+    {
+      title: "Administración",
+      url: "/Admin",
+      icon: BookOpen,
+      isActive: false,
+      items: [
+        { title: "Gestion de Inventario", url: "/Admin/Inventario" },
+        { title: "Recibos de Ventas", url: "/Admin/RecibosDeVentas" },
+      ],
+    },
+  ],
 };
 
 export const categories = data.categories;
@@ -103,7 +115,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarContent>
-        <NavMain items={data.navMain} categories={data.categories} />
+        <NavMain items={data.navMain} categories={data.categories} Admin={data.Admin}/>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
