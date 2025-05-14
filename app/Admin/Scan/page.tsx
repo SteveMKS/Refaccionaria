@@ -1,4 +1,4 @@
-import ScannerRedirect from "@/components/ScannerRedirect"; // ajusta la ruta según dónde lo tengas
+import ScannerRedirect from "@/components/Scanner/ScannerRedirect"; // ajusta la ruta según dónde lo tengas
 
 export default function RecibosPage() {
   return (

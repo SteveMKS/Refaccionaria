@@ -2,13 +2,13 @@
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/components/cart/useCart";
 import { CartItem } from "./CartItem";
-import { TicketModal } from "@/components/Tickets";
+import { TicketModal } from "@/components/cart/Tickets";
 import { toast } from "sonner";
 import { useState } from "react";
-import { useAuth } from "@/components/Auth";
-import { ConfirmPurchaseDialog } from "@/components/ui/AlertConfirmBuy";
+import { useAuth } from "@/components/AuthProvider/Auth";
+import { ConfirmPurchaseDialog } from "@/components/cart/AlertConfirmBuy";
 import { 
   ShoppingCart, 
   X, 

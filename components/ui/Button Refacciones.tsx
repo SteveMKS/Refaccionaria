@@ -2,7 +2,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { BookOpen } from 'lucide-react';
-import { categories } from "@/components/AppSidebar"
+import { categories } from "@/components/Sidebar/AppSidebar"
 
 export default function MenuCategorias() {
   const router = useRouter();

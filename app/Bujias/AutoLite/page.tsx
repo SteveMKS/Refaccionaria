@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/components/cart/useCart";
 import { Loader2 } from "lucide-react";
-import { LiveSearchBar } from "@/components/SearchBar";
 
 // Definición de tipos
 type Marca = {

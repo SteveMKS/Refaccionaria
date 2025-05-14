@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import { ShoppingCart } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
-import { useCart } from "@/hooks/useCart";
+import { useCart } from "@/components/cart/useCart";
 import { Loader2 } from "lucide-react";
 
-// Tipos
+// Definición de tipos
 type Marca = {
   id_marca: string;
   nombre: string;
@@ -30,11 +29,18 @@ type Producto = {
 };
 
 export default function ProductosPage() {
+  // Estados
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addingProductId, setAddingProductId] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  
+  // Hooks
   const { addToCart } = useCart();
 
+  // Efectos
   useEffect(() => {
     const cargarProductos = async () => {
       try {
@@ -43,8 +49,7 @@ export default function ProductosPage() {
 
         const { data, error: supabaseError } = await supabase
           .from("productos")
-          .select(`
-            *,
+          .select(`*,
             id_marca (
               id_marca,
               nombre,
@@ -75,7 +80,9 @@ export default function ProductosPage() {
           .order("nombre", { ascending: true });
 
         if (supabaseError) throw supabaseError;
-        if (!data || data.length === 0) throw new Error("No se encontraron productos");
+        if (!data || data.length === 0) {
+          throw new Error("No se encontraron productos");
+        }
 
         setProductos(data);
       } catch (err) {
@@ -88,14 +95,57 @@ export default function ProductosPage() {
     cargarProductos();
   }, []);
 
+  // Handlers
+  const handleAddToCart = async (producto: Producto) => {
+    setAddingProductId(producto.id_sku);
+    setSuccessMessage(null);
+
+    if (producto.existencias <= 0) {
+      setErrorMessage("Este producto está agotado.");
+      setTimeout(() => setErrorMessage(null), 3000);
+      setAddingProductId(null);
+      return;
+    }
+
+    await addToCart({
+      imagen_principal: producto.imagen_principal,
+      id: producto.id_sku,
+      name: producto.nombre,
+      descripcion: producto.descripcion,
+      price: producto.precio,
+    });
+
+    setSuccessMessage(`"${producto.nombre}" agregado al carrito.`);
+    
+    setTimeout(() => {
+      setSuccessMessage(null);
+      setAddingProductId(null);
+    }, 1500);
+  };
+
+  // Render
   return (
     <div className="container mx-auto py-8 px-4">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Catálogo de Productos</h1>
         <Cart />
       </div>
 
-      {/* Manejo de loading */}
+      {/* Mensajes de estado */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out">
+          {successMessage}
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="fixed bottom-6 right-6 bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out">
+          {errorMessage}
+        </div>
+      )}
+
+      {/* Estado de carga */}
       {loading && (
         <div className="flex justify-center items-center h-40">
           <Loader2 className="animate-spin h-6 w-6 text-blue-500" />
@@ -103,13 +153,7 @@ export default function ProductosPage() {
         </div>
       )}
 
-      {/* Manejo de error */}
-      {error && (
-        <div className="text-center text-red-600 font-semibold mt-4">
-          {error}
-        </div>
-      )}
-
+      {/* Lista de productos */}
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {productos.map((producto) => (
@@ -119,6 +163,7 @@ export default function ProductosPage() {
               </CardHeader>
 
               <CardContent className="flex-grow space-y-3">
+                {/* Imagen del producto */}
                 <div className="relative mx-auto w-40 h-40 bg-gray-100 rounded-md mb-3">
                   <Image
                     src={producto.imagen_principal}
@@ -129,6 +174,7 @@ export default function ProductosPage() {
                   />
                 </div>
 
+                {/* Detalles del producto */}
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="font-medium text-gray-600">Marca:</span>
@@ -154,6 +200,7 @@ export default function ProductosPage() {
                   {producto.descripcion}
                 </p>
 
+                {/* Precio y acciones */}
                 <div className="flex items-center justify-between mt-3 pt-2 border-t">
                   <span className="text-lg font-bold text-blue-600">
                     ${producto.precio.toLocaleString("es-MX")}
@@ -169,18 +216,19 @@ export default function ProductosPage() {
                       {producto.existencias > 0 ? "Disponible" : "Agotado"}
                     </span>
                     <button
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
+                      className={`p-2 rounded-full transition-colors ${
+                        producto.existencias <= 0
+                          ? "text-gray-400 cursor-not-allowed bg-gray-100"
+                          : "text-blue-600 hover:bg-blue-50"
+                      }`}
                       aria-label="Agregar al carrito"
-                      disabled={producto.existencias <= 0}
-                      onClick={() => addToCart({
-                        imagen_principal: producto.imagen_principal,
-                        id: producto.id_sku,
-                        name: producto.nombre,
-                        descripcion: producto.descripcion,
-                        price: producto.precio,
-                      })}
+                      onClick={() => handleAddToCart(producto)}
                     >
-                      <ShoppingCart className="h-5 w-5" />
+                      {addingProductId === producto.id_sku ? (
+                        <Loader2 className="animate-spin h-5 w-5" />
+                      ) : (
+                        <ShoppingCart className="h-5 w-5" />
+                      )}
                     </button>
                   </div>
                 </div>

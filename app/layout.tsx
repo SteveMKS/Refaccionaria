@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AppSidebar } from "@/components/Sidebar/AppSidebar";
 import { ThemeProvider } from "next-themes";
-import { ModeToggle } from "@/components/ModeToogle";
-import { SyncCart } from "@/components/CartSync";
-import { AuthProvider } from "@/components/Auth";
-import { HydrateUser } from "@/components/HydrateUser";
+import { ModeToggle } from "@/components/ThemeMode/ModeToogle";
+import { SyncCart } from "@/components/cart/CartSync";
+import { AuthProvider } from "@/components/AuthProvider/Auth";
+import { HydrateUser } from "@/components/Users/HydrateUser";
 
 
 const geistSans = Geist({

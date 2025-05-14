@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogFooter,
-  DialogTrigger,
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
@@ -29,7 +28,6 @@ import { Search, PlusCircle, Package, Loader2, Filter, ChevronDown } from "lucid
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -47,7 +45,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Pagination,
   PaginationContent,
