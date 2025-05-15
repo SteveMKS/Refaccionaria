@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase-browser';
-import { numeroALetras } from '@/hooks/NumerosaLetras';
 import { v4 as uuidv4 } from 'uuid';
 import type { User } from '@supabase/supabase-js';
 
@@ -71,7 +70,7 @@ export const useCart = create<CartStore>((set, get) => ({
     const existingItem = cart.find((item) => item.id === product.id);
 
     let updatedCart: CartItem[];
-    let newTotal = total + product.price;
+    const newTotal = total + product.price;
 
     if (existingItem) {
       updatedCart = cart.map((item) =>
