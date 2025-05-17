@@ -1,117 +1,179 @@
-
-// app/api/stripe/webhook/route.ts - VERSIÓN CORREGIDA
+// app/api/stripe/webhook/route.ts - VERSIÓN COMPLETAMENTE REVISADA
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
 
-// Configuración para asegurarnos de recibir el raw body
+// Configuración para webhook
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
+// Inicializar Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
 });
 
+// Inicializar Supabase con service role para asegurar permisos
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      persistSession: false,
+    },
+  }
 );
 
-// Función auxiliar para leer el body como buffer
-async function readRequestBodyAsBuffer(request: NextRequest): Promise<Buffer> {
-  const reader = request.body?.getReader();
-  const chunks: Uint8Array[] = [];
-
-  if (!reader) throw new Error("No body stream found.");
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) chunks.push(value);
+// Función para leer el cuerpo de la solicitud como buffer
+async function rawBody(req: NextRequest): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+  const reader = req.body?.getReader();
+  
+  if (!reader) {
+    throw new Error("No se pudo leer el body de la solicitud");
   }
-
-  return Buffer.concat(chunks);
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(Buffer.from(value));
+    }
+    
+    return Buffer.concat(chunks);
+  } catch (e) {
+    console.error("Error leyendo el body:", e);
+    throw e;
+  }
 }
 
 export async function POST(req: NextRequest) {
-  console.log("🔔 Webhook recibido");
+  console.log("🔔 Webhook de Stripe recibido");
   
-  // 1. Leer el body y verificar la firma
-  let bodyBuffer: Buffer;
-  let event: Stripe.Event;
-
   try {
-    bodyBuffer = await readRequestBodyAsBuffer(req);
-    const sig = req.headers.get("stripe-signature");
+    // Leer el body como buffer para la verificación de firma
+    const payload = await rawBody(req);
     
-    if (!sig) {
-      console.error("❌ Falta firma de Stripe");
-      return NextResponse.json({ error: "Falta firma de Stripe" }, { status: 400 });
+    // Obtener la firma de Stripe
+    const signature = req.headers.get("stripe-signature");
+    if (!signature) {
+      console.error("❌ Webhook sin firma de Stripe");
+      return NextResponse.json(
+        { error: "Falta la firma del webhook" },
+        { status: 400 }
+      );
     }
-
-    event = stripe.webhooks.constructEvent(
-      bodyBuffer,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
     
-    console.log(`✅ Evento verificado: ${event.type}`);
-  } catch (err) {
-    console.error("❌ Error verificando webhook:", err);
-    return NextResponse.json({ error: `Error de webhook: ${err}` }, { status: 400 });
-  }
-
-  // 2. Procesar el evento de checkout completado
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    console.log(`💰 Checkout completado: ${session.id}`);
-
+    // Verificar la firma del evento
+    let event;
     try {
-      // Generar ID de ticket
-      const ticketId = uuidv4();
+      event = stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        process.env.STRIPE_WEBHOOK_SECRET!
+      );
+      console.log(`✅ Evento de Stripe verificado: ${event.type}`);
+    } catch (err) {
+      console.error(`❌ Error verificando webhook: ${err}`);
+      return NextResponse.json(
+        { error: `Error de verificación: ${err}` },
+        { status: 400 }
+      );
+    }
+    
+    // Manejar el evento de checkout completado
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      console.log(`💰 Checkout completado - Session ID: ${session.id}`);
       
-      // Obtener información de la sesión
-      let productos = [];
-      
-      if (session.metadata?.productos) {
-        try {
-          productos = JSON.parse(session.metadata.productos);
-        } catch (e) {
-          console.error("❌ Error al parsear productos:", e);
+      try {
+        // Generar datos del recibo
+        const ticketId = uuidv4();
+        
+        // Procesar productos desde metadata
+        let productos = [];
+        if (session.metadata?.productos) {
+          try {
+            productos = JSON.parse(session.metadata.productos);
+            console.log("✅ Productos parseados correctamente:", productos);
+          } catch (e) {
+            console.error("❌ Error parseando productos:", e);
+            // En caso de error, intentamos usar un arreglo vacío
+          }
+        } else {
+          console.warn("⚠️ No se encontraron productos en metadata");
         }
-      }
-      
-      // Guardar recibo en Supabase
-      const { error } = await supabase.from("recibos").insert([
-        {
-          stripe_session_id: session.id, // Usamos este campo para búsqueda
+        
+        // Datos para guardar en Supabase
+        const reciboData = {
+          stripe_session_id: session.id,
           ticketId,
-          total: session.amount_total! / 100,
+          total: session.amount_total ? session.amount_total / 100 : 0,
           productos,
           fecha: new Date().toISOString().split("T")[0],
           hora: new Date().toTimeString().split(" ")[0],
           cliente: session.customer_email || "Cliente",
           metodo_pago: session.payment_method_types?.[0] || "Tarjeta",
-        },
-      ]);
-
-      if (error) {
-        console.error("❌ Error al guardar en Supabase:", error);
-        return NextResponse.json({ error: "Error de base de datos" }, { status: 500 });
+          created_at: new Date().toISOString(),
+        };
+        
+        console.log("📝 Intentando guardar recibo:", reciboData);
+        
+        // Insertar en Supabase con manejo de errores detallado
+        const { data, error } = await supabase
+          .from("recibos")
+          .insert([reciboData])
+          .select();
+        
+        if (error) {
+          console.error("❌ Error guardando en Supabase:", error);
+          
+          // Intentar diagnóstico del error
+          if (error.code === "23505") {
+            console.error("Parece ser un error de duplicado");
+          } else if (error.code === "42P01") {
+            console.error("La tabla 'recibos' posiblemente no existe");
+          } else if (error.code === "42703") {
+            console.error("Alguna columna no existe en la tabla 'recibos'");
+          }
+          
+          return NextResponse.json(
+            { error: `Error guardando recibo: ${error.message}` },
+            { status: 500 }
+          );
+        }
+        
+        console.log(`✅ Recibo guardado exitosamente. TicketID: ${ticketId}`);
+        console.log("Datos guardados:", data);
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: "Pago procesado exitosamente",
+          ticketId
+        });
+        
+      } catch (err) {
+        console.error("❌ Error procesando el pago:", err);
+        return NextResponse.json(
+          { error: `Error interno: ${err}` },
+          { status: 500 }
+        );
       }
-      
-      console.log(`✅ Recibo guardado con éxito. TicketID: ${ticketId}`);
-    } catch (err) {
-      console.error("❌ Error procesando pago:", err);
-      return NextResponse.json({ error: "Error procesando pago" }, { status: 500 });
     }
+    
+    // Para otros tipos de eventos, solo confirmamos recepción
+    return NextResponse.json({ received: true });
+    
+  } catch (err) {
+    console.error("❌ Error general en webhook:", err);
+    return NextResponse.json(
+      { error: `Error interno del servidor: ${err}` },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ received: true });
 }
 /*// app/api/stripe/webhook/route.ts
 import { NextRequest } from 'next/server'

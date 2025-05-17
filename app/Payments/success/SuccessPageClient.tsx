@@ -15,7 +15,9 @@ export default function SuccessPageClient() {
   const [modalOpen, setModalOpen] = useState(false);
   const [intentos, setIntentos] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [Error, setError] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   const supabase = createClientComponentClient();
 
@@ -58,11 +60,37 @@ export default function SuccessPageClient() {
           setLoading(false);
         } else if (intentos < maxIntentos) {
           console.log(`Recibo no encontrado. Reintentando en ${delay}ms...`, error);
+          
+          // Después del 5to intento, consultamos el endpoint de verificación
+          if (intentos === 5) {
+            try {
+              const response = await fetch(`/api/verify-receipt?session_id=${sessionId}`);
+              const debugData = await response.json();
+              setDebugInfo(debugData);
+              console.log("Información de depuración:", debugData);
+            } catch (e) {
+              console.error("Error obteniendo información de depuración:", e);
+            }
+          }
+          
           setTimeout(() => {
             setIntentos((prev) => prev + 1);
           }, delay);
         } else {
           console.error("Recibo no encontrado después de varios intentos:", error);
+          
+          // Intentar obtener información de depuración si no se hizo antes
+          if (!debugInfo) {
+            try {
+              const response = await fetch(`/api/verify-receipt?session_id=${sessionId}`);
+              const debugData = await response.json();
+              setDebugInfo(debugData);
+              console.log("Información de depuración final:", debugData);
+            } catch (e) {
+              console.error("Error obteniendo información de depuración:", e);
+            }
+          }
+          
           setError("No pudimos encontrar tu recibo. Por favor contacta a soporte con este ID: " + sessionId);
           setLoading(false);
         }
@@ -72,7 +100,7 @@ export default function SuccessPageClient() {
     };
 
     fetchReciboConReintentos();
-  }, [sessionId, intentos, supabase]);
+  }, [sessionId, intentos, supabase, debugInfo]);
 
   const handleCloseModal = () => {
     setModalOpen(false);
@@ -95,19 +123,35 @@ export default function SuccessPageClient() {
     );
   }
 
-  if (error) {
+  if (Error) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
           <h2 className="text-xl font-semibold text-center mb-4 text-red-700">
             Hubo un problema
           </h2>
-          <p className="text-center mb-6 text-gray-700">{error}</p>
-          <div className="flex justify-center">
+          <p className="text-center mb-6 text-gray-700">{Error}</p>
+          <div className="flex flex-col space-y-4">
             <Button onClick={() => router.push("/")} className="bg-primary hover:bg-primary/90">
               Volver a la tienda
             </Button>
+            
+            {sessionId && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDebug(!showDebug)}
+                className="text-sm"
+              >
+                {showDebug ? "Ocultar" : "Mostrar"} información técnica
+              </Button>
+            )}
           </div>
+          
+          {showDebug && debugInfo && (
+            <div className="mt-4 p-3 bg-gray-100 rounded text-xs overflow-auto max-h-60">
+              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+            </div>
+          )}
         </div>
       </div>
     );
