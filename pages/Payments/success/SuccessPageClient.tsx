@@ -7,16 +7,31 @@ import { TicketModal } from "@/components/cart/Tickets";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2 } from "lucide-react";
 
+interface Recibo {
+  productos: any[];
+  total: number;
+  fecha: string;
+  hora: string;
+  cliente?: string;
+  id_user?: string;
+  ticketId?: string;
+  ticket_id?: string;
+  metodo_pago?: string;
+  metodoPago?: string;
+  stripe_session_id?: string;
+  stripe_session?: string;
+}
+
 export default function SuccessPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const sessionId = searchParams ? searchParams.get("session_id") : null;
-  const [recibo, setRecibo] = useState<any | null>(null);
+  const sessionId = searchParams?.get("session_id") ?? null;
+  const [recibo, setRecibo] = useState<Recibo | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [intentos, setIntentos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [Error, setError] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState(false);
 
   const supabase = createClientComponentClient();
@@ -36,63 +51,65 @@ export default function SuccessPageClient() {
       const intentar = async () => {
         console.log(`Intento #${intentos + 1} de buscar recibo para sesión: ${sessionId}`);
         
-        // Primero intentamos con stripe_session_id
-        let { data, error } = await supabase
-          .from("recibos")
-          .select("*")
-          .eq("stripe_session_id", sessionId)
-          .single();
-        
-        // Si no se encuentra, intentamos con stripe_session
-        if (!data && !error) {
-          console.log("No se encontró con stripe_session_id, intentando con stripe_session");
-          ({ data, error } = await supabase
+        try {
+          // Primero intentamos con stripe_session_id
+          let { data, error: queryError } = await supabase
             .from("recibos")
             .select("*")
-            .eq("stripe_session", sessionId)
-            .single());
-        }
+            .eq("stripe_session_id", sessionId)
+            .single();
+          
+          // Si no se encuentra, intentamos con stripe_session
+          if (!data && !queryError) {
+            console.log("No se encontró con stripe_session_id, intentando con stripe_session");
+            const result = await supabase
+              .from("recibos")
+              .select("*")
+              .eq("stripe_session", sessionId)
+              .single();
+            data = result.data;
+            queryError = result.error;
+          }
 
-        if (data) {
-          console.log("¡Recibo encontrado!", data);
-          setRecibo(data);
-          setModalOpen(true);
-          setLoading(false);
-        } else if (intentos < maxIntentos) {
-          console.log(`Recibo no encontrado. Reintentando en ${delay}ms...`, error);
-          
-          // Después del 5to intento, consultamos el endpoint de verificación
-          if (intentos === 5) {
-            try {
-              const response = await fetch(`/api/verify-receipt?session_id=${sessionId}`);
-              const debugData = await response.json();
-              setDebugInfo(debugData);
-              console.log("Información de depuración:", debugData);
-            } catch (e) {
-              console.error("Error obteniendo información de depuración:", e);
+          if (data) {
+            console.log("¡Recibo encontrado!", data);
+            setRecibo(data);
+            setModalOpen(true);
+            setLoading(false);
+          } else if (intentos < maxIntentos) {
+            console.log(`Recibo no encontrado. Reintentando en ${delay}ms...`, queryError);
+            
+            // Después del 5to intento, consultamos el endpoint de verificación
+            if (intentos === 5) {
+              await fetchDebugInfo();
             }
+            
+            setTimeout(() => {
+              setIntentos((prev) => prev + 1);
+            }, delay);
+          } else {
+            console.error("Recibo no encontrado después de varios intentos:", queryError);
+            await fetchDebugInfo();
+            setError("No pudimos encontrar tu recibo. Por favor contacta a soporte con este ID: " + sessionId);
+            setLoading(false);
           }
-          
-          setTimeout(() => {
-            setIntentos((prev) => prev + 1);
-          }, delay);
-        } else {
-          console.error("Recibo no encontrado después de varios intentos:", error);
-          
-          // Intentar obtener información de depuración si no se hizo antes
-          if (!debugInfo) {
-            try {
-              const response = await fetch(`/api/verify-receipt?session_id=${sessionId}`);
-              const debugData = await response.json();
-              setDebugInfo(debugData);
-              console.log("Información de depuración final:", debugData);
-            } catch (e) {
-              console.error("Error obteniendo información de depuración:", e);
-            }
-          }
-          
-          setError("No pudimos encontrar tu recibo. Por favor contacta a soporte con este ID: " + sessionId);
+        } catch (err) {
+          console.error("Error inesperado al buscar recibo:", err);
+          setError("Ocurrió un error inesperado al procesar tu pago. Por favor contacta a soporte.");
           setLoading(false);
+        }
+      };
+
+      const fetchDebugInfo = async () => {
+        if (!debugInfo) {
+          try {
+            const response = await fetch(`/api/verify-receipt?session_id=${sessionId}`);
+            const debugData = await response.json();
+            setDebugInfo(debugData);
+            console.log("Información de depuración:", debugData);
+          } catch (e) {
+            console.error("Error obteniendo información de depuración:", e);
+          }
         }
       };
 
@@ -123,14 +140,14 @@ export default function SuccessPageClient() {
     );
   }
 
-  if (Error) {
+  if (error) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md w-full">
           <h2 className="text-xl font-semibold text-center mb-4 text-red-700">
             Hubo un problema
           </h2>
-          <p className="text-center mb-6 text-gray-700">{Error}</p>
+          <p className="text-center mb-6 text-gray-700">{error}</p>
           <div className="flex flex-col space-y-4">
             <Button onClick={() => router.push("/")} className="bg-primary hover:bg-primary/90">
               Volver a la tienda
@@ -186,9 +203,9 @@ export default function SuccessPageClient() {
           total={recibo.total}
           fecha={recibo.fecha}
           hora={recibo.hora}
-          cliente={recibo.cliente || recibo.id_user}
-          ticketId={recibo.ticketId || recibo.ticket_id}
-          metodoPago={recibo.metodo_pago || recibo.metodoPago}
+          cliente={recibo.cliente || recibo.id_user || ""}
+          ticketId={recibo.ticketId || recibo.ticket_id || ""}
+          metodoPago={recibo.metodo_pago || recibo.metodoPago || ""}
         />
       )}
     </>
