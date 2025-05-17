@@ -76,16 +76,16 @@ const handleStripeCheckout = async () => {
     return;
   }
 
-  const res = await fetch('/api/stripe/checkout', {
-    method: 'POST',
+  const res = await fetch("/api/stripe/create-checkout-session", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       email: user.email,
       productos: cart.map((item) => ({
-        nombre: item.name,
-        precio: item.price,
+        nombre: item.name,     // asegúrate que `name` sea el nombre del producto
+        precio: item.price,    // asegúrate que `price` esté en MXN (ej. 129.99)
         cantidad: item.quantity,
       })),
     }),
@@ -94,11 +94,12 @@ const handleStripeCheckout = async () => {
   const data = await res.json();
 
   if (data.url) {
-    window.location.href = data.url;
+    window.location.href = data.url; // Redirige a Stripe Checkout
   } else {
     toast.error(data.error || "Error al redirigir al pago");
   }
 };
+
 
   return (
     <>
