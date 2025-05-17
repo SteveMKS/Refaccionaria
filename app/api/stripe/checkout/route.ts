@@ -1,6 +1,83 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { v4 as uuidv4 } from 'uuid';
+
+export async function POST(req: Request) {
+  try {
+    // Obtenemos la configuración de Stripe
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    
+    if (!stripeKey) {
+      console.error("Falta la clave secreta de Stripe");
+      return new NextResponse(JSON.stringify({ error: "Error de configuración del servidor" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    
+    // Inicializamos Stripe
+    const stripe = new Stripe(stripeKey, {
+      apiVersion: "2025-03-31.basil",
+    });
+    
+    // Extraemos los datos de la solicitud
+    const data = await req.json();
+    const { cart, user_id, email, total } = data;
+    
+    if (!cart || !cart.length || !user_id || !email) {
+      return new NextResponse(JSON.stringify({ error: "Datos incompletos" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+    
+    // Crear los line_items para Stripe
+    const line_items = cart.map((item: any) => ({
+      price_data: {
+        currency: "mxn",
+        product_data: {
+          name: item.name,
+          description: item.descripcion || "",
+          images: item.imagen_principal ? [item.imagen_principal] : []
+        },
+        unit_amount: Math.round(item.price * 100), // Stripe espera el precio en centavos
+      },
+      quantity: item.quantity,
+    }));
+    
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    if (!siteUrl?.startsWith("http")) {
+    throw new Error("NEXT_PUBLIC_SITE_URL no está definido o no es una URL válida");
+    }   
+    // Crear una sesión de checkout
+    const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items,
+    mode: "payment",
+    success_url: `${siteUrl}/Payments/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${siteUrl}/Payments/cancel`,
+    customer_email: email,
+    metadata: {
+    userId: user_id,
+    cart: JSON.stringify(cart),
+    },
+    });
+    
+    return NextResponse.json({ url: session.url });
+    
+  } catch (error: any) {
+    console.error("Error al crear sesión de Stripe:", error);
+    return new NextResponse(JSON.stringify({ error: error.message || "Error al iniciar el checkout" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+}
+/*// app/api/stripe/checkout/route.ts
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 
 // 1. Definición de tipos mejorada
@@ -229,4 +306,4 @@ if (stockErrors.length > 0) {
       { status: 500 }
     );
   }
-}
+}*/

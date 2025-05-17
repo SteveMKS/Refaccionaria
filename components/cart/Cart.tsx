@@ -75,44 +75,40 @@ export const Cart = () => {
     }
   };
 
-  const handleStripeCheckout = async () => {
-    if (!user) {
-      toast.error("Debes iniciar sesión para realizar una compra");
-      return;
+// Corrección del método handleStripeCheckout en Cart.tsx
+const handleStripeCheckout = async () => {
+  if (!user) {
+    toast.error("Debes iniciar sesión para realizar una compra");
+    return;
+  }
+
+  try {
+    // Enviamos el formato correcto que espera el endpoint
+    const response = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cart: cart,  // Enviamos el carrito completo como está en useCart
+        user_id: user.id,  // Usamos user_id en vez de userId como espera useCart
+        email: user.email,  // Usamos email en vez de userEmail
+        total: total  // Incluimos el total
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Error al procesar el pago");
     }
 
-    try {
-      const cartItems: StripeCartItem[] = cart.map(item => ({
-        id_sku: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity
-      }));
-
-      const response = await fetch("/api/stripe/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cartItems,
-          userEmail: user.email,
-          userId: user.id
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error al procesar el pago");
-      }
-
-      const { url } = await response.json();
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error desconocido";
-      toast.error(message);
+    const { url } = await response.json();
+    if (url) {
+      window.location.href = url;
     }
-  };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error desconocido";
+    toast.error(message);
+  }
+};
 
   return (
     <>
