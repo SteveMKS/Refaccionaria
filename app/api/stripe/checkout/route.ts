@@ -1,66 +1,67 @@
-// app/api/stripe/checkout/route.ts
-import { NextResponse } from 'next/server'
-import Stripe from 'stripe'
-import { createClient } from '@supabase/supabase-js'
+import Stripe from "stripe";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { buffer } from "node:stream/consumers";
+import { v4 as uuidv4 } from "uuid";
+
+// ⚠️ Next.js requiere esta configuración para recibir el raw body
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
-})
+});
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // usa clave de Service Role
-)
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export async function POST(req: Request) {
-  const body = await req.json()
-  const { user_id } = body
+export async function POST(req: NextRequest) {
+  const rawBody = await req.body?.getReader().read();
+  const bodyBuffer = rawBody?.value;
+  if (!bodyBuffer) return NextResponse.json({ error: "Empty body" }, { status: 400 });
 
-  if (!user_id) {
-    return NextResponse.json({ error: 'user_id is required' }, { status: 400 })
-  }
+  const sig = req.headers.get("stripe-signature")!;
+  let event: Stripe.Event;
 
-  // 1. Obtener productos del carrito
-  const { data: cartItems, error: cartError } = await supabase
-    .from('carritos')
-    .select('*')
-    .eq('user_id', user_id)
-
-  if (cartError || !cartItems || cartItems.length === 0) {
-    return NextResponse.json({ error: 'Carrito vacío o error al obtener datos' }, { status: 400 })
-  }
-
-  // 2. Crear line_items para Stripe
-  const line_items = cartItems.map((item) => ({
-    price_data: {
-      currency: 'mxn',
-      product_data: {
-        name: item.nombre,
-        description: item.descripcion || '',
-        images: item.imagen_principal ? [item.imagen_principal] : [],
-      },
-      unit_amount: Math.round(item.precio * 100), // Stripe usa centavos
-    },
-    quantity: item.cantidad,
-  }))
-
-  // 3. Crear sesión de Stripe
   try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items,
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
-      metadata: {
-        user_id, // importante para crear el recibo después
-      },
-    })
-
-    return NextResponse.json({ sessionUrl: session.url })
+    event = stripe.webhooks.constructEvent(
+      Buffer.from(bodyBuffer),
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
   } catch (err) {
-    console.error('Error al crear la sesión de Stripe:', err)
-    return NextResponse.json({ error: 'Error creando sesión de pago' }, { status: 500 })
+    console.error("⚠️  Webhook signature verification failed.", err);
+    return NextResponse.json({ error: "Webhook Error" }, { status: 400 });
   }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    const ticketId = uuidv4();
+
+    const { error } = await supabase.from("recibos").insert([
+      {
+        stripe_session_id: session.id,
+        ticketId,
+        total: session.amount_total! / 100,
+        productos: session.metadata?.productos ? JSON.parse(session.metadata.productos) : [],
+        fecha: new Date().toISOString().split("T")[0],
+        hora: new Date().toLocaleTimeString(),
+        cliente: session.customer_email || "Anónimo",
+        metodo_pago: session.payment_method_types[0],
+      },
+    ]);
+
+    if (error) {
+      console.error("Error al guardar en Supabase:", error);
+      return NextResponse.json({ error: "Supabase insert error" }, { status: 500 });
+    }
+  }
+
+  return NextResponse.json({ received: true });
 }
- 
