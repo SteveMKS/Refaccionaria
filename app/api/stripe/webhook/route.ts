@@ -26,15 +26,15 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
 
-    // Obtener recibo relacionado
+    // Buscar recibo usando stripe_session en vez de ticket_id
     const { data: recibo, error: reciboError } = await supabase
       .from("recibos")
       .select("*")
-      .eq("ticket_id", session.id)
+      .eq("stripe_session", session.id)
       .single();
 
     if (reciboError || !recibo) {
-      console.error("Recibo no encontrado para ticket:", session.id);
+      console.error("Recibo no encontrado para stripe_session:", session.id);
       return NextResponse.json({ error: "Recibo no encontrado" }, { status: 404 });
     }
 
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     const { error: updateReciboError } = await supabase
       .from("recibos")
       .update({ status: "pagado" })
-      .eq("ticket_id", session.id);
+      .eq("stripe_session", session.id);
 
     if (updateReciboError) {
       console.error("Error actualizando recibo a pagado:", updateReciboError);

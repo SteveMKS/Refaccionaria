@@ -1,108 +1,99 @@
-import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from '@/lib/supabase-browser';
+import { v4 as uuidv4 } from "uuid";
+import { NextResponse } from "next/server";
 
-// Inicialización Stripe y Supabase con las variables de entorno
-const stripeKey = process.env.STRIPE_SECRET_KEY!;
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const stripe = new Stripe(stripeKey, { apiVersion: "2025-03-31.basil" });
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Clave secreta del webhook Stripe para validar la firma
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+type Producto = {
+  id_sku: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imagen_principal?: string;
+  descripcion?: string;
+};
 
 export async function POST(req: Request) {
-  const buf = await req.arrayBuffer();
-  const sig = req.headers.get("stripe-signature")!;
-
-  let event: Stripe.Event;
-
   try {
-    event = stripe.webhooks.constructEvent(Buffer.from(buf), sig, endpointSecret);
-  } catch (err: any) {
-    console.error("⚠️ Webhook signature verification failed.", err.message);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-  }
+    const { cart, user_id, email, total }: {
+      cart: Producto[];
+      user_id: string;
+      email: string;
+      total: number;
+    } = await req.json();
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    try {
-      // Consultar recibo en Supabase por ticket_id
-      const { data: recibo, error: reciboError } = await supabase
-        .from("recibos")
-        .select("id, productos, status")
-        .eq("ticket_id", session.id)
-        .single();
-
-      if (reciboError || !recibo) {
-        console.error("Recibo no encontrado para ticket_id:", session.id);
-        return NextResponse.json({ error: "Recibo no encontrado" }, { status: 404 });
-      }
-
-      if (recibo.status === "pagado") {
-        // Ya procesado antes, no hacer nada
-        return NextResponse.json({ received: true });
-      }
-
-      // Productos comprados con id_sku y quantity
-      const productosComprados = recibo.productos as {
-        id_sku: string;
-        quantity: number;
-      }[];
-
-      // Iterar para actualizar stock
-      for (const item of productosComprados) {
-        // Obtener stock actual
-        const { data: productoActual, error: errorProducto } = await supabase
-          .from("productos")
-          .select("existencias")
-          .eq("id_sku", item.id_sku)
-          .single();
-
-        if (errorProducto || !productoActual) {
-          console.error("Producto no encontrado para stock:", item.id_sku);
-          continue; // O manejar error como prefieras
-        }
-
-        const nuevoStock = productoActual.existencias - item.quantity;
-
-        if (nuevoStock < 0) {
-          console.error("Stock insuficiente para:", item.id_sku);
-          continue; // O manejar error
-        }
-
-        // Actualizar stock
-        const { error: updateError } = await supabase
-          .from("productos")
-          .update({ existencias: nuevoStock })
-          .eq("id_sku", item.id_sku);
-
-        if (updateError) {
-          console.error("Error actualizando stock para:", item.id_sku, updateError);
-        }
-      }
-
-      // Actualizar recibo como pagado
-      const { error: updateReciboError } = await supabase
-        .from("recibos")
-        .update({ status: "pagado" })
-        .eq("ticket_id", session.id);
-
-      if (updateReciboError) {
-        console.error("Error actualizando recibo:", updateReciboError);
-      }
-
-      return NextResponse.json({ received: true });
-    } catch (error) {
-      console.error("Error procesando webhook:", error);
-      return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    // Validaciones básicas
+    if (!cart || cart.length === 0) {
+      return NextResponse.json({ error: "Carrito vacío" }, { status: 400 });
     }
-  }
+    if (!user_id) {
+      return NextResponse.json({ error: "Usuario no autenticado" }, { status: 401 });
+    }
 
-  // Para otros eventos que no queremos procesar:
-  return NextResponse.json({ received: true });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: "2025-03-31.basil",
+    });
+
+    // 1. Crear ticket pendiente
+    const ticketId = uuidv4();
+    const now = new Date();
+    const fecha = now.toISOString().split("T")[0];
+    const hora = now.toTimeString().split(" ")[0];
+    const metodoPago = "Tarjeta";
+
+    const { error: insertError } = await supabase
+      .from("recibos")
+      .insert({
+        id_user: user_id,
+        status: "pendiente",
+        fecha,
+        hora,
+        total,
+        metodo_pago: metodoPago,
+        productos: cart,
+        ticket_id: ticketId,
+        stripe_session: null, // se actualizará luego
+      });
+
+    if (insertError) {
+      console.error("Error al crear recibo:", insertError);
+      return NextResponse.json({ error: "Error al crear recibo" }, { status: 500 });
+    }
+
+    // 2. Crear sesión Stripe con metadata ticketId
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      line_items: cart.map(item => ({
+        price_data: {
+          currency: "mxn",
+          product_data: { name: item.name },
+          unit_amount: Math.round(item.price * 100), // price en centavos
+        },
+        quantity: item.quantity,
+      })),
+      metadata: { ticket_id: ticketId },
+      success_url: `${process.env.URL_FRONTEND}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.URL_FRONTEND}/cancel`,
+    });
+
+    // 3. Actualizar recibo con session.id
+    const { error: updateError } = await supabase
+      .from("recibos")
+      .update({ stripe_session: session.id })
+      .eq("ticket_id", ticketId);
+
+    if (updateError) {
+      console.error("Error actualizando sesión Stripe:", updateError);
+      return NextResponse.json({ error: "Error actualizando sesión Stripe" }, { status: 500 });
+    }
+
+    // 4. Retornar url al frontend
+    return NextResponse.json({ url: session.url });
+
+  } catch (error) {
+    console.error("Error en API Stripe checkout:", error);
+    return NextResponse.json({ error: "Error inesperado en el servidor" }, { status: 500 });
+  }
 }
 
 /*// app/api/stripe/checkout/route.ts
