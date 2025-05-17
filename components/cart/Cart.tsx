@@ -82,16 +82,21 @@ const handleStripeCheckout = async () => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      user_id: user.id,
+      email: user.email,
+      productos: cart.map((item) => ({
+        nombre: item.name,
+        precio: item.price,
+        cantidad: item.quantity,
+      })),
     }),
   });
 
   const data = await res.json();
 
-  if (data.sessionUrl) {
-    window.location.href = data.sessionUrl;
+  if (data.url) {
+    window.location.href = data.url;
   } else {
-    toast.error("Error al redirigir al pago");
+    toast.error(data.error || "Error al redirigir al pago");
   }
 };
 
