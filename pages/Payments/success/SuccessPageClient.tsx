@@ -10,7 +10,7 @@ import { CheckCircle, Loader2 } from "lucide-react";
 export default function SuccessPageClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const sessionId = searchParams?.get("session_id") || null;
+  const sessionId = searchParams ? searchParams.get("session_id") : null;
   const [recibo, setRecibo] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [intentos, setIntentos] = useState(0);
