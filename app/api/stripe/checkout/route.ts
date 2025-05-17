@@ -40,24 +40,36 @@ export async function POST(req: Request) {
     const hora = now.toTimeString().split(" ")[0];
     const metodoPago = "Tarjeta";
 
-    const { error: insertError } = await supabase
-      .from("recibos")
-      .insert({
-        id_user: user_id,
-        status: "pendiente",
-        fecha,
-        hora,
-        total,
-        metodo_pago: metodoPago,
-        productos: cart,
-        ticket_id: ticketId,
-        stripe_session: null, // se actualizará luego
-      });
+console.log("Insert recibo:", {
+  id_user: user_id,
+  status: "pendiente",
+  fecha,
+  hora,
+  total,
+  metodo_pago: metodoPago,
+  productos: cart,
+  ticket_id: ticketId,
+  stripe_session: null,
+});
 
-    if (insertError) {
-      console.error("Error al crear recibo:", insertError);
-      return NextResponse.json({ error: "Error al crear recibo" }, { status: 500 });
-    }
+const { error: insertError } = await supabase
+  .from("recibos")
+  .insert({
+    id_user: user_id,
+    status: "pendiente",
+    fecha,
+    hora,
+    total,
+    metodo_pago: metodoPago,
+    productos: cart,
+    ticket_id: ticketId,
+    stripe_session: null,
+  });
+
+if (insertError) {
+  console.error("Error al crear recibo:", insertError);
+  return NextResponse.json({ error: "Error al crear recibo" }, { status: 500 });
+}
 
     // 2. Crear sesión Stripe con metadata ticketId
     const session = await stripe.checkout.sessions.create({
