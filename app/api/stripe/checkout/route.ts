@@ -1,80 +1,110 @@
-// app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { v4 as uuidv4 } from 'uuid';
+import { createClient } from "@supabase/supabase-js";
+
+// Inicialización Stripe y Supabase con las variables de entorno
+const stripeKey = process.env.STRIPE_SECRET_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const stripe = new Stripe(stripeKey, { apiVersion: "2025-03-31.basil" });
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Clave secreta del webhook Stripe para validar la firma
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
-  try {
-    // Obtenemos la configuración de Stripe
-    const stripeKey = process.env.STRIPE_SECRET_KEY;
-    
-    if (!stripeKey) {
-      console.error("Falta la clave secreta de Stripe");
-      return new NextResponse(JSON.stringify({ error: "Error de configuración del servidor" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-    
-    // Inicializamos Stripe
-    const stripe = new Stripe(stripeKey, {
-      apiVersion: "2025-03-31.basil",
-    });
-    
-    // Extraemos los datos de la solicitud
-    const data = await req.json();
-    const { cart, user_id, email, total } = data;
-    
-    if (!cart || !cart.length || !user_id || !email) {
-      return new NextResponse(JSON.stringify({ error: "Datos incompletos" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" }
-      });
-    }
-    
-    // Crear los line_items para Stripe
-    const line_items = cart.map((item: any) => ({
-      price_data: {
-        currency: "mxn",
-        product_data: {
-          name: item.name,
-          description: item.descripcion || "",
-          images: item.imagen_principal ? [item.imagen_principal] : []
-        },
-        unit_amount: Math.round(item.price * 100), // Stripe espera el precio en centavos
-      },
-      quantity: item.quantity,
-    }));
-    
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const buf = await req.arrayBuffer();
+  const sig = req.headers.get("stripe-signature")!;
 
-    if (!siteUrl?.startsWith("http")) {
-    throw new Error("NEXT_PUBLIC_SITE_URL no está definido o no es una URL válida");
-    }   
-    // Crear una sesión de checkout
-    const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
-    line_items,
-    mode: "payment",
-    success_url: `${siteUrl}/Payments/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${siteUrl}/Payments/cancel`,
-    customer_email: email,
-    metadata: {
-    userId: user_id,
-    cart: JSON.stringify(cart),
-    },
-    });
-    
-    return NextResponse.json({ url: session.url });
-    
-  } catch (error: any) {
-    console.error("Error al crear sesión de Stripe:", error);
-    return new NextResponse(JSON.stringify({ error: error.message || "Error al iniciar el checkout" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
-    });
+  let event: Stripe.Event;
+
+  try {
+    event = stripe.webhooks.constructEvent(Buffer.from(buf), sig, endpointSecret);
+  } catch (err: any) {
+    console.error("⚠️ Webhook signature verification failed.", err.message);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    try {
+      // Consultar recibo en Supabase por ticket_id
+      const { data: recibo, error: reciboError } = await supabase
+        .from("recibos")
+        .select("id, productos, status")
+        .eq("ticket_id", session.id)
+        .single();
+
+      if (reciboError || !recibo) {
+        console.error("Recibo no encontrado para ticket_id:", session.id);
+        return NextResponse.json({ error: "Recibo no encontrado" }, { status: 404 });
+      }
+
+      if (recibo.status === "pagado") {
+        // Ya procesado antes, no hacer nada
+        return NextResponse.json({ received: true });
+      }
+
+      // Productos comprados con id_sku y quantity
+      const productosComprados = recibo.productos as {
+        id_sku: string;
+        quantity: number;
+      }[];
+
+      // Iterar para actualizar stock
+      for (const item of productosComprados) {
+        // Obtener stock actual
+        const { data: productoActual, error: errorProducto } = await supabase
+          .from("productos")
+          .select("existencias")
+          .eq("id_sku", item.id_sku)
+          .single();
+
+        if (errorProducto || !productoActual) {
+          console.error("Producto no encontrado para stock:", item.id_sku);
+          continue; // O manejar error como prefieras
+        }
+
+        const nuevoStock = productoActual.existencias - item.quantity;
+
+        if (nuevoStock < 0) {
+          console.error("Stock insuficiente para:", item.id_sku);
+          continue; // O manejar error
+        }
+
+        // Actualizar stock
+        const { error: updateError } = await supabase
+          .from("productos")
+          .update({ existencias: nuevoStock })
+          .eq("id_sku", item.id_sku);
+
+        if (updateError) {
+          console.error("Error actualizando stock para:", item.id_sku, updateError);
+        }
+      }
+
+      // Actualizar recibo como pagado
+      const { error: updateReciboError } = await supabase
+        .from("recibos")
+        .update({ status: "pagado" })
+        .eq("ticket_id", session.id);
+
+      if (updateReciboError) {
+        console.error("Error actualizando recibo:", updateReciboError);
+      }
+
+      return NextResponse.json({ received: true });
+    } catch (error) {
+      console.error("Error procesando webhook:", error);
+      return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    }
+  }
+
+  // Para otros eventos que no queremos procesar:
+  return NextResponse.json({ received: true });
 }
+
 /*// app/api/stripe/checkout/route.ts
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
