@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { NextResponse } from "next/server";
 
 type Producto = {
-  id_sku: string;
+  id: string;
   name: string;
   price: number;
   quantity: number;
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     // Validar productos
     for (const item of cart) {
-      if (!item.id_sku || !item.name || !item.price || !item.quantity) {
+      if (!item.id || !item.name || !item.price || !item.quantity) {
         return NextResponse.json(
           { error: `Producto inválido: ${JSON.stringify(item)}` }, 
           { status: 400 }
