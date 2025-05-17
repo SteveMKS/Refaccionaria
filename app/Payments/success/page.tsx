@@ -25,7 +25,7 @@ export default function PaymentSuccess() {
       </p>
       <div className="flex gap-4 mt-6">
         <Button onClick={() => router.push("/")}>Ir al Inicio</Button>
-        <Button variant="outline" onClick={() => router.push("/orders")}>
+        <Button variant="outline" onClick={() => router.push("/Compras")}>
           Ver mis pedidos
         </Button>
       </div>
