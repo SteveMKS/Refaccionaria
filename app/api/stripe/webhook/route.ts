@@ -1,4 +1,162 @@
-// app/api/stripe/webhook/route.ts - VERSIÓN COMPLETAMENTE REVISADA
+
+// app/api/stripe/webhook/route.ts - CORREGIDO
+import Stripe from "stripe";
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
+
+// 🔧 Requerido para desactivar el body parser y leer el raw body
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-03-31.basil",
+});
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// 🧠 Función para leer todo el body como Buffer desde el ReadableStream
+async function readRequestBodyAsBuffer(request: NextRequest): Promise<Buffer> {
+  const reader = request.body?.getReader();
+  const chunks: Uint8Array[] = [];
+
+  if (!reader) throw new Error("No body stream found.");
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) chunks.push(value);
+  }
+
+  return Buffer.concat(chunks);
+}
+
+export async function POST(req: NextRequest) {
+  console.log("🔔 Webhook de Stripe recibido");
+  
+  let bodyBuffer: Buffer;
+  let event: Stripe.Event;
+
+  try {
+    bodyBuffer = await readRequestBodyAsBuffer(req);
+  } catch (error) {
+    console.error("❌ Error al leer el cuerpo de la solicitud:", error);
+    return NextResponse.json({ error: "Error al leer body" }, { status: 400 });
+  }
+
+  const sig = req.headers.get("stripe-signature");
+  if (!sig) {
+    console.error("❌ Falta firma de Stripe");
+    return NextResponse.json({ error: "Falta firma de Stripe" }, { status: 400 });
+  }
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      bodyBuffer,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+    console.log(`✅ Evento de Stripe verificado: ${event.type}`);
+  } catch (err) {
+    console.error("⚠️ Verificación de firma fallida:", err);
+    return NextResponse.json({ error: "Firma inválida" }, { status: 400 });
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    console.log(`💰 Checkout completado - Session ID: ${session.id}`);
+    
+    try {
+      // Verificar si existe un user_id en los metadatos
+      const userId = session.metadata?.user_id;
+      if (!userId) {
+        console.error("❌ No se encontró user_id en los metadatos de la sesión");
+        return NextResponse.json(
+          { error: "Se requiere id_user pero no se proporcionó en los metadatos" },
+          { status: 400 }
+        );
+      }
+      
+      // Generar ticket_id (no ticketId para mantener consistencia con la DB)
+      const ticket_id = uuidv4();
+      
+      // Procesar productos desde metadata
+      let productos = [];
+      if (session.metadata?.productos) {
+        try {
+          productos = JSON.parse(session.metadata.productos);
+          console.log("✅ Productos parseados correctamente:", productos);
+        } catch (e) {
+          console.error("❌ Error parseando productos:", e);
+          productos = []; // En caso de error, usamos un arreglo vacío
+        }
+      } else {
+        console.warn("⚠️ No se encontraron productos en metadata");
+      }
+      
+      // Crear el objeto de datos adaptado a la estructura de tu tabla
+      const reciboData = {
+        id_user: userId,
+        ticket_id,
+        stripe_session_id: session.id,
+        total: session.amount_total ? session.amount_total / 100 : 0,
+        productos,
+        fecha: new Date().toISOString().split("T")[0],
+        hora: new Date().toTimeString().split(" ")[0],
+        metodo_pago: session.payment_method_types?.[0] || "Tarjeta",
+        status: "completed"
+        // creado_en y actualizado_en tienen valores por defecto en la DB
+      };
+      
+      console.log("📝 Intentando guardar recibo:", reciboData);
+      
+      const { data, error } = await supabase
+        .from("recibos")
+        .insert([reciboData])
+        .select();
+      
+      if (error) {
+        console.error("❌ Error al guardar en Supabase:", error);
+        
+        // Diagnóstico detallado del error
+        if (error.code === "23505") {
+          console.error("Error de entrada duplicada. Posiblemente el ticket_id ya existe.");
+        } else if (error.code === "23502") {
+          console.error("Violación de NOT NULL. Falta un campo obligatorio.");
+          console.error("Datos que se intentaron insertar:", reciboData);
+        }
+        
+        return NextResponse.json(
+          { error: `Error al guardar recibo: ${error.message}` }, 
+          { status: 500 }
+        );
+      }
+      
+      console.log(`✅ Recibo guardado exitosamente. Ticket ID: ${ticket_id}`);
+      return NextResponse.json({ 
+        success: true,
+        ticket_id,
+        message: "Pago procesado exitosamente"
+      });
+    } catch (err) {
+      console.error("❌ Error procesando el pago:", err);
+      return NextResponse.json(
+        { error: `Error interno: ${err}` },
+        { status: 500 }
+      );
+    }
+  }
+
+  // Para otros tipos de eventos, solo confirmamos recepción
+  return NextResponse.json({ received: true });
+}
+/*// app/api/stripe/webhook/route.ts - CORREGIDO
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -90,8 +248,18 @@ export async function POST(req: NextRequest) {
       console.log(`💰 Checkout completado - Session ID: ${session.id}`);
       
       try {
-        // Generar datos del recibo
-        const ticketId = uuidv4();
+        // Verificar si existe un customer ID en los metadatos
+        const userId = session.metadata?.user_id;
+        if (!userId) {
+          console.error("❌ No se encontró user_id en los metadatos de la sesión");
+          return NextResponse.json(
+            { error: "Se requiere id_user pero no se proporcionó en los metadatos" },
+            { status: 400 }
+          );
+        }
+        
+        // Generar ticket_id
+        const ticket_id = uuidv4();
         
         // Procesar productos desde metadata
         let productos = [];
@@ -101,23 +269,24 @@ export async function POST(req: NextRequest) {
             console.log("✅ Productos parseados correctamente:", productos);
           } catch (e) {
             console.error("❌ Error parseando productos:", e);
-            // En caso de error, intentamos usar un arreglo vacío
+            productos = []; // En caso de error, usamos un arreglo vacío
           }
         } else {
           console.warn("⚠️ No se encontraron productos en metadata");
         }
         
-        // Datos para guardar en Supabase
+        // Datos para guardar en Supabase - adaptados a la estructura de la tabla
         const reciboData = {
+          id_user: userId,
+          ticket_id,
           stripe_session_id: session.id,
-          ticketId,
           total: session.amount_total ? session.amount_total / 100 : 0,
           productos,
           fecha: new Date().toISOString().split("T")[0],
           hora: new Date().toTimeString().split(" ")[0],
-          cliente: session.customer_email || "Cliente",
           metodo_pago: session.payment_method_types?.[0] || "Tarjeta",
-          created_at: new Date().toISOString(),
+          status: "completed",
+          // Los campos creado_en y actualizado_en tienen valores por defecto en la DB
         };
         
         console.log("📝 Intentando guardar recibo:", reciboData);
@@ -138,6 +307,8 @@ export async function POST(req: NextRequest) {
             console.error("La tabla 'recibos' posiblemente no existe");
           } else if (error.code === "42703") {
             console.error("Alguna columna no existe en la tabla 'recibos'");
+          } else if (error.code === "23502") {
+            console.error("Violación de restricción NOT NULL");
           }
           
           return NextResponse.json(
@@ -146,13 +317,13 @@ export async function POST(req: NextRequest) {
           );
         }
         
-        console.log(`✅ Recibo guardado exitosamente. TicketID: ${ticketId}`);
+        console.log(`✅ Recibo guardado exitosamente. Ticket ID: ${ticket_id}`);
         console.log("Datos guardados:", data);
         
         return NextResponse.json({ 
           success: true, 
           message: "Pago procesado exitosamente",
-          ticketId
+          ticket_id
         });
         
       } catch (err) {
@@ -174,98 +345,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-/*// app/api/stripe/webhook/route.ts
-import { NextRequest } from 'next/server'
-import Stripe from 'stripe'
-import { buffer } from 'micro'
-import { createClient } from '@supabase/supabase-js'
-import { v4 as uuidv4 } from 'uuid'
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-03-31.basil",
-})
-
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export async function POST(req: NextRequest) {
-  const sig = req.headers.get('stripe-signature')
-  const rawBody = await req.arrayBuffer()
-
-  let event: Stripe.Event
-
-  try {
-    event = stripe.webhooks.constructEvent(Buffer.from(rawBody), sig!, process.env.STRIPE_WEBHOOK_SECRET!)
-  } catch (err) {
-    console.error('❌ Error verificando firma del webhook:', err)
-    return new Response(`Webhook Error: ${err}`, { status: 400 })
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session
-
-    const userId = session.metadata?.user_id
-    const total = session.amount_total ? session.amount_total / 100 : 0
-    const metodo_pago = session.payment_method_types?.[0] || 'Desconocido'
-    const ticketId = uuidv4()
-
-    if (!userId) {
-      console.error('❌ No se recibió user_id en metadata.')
-      return new Response(JSON.stringify({ error: 'Falta user_id en metadata' }), { status: 400 })
-    }
-
-    const { data: cartItems, error: cartError } = await supabase
-      .from('carritos')
-      .select('*')
-      .eq('user_id', userId)
-
-    if (cartError || !cartItems || cartItems.length === 0) {
-      console.error('❌ Error al obtener el carrito o está vacío:', cartError)
-      return new Response(JSON.stringify({ error: 'Error al obtener el carrito o carrito vacío' }), { status: 500 })
-    }
-
-    const productosJSON = cartItems.map(item => ({
-      producto_id: item.producto_id,
-      nombre: item.nombre,
-      precio: item.precio,
-      cantidad: item.cantidad,
-      subtotal: item.precio * item.cantidad,
-    }))
-
-    const { error: reciboError } = await supabase.from('recibos').insert({
-      id_user: userId,
-      fecha: new Date().toISOString().slice(0, 10),
-      hora: new Date().toISOString().slice(11, 19),
-      total,
-      status: 'pagado',
-      metodo_pago,
-      productos: productosJSON,
-      ticket_id: ticketId,
-      stripe_session: session.id,
-    })
-
-    if (reciboError) {
-      console.error('❌ Error al insertar el recibo:', reciboError)
-      return new Response(JSON.stringify({ error: 'No se pudo insertar el recibo' }), { status: 500 })
-    }
-
-    const { error: deleteError } = await supabase.from('carritos').delete().eq('user_id', userId)
-
-    if (deleteError) {
-      console.error('⚠️ Error al limpiar el carrito:', deleteError)
-    }
-
-    console.log('✅ Recibo generado correctamente con ticket_id:', ticketId)
-  }
-
-  return new Response(JSON.stringify({ received: true }), { status: 200 })
 }*/
