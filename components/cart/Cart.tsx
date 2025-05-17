@@ -83,15 +83,24 @@ const handleStripeCheckout = async () => {
   }
 
   try {
-    // Enviamos el formato correcto que espera el endpoint
+    // Preparamos los productos con el formato esperado por el backend
+    const formattedCart = cart.map(item => ({
+      id_sku: item.id,  // Mapeamos item.id a id_sku
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      imagen_principal: item.imagen_principal,
+      descripcion: item.descripcion
+    }));
+
     const response = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        cart: cart,  // Enviamos el carrito completo como está en useCart
-        user_id: user.id,  // Usamos user_id en vez de userId como espera useCart
-        email: user.email,  // Usamos email en vez de userEmail
-        total: total  // Incluimos el total
+        cart: formattedCart,  // Enviamos el carrito con formato corregido
+        user_id: user.id,
+        email: user.email,
+        total: total
       }),
     });
 
@@ -107,6 +116,7 @@ const handleStripeCheckout = async () => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Error desconocido";
     toast.error(message);
+    console.error("Error en checkout:", error);  // Log detallado para depuración
   }
 };
 
