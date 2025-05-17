@@ -27,7 +27,8 @@ export async function POST(req: Request) {
         quantity: p.cantidad,
       })),
       customer_email: email,
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/success`,
+      // Modificamos las URLs de éxito y cancelación para incluir el session_id
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/cancel`,
     });
 
