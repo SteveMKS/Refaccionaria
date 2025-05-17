@@ -1,4 +1,5 @@
-import { NextApiRequest, NextApiResponse } from 'next'
+// app/api/stripe/webhook/route.ts
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { buffer } from 'micro'
 import { createClient } from '@supabase/supabase-js'
@@ -16,20 +17,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role para escritura sin restricciones
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const sig = req.headers['stripe-signature'] as string
-  const buf = await buffer(req)
+export async function POST(req: NextRequest) {
+  const sig = req.headers.get('stripe-signature')
+  const rawBody = await req.arrayBuffer()
 
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(buf.toString(), sig, process.env.STRIPE_WEBHOOK_SECRET!)
+    event = stripe.webhooks.constructEvent(Buffer.from(rawBody), sig!, process.env.STRIPE_WEBHOOK_SECRET!)
   } catch (err) {
     console.error('❌ Error verificando firma del webhook:', err)
-    return res.status(400).send(`Webhook Error: ${err}`)
+    return new Response(`Webhook Error: ${err}`, { status: 400 })
   }
 
   if (event.type === 'checkout.session.completed') {
@@ -42,10 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (!userId) {
       console.error('❌ No se recibió user_id en metadata.')
-      return res.status(400).json({ error: 'Falta user_id en metadata' })
+      return new Response(JSON.stringify({ error: 'Falta user_id en metadata' }), { status: 400 })
     }
 
-    // 1. Obtener productos del carrito
     const { data: cartItems, error: cartError } = await supabase
       .from('carritos')
       .select('*')
@@ -53,10 +53,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (cartError || !cartItems || cartItems.length === 0) {
       console.error('❌ Error al obtener el carrito o está vacío:', cartError)
-      return res.status(500).json({ error: 'Error al obtener el carrito o carrito vacío' })
+      return new Response(JSON.stringify({ error: 'Error al obtener el carrito o carrito vacío' }), { status: 500 })
     }
 
-    // 2. Formatear productos
     const productosJSON = cartItems.map(item => ({
       producto_id: item.producto_id,
       nombre: item.nombre,
@@ -65,11 +64,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       subtotal: item.precio * item.cantidad,
     }))
 
-    // 3. Insertar en la tabla de recibos
     const { error: reciboError } = await supabase.from('recibos').insert({
       id_user: userId,
-      fecha: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
-      hora: new Date().toISOString().slice(11, 19), // HH:MM:SS
+      fecha: new Date().toISOString().slice(0, 10),
+      hora: new Date().toISOString().slice(11, 19),
       total,
       status: 'pagado',
       metodo_pago,
@@ -80,19 +78,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (reciboError) {
       console.error('❌ Error al insertar el recibo:', reciboError)
-      return res.status(500).json({ error: 'No se pudo insertar el recibo' })
+      return new Response(JSON.stringify({ error: 'No se pudo insertar el recibo' }), { status: 500 })
     }
 
-    // 4. Eliminar productos del carrito
     const { error: deleteError } = await supabase.from('carritos').delete().eq('user_id', userId)
 
     if (deleteError) {
       console.error('⚠️ Error al limpiar el carrito:', deleteError)
-      // No retornamos error aquí porque el recibo ya se guardó exitosamente
     }
 
     console.log('✅ Recibo generado correctamente con ticket_id:', ticketId)
   }
 
-  res.status(200).json({ received: true })
+  return new Response(JSON.stringify({ received: true }), { status: 200 })
 }
