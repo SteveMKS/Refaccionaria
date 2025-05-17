@@ -45,12 +45,6 @@ type CheckoutResult =
       error: string;
     };
 
-type StripeCartItem = {
-  id_sku: string;
-  name: string;
-  price: number;
-  quantity: number;
-};
 
 export const Cart = () => {
   const { user, isEmployee } = useAuth();
@@ -78,45 +72,26 @@ export const Cart = () => {
 // Corrección del método handleStripeCheckout en Cart.tsx
 const handleStripeCheckout = async () => {
   if (!user) {
-    toast.error("Debes iniciar sesión para realizar una compra");
+    toast.error("Debes iniciar sesión para pagar con tarjeta");
     return;
   }
 
-  try {
-    // Preparamos los productos con el formato esperado por el backend
-    const formattedCart = cart.map(item => ({
-      id_sku: item.id,  // Mapeamos item.id a id_sku
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      imagen_principal: item.imagen_principal,
-      descripcion: item.descripcion
-    }));
+  const res = await fetch('/api/stripe/checkout', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      user_id: user.id,
+    }),
+  });
 
-    const response = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cart: formattedCart,  // Enviamos el carrito con formato corregido
-        user_id: user.id,
-        email: user.email,
-        total: total
-      }),
-    });
+  const data = await res.json();
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Error al procesar el pago");
-    }
-
-    const { url } = await response.json();
-    if (url) {
-      window.location.href = url;
-    }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Error desconocido";
-    toast.error(message);
-    console.error("Error en checkout:", error);  // Log detallado para depuración
+  if (data.sessionUrl) {
+    window.location.href = data.sessionUrl;
+  } else {
+    toast.error("Error al redirigir al pago");
   }
 };
 

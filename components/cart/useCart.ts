@@ -247,7 +247,7 @@ export const useCart = create<CartStore>((set, get) => ({
     }
   },
   
-  checkoutTarjeta: async (): Promise<{ url?: string; error?: string }> => {
+checkoutTarjeta: async (): Promise<{ url?: string; error?: string }> => {
   const { cart, total, user, isCheckoutInProgress } = get();
 
   if (isCheckoutInProgress) {
@@ -261,7 +261,49 @@ export const useCart = create<CartStore>((set, get) => ({
   set({ isCheckoutInProgress: true });
 
   try {
-    // Llama a la API que crea la sesión de Stripe
+    // 1. Verificación de inventario (igual que en efectivo)
+    for (const item of cart) {
+      const { data: producto, error } = await supabase
+        .from("productos")
+        .select("existencias, nombre")
+        .eq("id_sku", item.id)
+        .single();
+
+      if (error || !producto) {
+        return { error: `Error consultando el inventario de ${item.name}` };
+      }
+
+      if (producto.existencias < item.quantity) {
+        return { error: `No hay suficiente stock de "${producto.nombre}". Disponible: ${producto.existencias}, solicitado: ${item.quantity}` };
+      }
+    }
+
+    // 2. Crear registro de recibo en estado "pendiente"
+    const ticketId = uuidv4();
+    const now = new Date();
+    const fecha = now.toISOString().split("T")[0];
+    const hora = now.toTimeString().split(" ")[0];
+    const metodoPago = "Tarjeta";
+
+    const { error: insertError } = await supabase
+      .from("recibos")
+      .insert({
+        id_user: user.id,
+        status: "pendiente",
+        fecha,
+        hora,
+        total,
+        metodo_pago: metodoPago,
+        productos: cart,
+        ticket_id: ticketId,
+        stripe_session: null
+      });
+
+    if (insertError) {
+      return { error: "Error al guardar el recibo inicial" };
+    }
+
+    // 3. Crear sesión de Stripe con el ticketId en metadata
     const response = await fetch("/api/stripe/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -270,19 +312,33 @@ export const useCart = create<CartStore>((set, get) => ({
         user_id: user.id,
         email: user.email,
         total,
+        ticket_id: ticketId // Enviamos el ID del recibo creado
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok || !data.url) {
+      // Si falla Stripe, actualizamos el recibo a "fallido"
+      await supabase
+        .from("recibos")
+        .update({ status: "fallido" })
+        .eq("ticket_id", ticketId);
+      
       return { error: data.error || "No se pudo iniciar el pago con tarjeta" };
     }
 
+    // 4. Actualizar recibo con ID de sesión de Stripe
+    await supabase
+      .from("recibos")
+      .update({ stripe_session: data.sessionId }) // Asume que la API devuelve sessionId
+      .eq("ticket_id", ticketId);
+
     return { url: data.url };
+
   } catch (error) {
     console.error("Error en checkoutTarjeta:", error);
-    return { error: "Error inesperado al redirigir a Stripe" };
+    return { error: "Error inesperado al procesar el pago" };
   } finally {
     set({ isCheckoutInProgress: false });
   }

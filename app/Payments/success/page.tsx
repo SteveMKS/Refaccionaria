@@ -1,34 +1,59 @@
-// app/Payments/success/page.tsx
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/AuthProvider/Auth";
-import { Button } from "@/components/ui/button";
-import { CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { TicketModal } from "@/components/cart/Tickets"; // Ajusta la ruta si es distinta
 
-export default function PaymentSuccess() {
-  const router = useRouter();
-  const { user } = useAuth();
+export default function SuccessPage() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get("session_id");
+  const [recibo, setRecibo] = useState<any | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const supabase = createClientComponentClient();
 
   useEffect(() => {
-    toast.success("Pago realizado con éxito");
-  }, []);
+    const fetchRecibo = async () => {
+      if (!sessionId) return;
+
+      const { data, error } = await supabase
+        .from("recibos")
+        .select("*")
+        .eq("stripe_session_id", sessionId) // Usa el campo que guardaste del Webhook
+        .single();
+
+      if (data) {
+        setRecibo(data);
+        setModalOpen(true);
+      } else {
+        console.error("Recibo no encontrado", error);
+      }
+    };
+
+    fetchRecibo();
+  }, [sessionId]);
+
+  if (!recibo) return <div className="p-4 text-center">Procesando pago...</div>;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
-      <CheckCircle className="w-16 h-16 text-green-500" />
-      <h1 className="text-3xl font-bold">¡Pago Exitoso!</h1>
-      <p className="text-muted-foreground">
-        Tu pedido ha sido procesado correctamente
-      </p>
-      <div className="flex gap-4 mt-6">
-        <Button onClick={() => router.push("/")}>Ir al Inicio</Button>
-        <Button variant="outline" onClick={() => router.push("/Compras")}>
-          Ver mis pedidos
-        </Button>
+    <>
+      <div className="p-4 text-center">
+        <h1 className="text-2xl font-bold">¡Gracias por tu compra!</h1>
+        <p className="mt-2">Aquí está tu recibo:</p>
       </div>
-    </div>
+
+      <TicketModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        productos={recibo.productos} // Asegúrate que este campo sea un array con productos
+        total={recibo.total}
+        fecha={recibo.fecha}
+        hora={recibo.hora}
+        cliente={recibo.cliente}
+        ticketId={recibo.ticketId}
+        metodoPago={recibo.metodo_pago}
+      />
+    </>
   );
 }

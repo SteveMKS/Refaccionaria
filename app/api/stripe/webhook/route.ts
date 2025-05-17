@@ -1,93 +1,98 @@
-import { NextResponse } from "next/server";
-import Stripe from "stripe";
-import { createClient } from "@supabase/supabase-js";
+import { NextApiRequest, NextApiResponse } from 'next'
+import Stripe from 'stripe'
+import { buffer } from 'micro'
+import { createClient } from '@supabase/supabase-js'
+import { v4 as uuidv4 } from 'uuid'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2025-03-31.basil" });
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
 
-export async function POST(req: Request) {
-  const buf = await req.arrayBuffer();
-  const sig = req.headers.get("stripe-signature");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-03-31.basil",
+})
 
-  if (!sig) {
-    return NextResponse.json({ error: "Missing stripe-signature header" }, { status: 400 });
-  }
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Service role para escritura sin restricciones
+)
 
-  let event: Stripe.Event;
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const sig = req.headers['stripe-signature'] as string
+  const buf = await buffer(req)
+
+  let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(Buffer.from(buf), sig, endpointSecret);
-  } catch (err: any) {
-    console.error("⚠️ Webhook signature verification failed.", err.message);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    event = stripe.webhooks.constructEvent(buf.toString(), sig, process.env.STRIPE_WEBHOOK_SECRET!)
+  } catch (err) {
+    console.error('❌ Error verificando firma del webhook:', err)
+    return res.status(400).send(`Webhook Error: ${err}`)
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session
 
-    // Buscar recibo usando stripe_session en vez de ticket_id
-    const { data: recibo, error: reciboError } = await supabase
-      .from("recibos")
-      .select("*")
-      .eq("stripe_session", session.id)
-      .single();
+    const userId = session.metadata?.user_id
+    const total = session.amount_total ? session.amount_total / 100 : 0
+    const metodo_pago = session.payment_method_types?.[0] || 'Desconocido'
+    const ticketId = uuidv4()
 
-    if (reciboError || !recibo) {
-      console.error("Recibo no encontrado para stripe_session:", session.id);
-      return NextResponse.json({ error: "Recibo no encontrado" }, { status: 404 });
+    if (!userId) {
+      console.error('❌ No se recibió user_id en metadata.')
+      return res.status(400).json({ error: 'Falta user_id en metadata' })
     }
 
-    if (recibo.status === "pagado") {
-      // Ya procesado previamente
-      return NextResponse.json({ received: true });
+    // 1. Obtener productos del carrito
+    const { data: cartItems, error: cartError } = await supabase
+      .from('carritos')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (cartError || !cartItems || cartItems.length === 0) {
+      console.error('❌ Error al obtener el carrito o está vacío:', cartError)
+      return res.status(500).json({ error: 'Error al obtener el carrito o carrito vacío' })
     }
 
-    const productosComprados = recibo.productos as {
-      id_sku: string;
-      quantity: number;
-    }[];
+    // 2. Formatear productos
+    const productosJSON = cartItems.map(item => ({
+      producto_id: item.producto_id,
+      nombre: item.nombre,
+      precio: item.precio,
+      cantidad: item.cantidad,
+      subtotal: item.precio * item.cantidad,
+    }))
 
-    // Actualizar stock para cada producto
-    for (const item of productosComprados) {
-      const { data: productoActual, error: errorProducto } = await supabase
-        .from("productos")
-        .select("existencias")
-        .eq("id_sku", item.id_sku)
-        .single();
+    // 3. Insertar en la tabla de recibos
+    const { error: reciboError } = await supabase.from('recibos').insert({
+      id_user: userId,
+      fecha: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
+      hora: new Date().toISOString().slice(11, 19), // HH:MM:SS
+      total,
+      status: 'pagado',
+      metodo_pago,
+      productos: productosJSON,
+      ticket_id: ticketId,
+      stripe_session: session.id,
+    })
 
-      if (errorProducto || !productoActual) {
-        console.error("Producto no encontrado para stock:", item.id_sku);
-        continue;
-      }
-
-      const nuevoStock = productoActual.existencias - item.quantity;
-
-      if (nuevoStock < 0) {
-        console.error("Stock insuficiente para:", item.id_sku);
-        continue;
-      }
-
-      const { error: updateError } = await supabase
-        .from("productos")
-        .update({ existencias: nuevoStock })
-        .eq("id_sku", item.id_sku);
-
-      if (updateError) {
-        console.error("Error actualizando stock para:", item.id_sku, updateError);
-      }
+    if (reciboError) {
+      console.error('❌ Error al insertar el recibo:', reciboError)
+      return res.status(500).json({ error: 'No se pudo insertar el recibo' })
     }
 
-    // Actualizar estado del recibo a pagado
-    const { error: updateReciboError } = await supabase
-      .from("recibos")
-      .update({ status: "pagado" })
-      .eq("stripe_session", session.id);
+    // 4. Eliminar productos del carrito
+    const { error: deleteError } = await supabase.from('carritos').delete().eq('user_id', userId)
 
-    if (updateReciboError) {
-      console.error("Error actualizando recibo a pagado:", updateReciboError);
+    if (deleteError) {
+      console.error('⚠️ Error al limpiar el carrito:', deleteError)
+      // No retornamos error aquí porque el recibo ya se guardó exitosamente
     }
+
+    console.log('✅ Recibo generado correctamente con ticket_id:', ticketId)
   }
 
-  return NextResponse.json({ received: true });
+  res.status(200).json({ received: true })
 }
