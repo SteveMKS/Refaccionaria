@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -8,51 +9,53 @@ import { ModeToggle } from "@/components/ThemeMode/ModeToogle";
 import { SyncCart } from "@/components/cart/CartSync";
 import { AuthProvider } from "@/components/AuthProvider/Auth";
 import { HydrateUser } from "@/components/Users/HydrateUser";
-
+import { Toaster } from "sonner"; // ✅ Importar Toaster
 
 const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-    title: "Frontera APP",
-    description: "Refacciones de Calidad",
+  title: "Frontera APP",
+  description: "Refacciones de Calidad",
 };
 
 export default function RootLayout({
-    children,
+  children,
 }: Readonly<{
-    children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-    return (
-        <html lang="en" suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="system"
-                    enableSystem
-                    disableTransitionOnChange
-                >
-                    <AuthProvider>
-                        <HydrateUser />
-                        <SidebarProvider>
-                            <AppSidebar />
-                            <main className="flex-1">
-                                <SidebarTrigger />
-                                <ModeToggle />
-                                <SyncCart />
-                                {children}
-                            </main>
-                        </SidebarProvider>
-                    </AuthProvider>
-                </ThemeProvider>
-            </body>
-        </html>
-    );
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthProvider>
+            <HydrateUser />
+            <SidebarProvider>
+              <AppSidebar />
+              <main className="flex-1">
+                <SidebarTrigger />
+                <ModeToggle />
+                <SyncCart />
+                {children}
+              </main>
+            </SidebarProvider>
+          </AuthProvider>
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }
+

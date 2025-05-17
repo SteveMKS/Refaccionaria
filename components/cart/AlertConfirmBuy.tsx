@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import { ReactNode } from "react";
 
 interface ConfirmPurchaseDialogProps {
-  onConfirm: () => Promise<void>;
+  onConfirm: () => Promise<any>;
   trigger?: ReactNode; // Nueva prop opcional
   children?: ReactNode; // Mantenemos children para compatibilidad
 }
@@ -25,7 +25,15 @@ export function ConfirmPurchaseDialog({
   const handleConfirmPurchase = async () => {
     try {
       setLoading(true);
-      await onConfirm();
+      const result = await onConfirm();
+      
+      // Verificamos si el resultado contiene un error
+      if (result && typeof result === "object" && "error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      
+      // Solo mostramos el mensaje de éxito si no hubo errores
       toast.success("Compra realizada con éxito");
     } catch (error: any) {
       toast.error(error.message || "Error al procesar la compra");

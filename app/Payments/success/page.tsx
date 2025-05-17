@@ -1,18 +1,34 @@
-import Link from "next/link"; 
-export default function SuccessPage() {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-green-50">
-        <div className="bg-white shadow-xl p-8 rounded-2xl text-center max-w-md">
-          <h1 className="text-3xl font-bold text-green-600 mb-4">¡Pago exitoso!</h1>
-          <p className="text-gray-700 mb-6">Gracias por tu compra. Tu pedido ha sido procesado con éxito.</p>
-          <Link
-            href="/"
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full font-semibold"
-          >
-            Volver al inicio
-          </Link>
-        </div>
+// app/Payments/success/page.tsx
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider/Auth";
+import { Button } from "@/components/ui/button";
+import { CheckCircle } from "lucide-react";
+import { toast } from "sonner";
+
+export default function PaymentSuccess() {
+  const router = useRouter();
+  const { user } = useAuth();
+
+  useEffect(() => {
+    toast.success("Pago realizado con éxito");
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+      <CheckCircle className="w-16 h-16 text-green-500" />
+      <h1 className="text-3xl font-bold">¡Pago Exitoso!</h1>
+      <p className="text-muted-foreground">
+        Tu pedido ha sido procesado correctamente
+      </p>
+      <div className="flex gap-4 mt-6">
+        <Button onClick={() => router.push("/")}>Ir al Inicio</Button>
+        <Button variant="outline" onClick={() => router.push("/orders")}>
+          Ver mis pedidos
+        </Button>
       </div>
-    );
-  }
-  
+    </div>
+  );
+}

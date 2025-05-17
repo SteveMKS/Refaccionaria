@@ -40,6 +40,7 @@ type CartStore = {
   clearCartState: () => void;
   setCartFromDB: (items: CartItem[]) => void;
   checkoutEfectivo: () => Promise<CheckoutResult>;
+  checkoutTarjeta: () => Promise<{ url?: string; error?: string }>;
 };
 
 export const useCart = create<CartStore>((set, get) => ({
@@ -157,27 +158,58 @@ export const useCart = create<CartStore>((set, get) => ({
 
   checkoutEfectivo: async () => {
     const { cart, total, user, isCheckoutInProgress } = get();
-    
+
     if (isCheckoutInProgress) {
       return { error: "Procesando compra, por favor espera" };
     }
-    
+
     if (!user || cart.length === 0) {
       return { error: "Carrito vacío o usuario no autenticado" };
     }
-    
+
     set({ isCheckoutInProgress: true });
-    
+
     try {
-      // Generación única del UUID
+      // 1. Verificamos inventario primero
+      for (const item of cart) {
+        const { data: producto, error } = await supabase
+          .from("productos")
+          .select("existencias, nombre")
+          .eq("id_sku", item.id)
+          .single();
+
+        if (error || !producto) {
+          set({ isCheckoutInProgress: false }); // Importante restablecer el estado
+          return { error: `Error consultando el inventario de ${item.name}` };
+        }
+
+        if (producto.existencias < item.quantity) {
+          set({ isCheckoutInProgress: false }); // Importante restablecer el estado
+          return { error: `No hay suficiente stock de "${producto.nombre}". Disponible: ${producto.existencias}, solicitado: ${item.quantity}` };
+        }
+      }
+
+      // 2. Descontamos existencias solo si pasamos la verificación
+      for (const item of cart) {
+        const { error } = await supabase.rpc("descontar_existencias", {
+          sku: item.id,
+          cantidad: item.quantity
+        });
+
+        if (error) {
+          set({ isCheckoutInProgress: false }); // Importante restablecer el estado
+          return { error: `Error al descontar inventario de "${item.name}"` };
+        }
+      }
+
+      // 3. Registramos la venta
       const ticketId = uuidv4();
       const now = new Date();
       const fecha = now.toISOString().split("T")[0];
       const hora = now.toTimeString().split(" ")[0];
       const metodoPago = "Efectivo";
-  
-      // Guardar en Supabase con el ticketId generado
-      const { error } = await supabase
+
+      const { error: insertError } = await supabase
         .from("recibos")
         .insert({
           id_user: user.id,
@@ -187,25 +219,26 @@ export const useCart = create<CartStore>((set, get) => ({
           total,
           metodo_pago: metodoPago,
           productos: cart,
-          ticket_id: ticketId, // Usamos el mismo UUID generado
+          ticket_id: ticketId
         });
-  
-      if (error) {
-        console.error("Error al guardar la orden:", error);
+
+      if (insertError) {
+        set({ isCheckoutInProgress: false }); // Importante restablecer el estado
         return { error: "Error al guardar el recibo" };
       }
-  
+
       await get().clearCart();
-  
+
       return {
         fecha,
         hora,
         cliente: user.email || user.user_metadata?.name || "Cliente",
-        ticketId, // Devolvemos el mismo UUID
+        ticketId,
         productos: [...cart],
         total,
         metodoPago
       };
+
     } catch (error) {
       console.error("Error en checkoutEfectivo:", error);
       return { error: "Error inesperado al procesar el pago" };
@@ -213,4 +246,45 @@ export const useCart = create<CartStore>((set, get) => ({
       set({ isCheckoutInProgress: false });
     }
   },
+  
+  checkoutTarjeta: async (): Promise<{ url?: string; error?: string }> => {
+  const { cart, total, user, isCheckoutInProgress } = get();
+
+  if (isCheckoutInProgress) {
+    return { error: "Procesando compra, por favor espera" };
+  }
+
+  if (!user || cart.length === 0) {
+    return { error: "Carrito vacío o usuario no autenticado" };
+  }
+
+  set({ isCheckoutInProgress: true });
+
+  try {
+    // Llama a la API que crea la sesión de Stripe
+    const response = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cart,
+        user_id: user.id,
+        email: user.email,
+        total,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.url) {
+      return { error: data.error || "No se pudo iniciar el pago con tarjeta" };
+    }
+
+    return { url: data.url };
+  } catch (error) {
+    console.error("Error en checkoutTarjeta:", error);
+    return { error: "Error inesperado al redirigir a Stripe" };
+  } finally {
+    set({ isCheckoutInProgress: false });
+  }
+},
 }));
