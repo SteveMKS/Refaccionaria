@@ -24,7 +24,12 @@ if (!supabaseUrl || !supabaseKey) {
   console.error("❌ Variables de entorno de Supabase no configuradas correctamente");
 }
 
-const supabase = createClient(supabaseUrl!, supabaseKey!);
+const supabase = createClient(supabaseUrl!, supabaseKey!, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  }
+});
 
 // 🧠 Función para leer todo el body como Buffer desde el ReadableStream
 async function readRequestBodyAsBuffer(request: NextRequest): Promise<Buffer> {
@@ -118,26 +123,43 @@ export async function POST(req: NextRequest) {
         console.warn("⚠️ No se encontraron productos en metadata");
       }
       
-      // Crear objeto para inserción en Supabase exactamente según schema
+      // Insertar en Supabase con manejo de errores detallado
+      console.log("🔍 Verificando si el user_id existe en la tabla de usuarios...");
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("id", userId)
+        .single();
+        
+      if (userError) {
+        console.error("❌ Error al verificar el usuario:", userError);
+        return NextResponse.json(
+          { error: `El usuario con ID ${userId} no existe en la base de datos` }, 
+          { status: 400 }
+        );
+      }
+      
+      console.log("✅ Usuario verificado, procediendo a guardar recibo...");
+      
+      // Crear recibo con tipos de datos exactos según el schema
       const reciboData = {
         id_user: userId,
         ticket_id: ticket_id,
         stripe_session_id: session.id,
-        total: session.amount_total ? session.amount_total / 100 : 0,
+        total: Number((session.amount_total! / 100).toFixed(2)),
         productos: productos, // jsonb field
         fecha: new Date().toISOString().split("T")[0], // formato YYYY-MM-DD
         hora: new Date().toLocaleTimeString("en-US", { hour12: false }), // formato HH:MM:SS
         metodo_pago: session.payment_method_types?.[0] || "Tarjeta",
         status: "completed"
-        // creado_en y actualizado_en tienen valores por defecto en la DB
       };
       
       console.log("📝 Intentando guardar recibo:", JSON.stringify(reciboData));
       
-      // Insertar en Supabase con manejo de errores detallado
       const { data, error } = await supabase
         .from("recibos")
-        .insert([reciboData]);
+        .insert([reciboData])
+        .select();
       
       if (error) {
         console.error("❌ Error al guardar en Supabase:", error);
