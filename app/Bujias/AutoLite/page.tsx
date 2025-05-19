@@ -40,8 +40,9 @@ export default function ProductosPage() {
   const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
   const [busqueda, setBusqueda] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+const [page, setPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+
 
 
 useEffect(() => {
@@ -225,32 +226,33 @@ useEffect(() => {
 
           {/* Paginación */}
           <div className="flex justify-center items-center mt-6 gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPaginaActual(p => Math.max(p - 1, 1))}
-              disabled={paginaActual === 1}
-            >
-              Anterior
-            </Button>
-            {paginas.map(num => (
-              <Button
-                key={num}
-                size="sm"
-                variant={paginaActual === num ? "default" : "outline"}
-                onClick={() => setPaginaActual(num)}
-              >
-                {num}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPaginaActual(p => Math.min(p + 1, totalPaginas))}
-              disabled={paginaActual === totalPaginas}
-            >
-              Siguiente
-            </Button>
+<Button
+  variant="outline"
+  size="sm"
+  onClick={() => setPage(p => Math.max(p - 1, 1))}
+  disabled={page === 1}
+>
+  Anterior
+</Button>
+{Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
+  <Button
+    key={num}
+    size="sm"
+    variant={page === num ? "default" : "outline"}
+    onClick={() => setPage(num)}
+  >
+    {num}
+  </Button>
+))}
+<Button
+  variant="outline"
+  size="sm"
+  onClick={() => setPage(p => Math.min(p + 1, totalPages))}
+  disabled={page === totalPages}
+>
+  Siguiente
+</Button>
+
           </div>
         </>
       )}
