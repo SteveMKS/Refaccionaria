@@ -92,6 +92,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Firma inválida" }, { status: 400 });
   }
 
+  // 👇 Inserción de prueba aislado (puedes dejarlo en producción temporalmente si quieres verlo funcionar)
+console.log("⚙️ Ejecutando insert de prueba aislado...");
+
+const pruebaInsert = await supabase.from("recibos").insert([
+  {
+    id_user: 'd46290e7-c522-4eca-b190-0759a3d84a2c', // ⚠️ Usa un ID que exista en tu tabla "users"
+    ticket_id: 'debug-test-' + Math.random().toString(36).substring(2, 8),
+    stripe_session_id: 'cs_test_debug_' + Date.now(),
+    total: 123.45,
+    productos: [
+      { id: 'p1', name: 'Producto de prueba', price: 100, quantity: 1 },
+      { id: 'p2', name: 'Producto 2', price: 23.45, quantity: 1 }
+    ],
+    fecha: new Date().toISOString().split('T')[0],
+    hora: new Date().toTimeString().split(' ')[0],
+    metodo_pago: 'debug',
+    status: 'completed'
+  }
+]).select();
+
+if (pruebaInsert.error) {
+  console.error("❌ Insert de prueba falló:", pruebaInsert.error.message, pruebaInsert.error.code, pruebaInsert.error.details);
+} else {
+  console.log("✅ Insert de prueba exitoso:", JSON.stringify(pruebaInsert.data, null, 2));
+}
+
   // Paso 3: Procesar el evento checkout.session.completed
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
