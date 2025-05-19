@@ -13,11 +13,11 @@ import {
 } from 'react';
 
 interface Users {
-  nombre: string;
-  apellido: string;
-  correo: string;  
+  nombre?: string;
+  apellido?: string;
+  correo?: string;
   avatar?: string;
-  rol?: 'user' | 'empleado' | 'admin'; // Nuevo campo rol
+  rol?: 'user' | 'empleado' | 'admin';
 }
 
 interface CarritoItemFromDB {
@@ -34,7 +34,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   logout: () => Promise<void>;
-  isAdmin: boolean; // Nuevas propiedades
+  isAdmin: boolean;
   isEmployee: boolean;
   userRole: string | null;
 }
@@ -50,39 +50,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = async (session: Session | null) => {
     const { setCartFromDB } = useCart.getState();
-  
+
     if (!session?.user) {
       setUser(null);
       setUserRole(null);
       return;
     }
-  
+
+    const userId = session.user.id;
+    const userEmail = session.user.email;
+
+    // 🔍 Verificar existencia en tabla public.users
     const { data: profile, error: profileError } = await supabase
       .from('users')
-      .select('nombre, apellido, correo, avatar, rol') // Incluir rol en la consulta
-      .eq('id', session.user.id)
+      .select('nombre, apellido, correo, avatar, rol')
+      .eq('id', userId)
       .single();
-  
-    if (profileError) {
-      console.error('Error obteniendo perfil:', profileError);
-      setUser(session.user as UserWithProfile);
-      setUserRole('user'); // Valor por defecto
-    } else {
-      const userWithProfile = { 
-        ...session.user, 
-        ...profile,
-        rol: profile.rol || 'user' // Valor por defecto si no tiene rol
-      };
-      setUser(userWithProfile);
-      setUserRole(userWithProfile.rol);
+
+    // Si no existe, lo insertamos automáticamente
+    if (profileError && profileError.code === 'PGRST116') {
+      console.warn('🧩 Usuario no encontrado en tabla "users", creando entrada...');
+
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
+          id: userId,
+          correo: userEmail,
+          nombre: session.user.user_metadata?.name || 'Cliente',
+          apellido: '',
+          avatar: session.user.user_metadata?.avatar_url || null,
+          rol: 'user',
+        });
+
+      if (insertError) {
+        console.error('❌ Error al insertar usuario en "users":', insertError.message);
+      }
     }
-  
-    // Cargar productos del carrito (mantenemos esta lógica)
+
+    // 🔁 Obtener el perfil actualizado
+    const { data: profileFinal } = await supabase
+      .from('users')
+      .select('nombre, apellido, correo, avatar, rol')
+      .eq('id', userId)
+      .single();
+
+    const userWithProfile: UserWithProfile = {
+      ...session.user,
+      ...profileFinal,
+      rol: profileFinal?.rol || 'user',
+    };
+
+    setUser(userWithProfile);
+    setUserRole(userWithProfile.rol ?? 'user'); // 🔒 Siempre asegura string válido
+
+    // 🛒 Sincronizar carrito del usuario
     const { data: carritoDB, error: carritoError } = await supabase
       .from('carritos')
       .select('producto_id, nombre, precio, cantidad, imagen_principal, descripcion')
-      .eq('user_id', session.user.id);
-  
+      .eq('user_id', userId);
+
     if (carritoError) {
       console.error('Error cargando carrito:', carritoError);
     } else if (carritoDB) {
@@ -106,16 +132,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetchUser(data.session);
       setLoading(false);
     };
-  
+
     initAuth();
-  
+
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event: string, session: Session | null) => {
         setSession(session);
         fetchUser(session);
       }
     );
-  
+
     return () => {
       listener?.subscription?.unsubscribe();
     };
@@ -129,14 +155,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useCart.getState().clearCart();
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     session,
     loading,
     logout,
     isAdmin: userRole === 'admin',
     isEmployee: userRole === 'empleado' || userRole === 'admin',
-    userRole
+    userRole,
   };
 
   return (

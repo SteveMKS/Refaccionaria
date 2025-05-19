@@ -134,9 +134,9 @@ export async function POST(req: NextRequest) {
         .single();
         
       if (userError) {
-        console.error("❌ Error al verificar el usuario:", userError);
+        console.error("❌ Usuario no existe en public.users. Rechazando el recibo.");
         return NextResponse.json(
-          { error: `El usuario con ID ${userId} no existe en la base de datos` }, 
+          { error: "El usuario no existe en la base de datos" }, 
           { status: 400 }
         );
       }
