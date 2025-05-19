@@ -95,10 +95,11 @@ export const Cart = () => {
           email: user.email,
           userId: user.id, // Añadimos el ID del usuario aquí
           productos: cart.map((item) => ({
-            nombre: item.name,
-            precio: item.price,
-            cantidad: item.quantity,
-          })),
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          }))
         }),
       });
 

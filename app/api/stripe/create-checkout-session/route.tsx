@@ -1,4 +1,3 @@
-// app/api/stripe/create-checkout-session/route.ts - CORREGIDO
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
@@ -7,7 +6,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
 });
 
-// Inicializar Supabase (opcional, por si necesitas verificar el usuario)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -15,10 +13,8 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    // Extraer productos, email y userId del cuerpo de la solicitud
-    const { productos, email, userId } = await req.json();
-    
-    // Verificar que tengamos el ID del usuario
+    const { productos, email, userId, ticket_id } = await req.json();
+
     if (!userId) {
       console.error("❌ No se proporcionó el ID de usuario");
       return NextResponse.json(
@@ -26,26 +22,26 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    
+
     console.log(`📦 Creando sesión para usuario ${userId} con ${productos.length} productos`);
 
-    // Crear sesión de checkout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "payment",
       metadata: {
-        productos: JSON.stringify(productos),
-        user_id: userId // Crucial: Incluimos el ID del usuario aquí
+        productos: JSON.stringify(productos), // ya con keys correctas
+        user_id: userId,
+        ticket_id: ticket_id || undefined,
       },
       line_items: productos.map((p: any) => ({
         price_data: {
           currency: "mxn",
           product_data: {
-            name: p.nombre,
+            name: p.name,
           },
-          unit_amount: Math.round(p.precio * 100),
+          unit_amount: Math.round(p.price * 100), // ✅ Esto necesita que `p.price` sea número
         },
-        quantity: p.cantidad,
+        quantity: p.quantity,
       })),
       customer_email: email,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/Payments/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -53,8 +49,8 @@ export async function POST(req: Request) {
     });
 
     console.log(`✅ Sesión de Stripe creada con éxito - ID: ${session.id}`);
-    return NextResponse.json({ url: session.url });
-    
+    return NextResponse.json({ url: session.url, sessionId: session.id });
+
   } catch (err: any) {
     console.error("❌ Error creando sesión de Stripe:", err.message);
     return NextResponse.json(

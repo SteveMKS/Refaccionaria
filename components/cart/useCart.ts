@@ -313,9 +313,10 @@ checkoutTarjeta: async (): Promise<{ url?: string; error?: string }> => {
         email: user.email,
         userId: user.id,
         productos: cart.map((item) => ({
-          nombre: item.name,
-          precio: item.price,
-          cantidad: item.quantity,
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
         })),
         ticket_id: ticketId,
       }),
