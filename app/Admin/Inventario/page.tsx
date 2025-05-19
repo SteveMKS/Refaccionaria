@@ -55,6 +55,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { number } from "framer-motion";
 
 interface Producto {
   id_sku: string;
@@ -74,7 +75,7 @@ export default function InventarioAdminPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [marcas, setMarcas] = useState<{ id_marca: string; nombre: string }[]>([]);
   const [subcategorias, setSubcategorias] = useState<{ id_subsubcategoria: string; nombre: string }[]>([]);
-  const [formData, setFormData] = useState<Partial<Producto>>({ activo: true, destacado: false });
+  const [formData, setFormData] = useState<FormProducto>({ activo: true, destacado: false });
   const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
   const [loading, setLoading] = useState(false);
   const [openForm, setOpenForm] = useState(false);
@@ -84,6 +85,8 @@ export default function InventarioAdminPage() {
   const [isFiltering, setIsFiltering] = useState(false);
   const [selectedMarca, setSelectedMarca] = useState<string | null>(null);
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
+  type FormProducto = Partial<Producto> & { ajuste?: number };
+  
 
   const itemsPerPage = 10;
 
@@ -146,13 +149,17 @@ export default function InventarioAdminPage() {
 
   const handleDelete = async (id_sku: string) => {
     try {
-      const { error } = await supabase.from("productos").delete().eq("id_sku", id_sku);
+      const { error } = await supabase
+        .from("productos")
+        .update({ activo: false })
+        .eq("id_sku", id_sku);
+    
       if (error) throw error;
-      
-      toast.success("Producto eliminado correctamente");
+
+      toast.success("Producto marcado como inactivo");
       fetchData();
-    } catch (error) {
-      toast.error("Error al eliminar producto");
+      } catch (error) {
+      toast.error("Error al desactivar el producto");
     }
   };
 
@@ -162,25 +169,48 @@ export default function InventarioAdminPage() {
     setOpenForm(true);
   };
 
-  const handleUpdate = async () => {
-    if (!editingProduct) return;
-    setLoading(true);
-    try {
-      const { error } = await supabase.from("productos").update(formData).eq("id_sku", editingProduct.id_sku);
-      
-      if (error) throw error;
-      
-      toast.success("Producto actualizado correctamente");
-      setEditingProduct(null);
-      setFormData({ activo: true, destacado: false });
-      setOpenForm(false);
-      fetchData();
-    } catch (error) {
-      toast.error("Error al actualizar producto");
-    } finally {
+const handleUpdate = async () => {
+  if (!editingProduct) return;
+  setLoading(true);
+
+  try {
+    // Convertir valores numéricos
+    const existenciasActuales = Number(editingProduct.existencias || 0);
+    const ajuste = Number(formData.ajuste || 0);
+
+    const nuevaExistencia = existenciasActuales + ajuste;
+
+    if (nuevaExistencia < 0) {
+      toast.error("No puedes tener existencias negativas");
       setLoading(false);
+      return;
     }
-  };
+
+    // Excluir 'ajuste' antes del update
+    const { ajuste: _, ...formDataSinAjuste } = formData;
+
+    const { error } = await supabase
+      .from("productos")
+      .update({
+        ...formDataSinAjuste,
+        existencias: nuevaExistencia,
+      })
+      .eq("id_sku", editingProduct.id_sku);
+
+    if (error) throw error;
+
+    toast.success("Producto actualizado correctamente");
+    setEditingProduct(null);
+    setFormData({ activo: true, destacado: false });
+    setOpenForm(false);
+    fetchData();
+  } catch (error) {
+    toast.error("Error al actualizar producto");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -477,7 +507,7 @@ export default function InventarioAdminPage() {
                               onClick={() => handleDelete(producto.id_sku)} 
                               className="h-8 px-2"
                             >
-                              Eliminar
+                              Desactivar
                             </Button>
                           </div>
                         </TableCell>
@@ -709,6 +739,19 @@ export default function InventarioAdminPage() {
                 placeholder="https://ejemplo.com/imagen.jpg"
               />
             </div>
+
+            <div className="space-y-2">
+            <Label htmlFor="ajuste">Ajuste de Existencias</Label>
+              <Input
+                type="number"
+                id="ajuste"
+                name="ajuste"
+                placeholder="Ej: 5 o -2"
+                value={formData.ajuste || ""}
+                onChange={(e) => setFormData({ ...formData, ajuste: Number(e.target.value) })}
+                />
+              </div>
+
             
             <div className="flex items-center justify-between space-x-2 md:col-span-2">
               <div className="flex flex-col space-y-1.5">
