@@ -8,6 +8,8 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
 import { useCart } from "@/components/cart/useCart";
 import { Button } from "@/components/ui/button";
+import { BusquedaBar } from "@/components/Busqueda/BusquedaBar";
+import { useBusqueda } from "@/components/Busqueda/BusquedaContext";
 
 type Marca = {
   id_marca: string;
@@ -30,6 +32,7 @@ type Producto = {
 const PAGE_SIZE = 6;
 
 export default function ProductosPage() {
+  const { busqueda } = useBusqueda();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [total, setTotal] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
@@ -45,10 +48,19 @@ export default function ProductosPage() {
       const start = (paginaActual - 1) * PAGE_SIZE;
       const end = start + PAGE_SIZE - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from("productos")
-        .select(`*, id_marca (id_marca, nombre, descripcion)`, { count: 'exact' })
-        .eq("id_marca", "88578827-9e74-492b-a6be-d8eca170eb1e")
+        .select("*, id_marca (id_marca, nombre, descripcion)", { count: "exact" })
+        .eq("activo", true)
+        .eq("id_marca", "88578827-9e74-492b-a6be-d8eca170eb1e");
+
+      if (busqueda.trim() !== "") {
+        query = query.or(
+          `nombre.ilike.%${busqueda}%,id_sku.ilike.%${busqueda}%,num_parte.ilike.%${busqueda}%`
+        );
+      }
+
+      const { data, error, count } = await query
         .order("nombre", { ascending: true })
         .range(start, end);
 
@@ -60,11 +72,12 @@ export default function ProductosPage() {
         setProductos(data || []);
         setTotal(count || 0);
       }
+
       setLoading(false);
     };
 
     cargarProductos();
-  }, [paginaActual]);
+  }, [paginaActual, busqueda]);
 
   const handleAddToCart = async (producto: Producto) => {
     setAddingProductId(producto.id_sku);
@@ -101,6 +114,8 @@ export default function ProductosPage() {
         <h1 className="text-2xl font-bold">Catálogo de Productos</h1>
         <Cart />
       </div>
+
+      <BusquedaBar resetPage={() => setPaginaActual(1)} />
 
       {successMessage && (
         <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out">
@@ -180,7 +195,6 @@ export default function ProductosPage() {
             ))}
           </div>
 
-          {/* Paginación */}
           <div className="flex justify-center items-center mt-6 gap-2">
             <Button
               variant="outline"

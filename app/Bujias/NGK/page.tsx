@@ -37,34 +37,63 @@ export default function ProductosPage() {
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
+  const [busqueda, setBusqueda] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    const cargarProductos = async () => {
+
+useEffect(() => {
+  const cargarProductos = async () => {
+    try {
       setLoading(true);
-      const start = (paginaActual - 1) * PAGE_SIZE;
-      const end = start + PAGE_SIZE - 1;
+      setError(null);
 
-      const { data, error, count } = await supabase
+      const pageSize = 9;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let query = supabase
         .from("productos")
-        .select(`*, id_marca (id_marca, nombre, descripcion)`, { count: 'exact' })
+        .select(
+          `
+          *,
+          id_marca (
+            id_marca,
+            nombre,
+            descripcion
+          )
+        `,
+          { count: "exact" }
+        )
+        .eq("activo", true)
         .eq("id_marca", "e50868cc-ef7f-44f8-9e47-885aa04e8b16")
         .order("nombre", { ascending: true })
-        .range(start, end);
+        .range(from, to);
 
-      if (error) {
-        console.error("Error al cargar productos:", error);
-        setProductos([]);
-        setTotal(0);
-      } else {
-        setProductos(data || []);
-        setTotal(count || 0);
+      if (busqueda.trim() !== "") {
+        query = query.or(
+          `nombre.ilike.%${busqueda}%,id_sku.ilike.%${busqueda}%,num_parte.ilike.%${busqueda}%`
+        );
       }
-      setLoading(false);
-    };
 
-    cargarProductos();
-  }, [paginaActual]);
+      const { data, count, error: supabaseError } = await query;
+
+      if (supabaseError) throw supabaseError;
+
+      setProductos(data || []);
+      setTotalPages(Math.ceil((count || 0) / pageSize));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+      setProductos([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  cargarProductos();
+}, [busqueda, page]);
 
   const handleAddToCart = async (producto: Producto) => {
     setAddingProductId(producto.id_sku);
@@ -113,6 +142,20 @@ export default function ProductosPage() {
           {errorMessage}
         </div>
       )}
+
+{/* 🔍 Input de búsqueda */}
+<div className="mb-6">
+  <input
+    type="text"
+    placeholder="Buscar por nombre, SKU o número de parte..."
+    value={busqueda}
+    onChange={(e) => {
+      setBusqueda(e.target.value);
+      setPage(1); // 🔁 reinicia la paginación al hacer una nueva búsqueda
+    }}
+    className="w-full border border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring focus:ring-blue-200"
+  />
+</div>
 
       {loading ? (
         <div className="flex justify-center items-center h-40">
