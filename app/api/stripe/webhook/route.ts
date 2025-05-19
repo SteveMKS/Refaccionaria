@@ -1,8 +1,8 @@
-
 import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
+
 
 // 🔧 Configuración para desactivar el body parser y leer el raw body
 export const config = {
@@ -10,6 +10,8 @@ export const config = {
     bodyParser: false,
   },
 };
+
+export const runtime = "nodejs"; // 👈 NECESARIO para Stripe
 
 // Inicializar Stripe con formato de API específico
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
