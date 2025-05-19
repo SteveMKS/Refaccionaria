@@ -8,8 +8,6 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
 import { useCart } from "@/components/cart/useCart";
 import { Button } from "@/components/ui/button";
-import { BusquedaBar } from "@/components/Busqueda/BusquedaBar";
-import { useBusqueda } from "@/components/Busqueda/BusquedaContext";
 
 type Marca = {
   id_marca: string;
@@ -32,7 +30,6 @@ type Producto = {
 const PAGE_SIZE = 6;
 
 export default function ProductosPage() {
-  const { busqueda } = useBusqueda();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [total, setTotal] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
@@ -40,19 +37,40 @@ export default function ProductosPage() {
   const [addingProductId, setAddingProductId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { addToCart } = useCart();
+  const [busqueda, setBusqueda] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    const cargarProductos = async () => {
+
+useEffect(() => {
+  const cargarProductos = async () => {
+    try {
       setLoading(true);
-      const start = (paginaActual - 1) * PAGE_SIZE;
-      const end = start + PAGE_SIZE - 1;
+      setError(null);
+
+      const pageSize = 9;
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
       let query = supabase
         .from("productos")
-        .select("*, id_marca (id_marca, nombre, descripcion)", { count: "exact" })
+        .select(
+          `
+          *,
+          id_marca (
+            id_marca,
+            nombre,
+            descripcion
+          )
+        `,
+          { count: "exact" }
+        )
         .eq("activo", true)
-        .eq("id_marca", "88578827-9e74-492b-a6be-d8eca170eb1e");
+        .eq("id_marca", "88578827-9e74-492b-a6be-d8eca170eb1e")
+        .order("nombre", { ascending: true })
+        .range(from, to);
 
       if (busqueda.trim() !== "") {
         query = query.or(
@@ -60,24 +78,22 @@ export default function ProductosPage() {
         );
       }
 
-      const { data, error, count } = await query
-        .order("nombre", { ascending: true })
-        .range(start, end);
+      const { data, count, error: supabaseError } = await query;
 
-      if (error) {
-        console.error("Error al cargar productos:", error);
-        setProductos([]);
-        setTotal(0);
-      } else {
-        setProductos(data || []);
-        setTotal(count || 0);
-      }
+      if (supabaseError) throw supabaseError;
 
+      setProductos(data || []);
+      setTotalPages(Math.ceil((count || 0) / pageSize));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+      setProductos([]);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    cargarProductos();
-  }, [paginaActual, busqueda]);
+  cargarProductos();
+}, [busqueda, page]);
 
   const handleAddToCart = async (producto: Producto) => {
     setAddingProductId(producto.id_sku);
@@ -115,8 +131,6 @@ export default function ProductosPage() {
         <Cart />
       </div>
 
-      <BusquedaBar resetPage={() => setPaginaActual(1)} />
-
       {successMessage && (
         <div className="fixed bottom-6 right-6 bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-lg shadow-lg z-50 animate-fade-in-out">
           {successMessage}
@@ -128,6 +142,20 @@ export default function ProductosPage() {
           {errorMessage}
         </div>
       )}
+
+{/* 🔍 Input de búsqueda */}
+<div className="mb-6">
+  <input
+    type="text"
+    placeholder="Buscar por nombre, SKU o número de parte..."
+    value={busqueda}
+    onChange={(e) => {
+      setBusqueda(e.target.value);
+      setPage(1); // 🔁 reinicia la paginación al hacer una nueva búsqueda
+    }}
+    className="w-full border border-gray-300 rounded px-4 py-2 shadow-sm focus:outline-none focus:ring focus:ring-blue-200"
+  />
+</div>
 
       {loading ? (
         <div className="flex justify-center items-center h-40">
@@ -195,6 +223,7 @@ export default function ProductosPage() {
             ))}
           </div>
 
+          {/* Paginación */}
           <div className="flex justify-center items-center mt-6 gap-2">
             <Button
               variant="outline"
