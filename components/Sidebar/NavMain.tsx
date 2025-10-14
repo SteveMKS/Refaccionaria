@@ -1,269 +1,146 @@
+
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/components/AuthProvider/Auth';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-} from '@/components/ui/sidebar';
-import { useAuth } from '@/components/AuthProvider/Auth';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 
-type NavItemProps = {
+type NavItemData = {
   title: string;
   url: string;
   icon?: LucideIcon;
-  isActive?: boolean;
-  items?: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-  }[];
+  items?: NavItemData[];
 };
 
-export function NavMain({
-  items,
-  categories,
-  Admin,
-}: {
-  items: NavItemProps[];
-  categories: NavItemProps[];
-  Admin: NavItemProps[];
-}) {
-  const { userRole } = useAuth();
+type NavMainProps = {
+  isCollapsed?: boolean;
+  items: NavItemData[];
+  categories: NavItemData[];
+  Admin: NavItemData[];
+};
+
+const navItemVariants = {
+  hidden: { opacity: 0, y: -6 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.04, duration: 0.18, ease: 'easeOut' },
+  }),
+};
+
+const NavItem = ({ item, isCollapsed, customI }: { item: NavItemData; isCollapsed: boolean; customI: number }) => {
   const pathname = usePathname();
-  
-  const isActive = (url: string) => {
-    return pathname === url || pathname.startsWith(`${url}/`);
-  };
+  const isActive = (url: string) => pathname === url || (url !== '/' && pathname.startsWith(url));
+
+  const isParentActive = item.items ? item.items.some(sub => isActive(sub.url)) : false;
+
+  if (item.items && item.items.length > 0) {
+    return (
+      <motion.div variants={navItemVariants} custom={customI} initial="hidden" animate="visible" exit="hidden">
+        <Collapsible defaultOpen={isParentActive}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    variant={isParentActive ? 'secondary' : 'ghost'}
+                    className={cn('w-full justify-start h-10 px-3 gap-2', isParentActive && 'font-semibold')}
+                  >
+                    {item.icon && <item.icon className={cn('h-5 w-5 shrink-0', isParentActive ? 'text-primary' : 'text-muted-foreground')} />}
+                    {!isCollapsed && <span className="flex-grow text-left">{item.title}</span>}
+                    {!isCollapsed && <ChevronRight className="h-4 w-4 ml-2 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-90" />}
+                  </Button>
+                </CollapsibleTrigger>
+              </TooltipTrigger>
+              {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
+
+          <CollapsibleContent className="pl-3">
+            <div className="flex flex-col gap-1 py-1">
+              {item.items.map((sub, idx) => (
+                <NavItem key={sub.url} item={sub} isCollapsed={isCollapsed} customI={idx} />
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </motion.div>
+    );
+  }
 
   return (
-    <SidebarGroup>
-      <SidebarMenu>
-        {items.filter(item => !item.items || item.items.length === 0).map((item) => (
-          <SidebarMenuItem key={item.title}>
-            <Link href={item.url} passHref>
-              <SidebarMenuButton 
-                tooltip={item.title}
-                className={cn(
-                  "transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800",
-                  isActive(item.url) ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" : ""
+    <motion.div variants={navItemVariants} custom={customI} initial="hidden" animate="visible" exit="hidden">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              variant={usePathname() === item.url ? 'secondary' : 'ghost'}
+              className={cn('w-full justify-start h-10 px-3 relative')}
+            >
+              <Link href={item.url} className="flex items-center w-full gap-3">
+                {usePathname() === item.url && (
+                  <motion.div layoutId="active-nav-indicator" className="absolute left-0 top-0 h-full w-1 bg-primary rounded-r-full" />
                 )}
-              >
-                {item.icon && <item.icon className={cn(
-                  "h-5 w-5",
-                  isActive(item.url) ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
-                )} />}
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
+                {item.icon && <item.icon className="h-5 w-5 shrink-0" />}
+                {!isCollapsed && <span className="flex-grow text-left">{item.title}</span>}
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          {isCollapsed && <TooltipContent side="right">{item.title}</TooltipContent>}
+        </Tooltip>
+      </TooltipProvider>
+    </motion.div>
+  );
+};
 
-      <SidebarGroupLabel className="mt-6 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium px-3">
-        Piezas
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {items.filter(item => item.items && item.items.length > 0).map((item) => (
-          <Collapsible
-            key={item.title}
-            asChild
-            defaultOpen={isActive(item.url)}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton 
-                  tooltip={item.title}
-                  className={cn(
-                    "transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800",
-                    isActive(item.url) ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" : ""
-                  )}
-                >
-                  {item.icon && <item.icon className={cn(
-                    "h-5 w-5",
-                    isActive(item.url) ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
-                  )} />}
-                  <span>{item.title}</span>
-                  <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 text-slate-400 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton 
-                        asChild
-                        className={cn(
-                          "transition-all duration-200",
-                          isActive(subItem.url) ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20" : ""
-                        )}
-                      >
-                        <Link href={subItem.url}>
-                          {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
-                          <span>{subItem.title}</span>
-                          {isActive(subItem.url) && (
-                            <motion.div
-                              layoutId="activeIndicator"
-                              className="absolute left-0 w-1 h-5 bg-blue-600 dark:bg-blue-400 rounded-r-md"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.2 }}
-                            />
-                          )}
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
-      </SidebarMenu>
+const NavGroup = ({ title, items, isCollapsed }: { title: string; items: NavItemData[]; isCollapsed: boolean }) => {
+  if (!items || items.length === 0) return null;
 
-      <SidebarGroupLabel className="mt-6 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium px-3">
-        Categorías
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {categories.map((category) => (
-          <Collapsible
-            key={category.title}
-            asChild
-            defaultOpen={isActive(category.url)}
-            className="group/collapsible"
-          >
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton 
-                  tooltip={category.title}
-                  className={cn(
-                    "transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800",
-                    isActive(category.url) ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" : ""
-                  )}
-                >
-                  {category.icon && <category.icon className={cn(
-                    "h-5 w-5",
-                    isActive(category.url) ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
-                  )} />}
-                  <span>{category.title}</span>
-                  <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 text-slate-400 group-data-[state=open]/collapsible:rotate-90" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>
-                  {category.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton 
-                        asChild
-                        className={cn(
-                          "transition-all duration-200",
-                          isActive(subItem.url) ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20" : ""
-                        )}
-                      >
-                        <Link href={subItem.url}>
-                          {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
-                          <span>{subItem.title}</span>
-                          {isActive(subItem.url) && (
-                            <motion.div
-                              layoutId="activeIndicator"
-                              className="absolute left-0 w-1 h-5 bg-blue-600 dark:bg-blue-400 rounded-r-md"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.2 }}
-                            />
-                          )}
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        ))}
-      </SidebarMenu>
+  return (
+    <div>
+      {!isCollapsed && <div className="px-3 mt-6 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{title}</div>}
+      <div className="flex flex-col gap-1">
+        <AnimatePresence>
+          {items.map((it, i) => (
+            <NavItem key={it.url} item={it} isCollapsed={isCollapsed} customI={i} />
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
 
-      {(userRole === 'admin' || userRole === 'empleado') && (
-        <>
-          <SidebarGroupLabel className="mt-6 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium px-3">
-            Administración
-          </SidebarGroupLabel>
-          <SidebarMenu>
-            {Admin.map((admin) => (
-              <Collapsible
-                key={admin.title}
-                asChild
-                defaultOpen={isActive(admin.url)}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton 
-                      tooltip={admin.title}
-                      className={cn(
-                        "transition-all duration-200 hover:bg-slate-100 dark:hover:bg-slate-800",
-                        isActive(admin.url) ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" : ""
-                      )}
-                    >
-                      {admin.icon && <admin.icon className={cn(
-                        "h-5 w-5",
-                        isActive(admin.url) ? "text-blue-600 dark:text-blue-400" : "text-slate-600 dark:text-slate-400"
-                      )} />}
-                      <span>{admin.title}</span>
-                      <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 text-slate-400 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {admin.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton 
-                            asChild
-                            className={cn(
-                              "transition-all duration-200",
-                              isActive(subItem.url) ? "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/20" : ""
-                            )}
-                          >
-                            <Link href={subItem.url}>
-                              {subItem.icon && <subItem.icon className="h-4 w-4 mr-2" />}
-                              <span>{subItem.title}</span>
-                              {isActive(subItem.url) && (
-                                <motion.div
-                                  layoutId="activeIndicator"
-                                  className="absolute left-0 w-1 h-5 bg-blue-600 dark:bg-blue-400 rounded-r-md"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ duration: 0.2 }}
-                                />
-                              )}
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            ))}
-          </SidebarMenu>
-        </>
-      )}
-    </SidebarGroup>
+export function NavMain({ isCollapsed = false, items, categories, Admin }: NavMainProps) {
+  const { userRole } = useAuth();
+
+  const adminItems = (userRole === 'admin' || userRole === 'empleado') ? Admin : [];
+
+  return (
+    <nav className="flex flex-col px-2 py-4 bg-gradient-to-b from-background/50 to-background/30 rounded-lg shadow-sm">
+      <div className="px-3 mb-3">
+        {!isCollapsed && <h1 className="text-lg font-bold">Frontera</h1>}
+      </div>
+      <NavGroup title="Principal" items={items} isCollapsed={isCollapsed} />
+      <div className="my-2 border-t border-border/60" />
+      <NavGroup title="Categorías" items={categories} isCollapsed={isCollapsed} />
+      <div className="my-2 border-t border-border/60" />
+      <NavGroup title="Administración" items={adminItems} isCollapsed={isCollapsed} />
+    </nav>
   );
 }
