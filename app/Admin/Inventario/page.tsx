@@ -56,6 +56,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { number } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface Producto {
   id_sku: string;
@@ -87,8 +88,15 @@ export default function InventarioAdminPage() {
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
   type FormProducto = Partial<Producto> & { ajuste?: number };
   
-
+  const INVENTARIO_BAJO_UMBRAL = 5; // Umbral para considerar inventario bajo
   const itemsPerPage = 10;
+
+  // Función para determinar el estado del inventario
+  const getInventoryStatus = (existencias: number) => {
+    if (existencias <= 0) return 'agotado';
+    if (existencias <= INVENTARIO_BAJO_UMBRAL) return 'bajo';
+    return 'normal';
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -279,74 +287,177 @@ const handleUpdate = async () => {
     return categoria ? categoria.nombre : "N/A";
   };
 
+  // Calcular resumen de inventario
+  const inventorySummary = productos.reduce((acc, producto) => {
+    const status = getInventoryStatus(producto.existencias);
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Obtener productos con inventario bajo o agotado
+  const lowStockProducts = productos
+    .filter(p => p.existencias <= INVENTARIO_BAJO_UMBRAL)
+    .sort((a, b) => a.existencias - b.existencias);
+
   return (
-    <div className="mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+    <div className="mx-auto p-6 space-y-6 bg-gradient-to-br from-gray-50 via-white to-gray-100 min-h-screen">
+      {/* Encabezado */}
+      <div className="flex items-start pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-3">
           <Package className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Gestión de Inventario</h1>
-            <p className="text-muted-foreground">Administra tus productos, precios y existencias</p>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-800">Gestión de Inventario</h1>
+            <p className="text-sm text-gray-500">Administra tus productos, precios y existencias</p>
           </div>
         </div>
-        
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button onClick={() => {
-                setEditingProduct(null);
-                setFormData({ activo: true, destacado: false });
-                setOpenForm(true);
-              }}
-              className="group"
-              size="sm">
-                <PlusCircle className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
-                Nuevo Producto
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Agregar nuevo producto al inventario</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-1">
-        <Card className="shadow-md">
-          <CardHeader className="pb-3">
-            <CardTitle>Inventario de Productos</CardTitle>
+      {/* Dashboard de Inventario */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <Card className="bg-white/50 backdrop-blur-sm border-0 shadow-sm">
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-xs font-medium text-gray-500">
+              Productos Totales
+            </CardTitle>
+            <div className="text-xl font-semibold text-gray-900">{productos.length}</div>
+          </CardHeader>
+        </Card>
+        
+        <Card className={cn(
+          "bg-white/50 backdrop-blur-sm border-0 shadow-sm",
+          inventorySummary.bajo > 0 ? "border-l-4 border-l-yellow-500" : ""
+        )}>
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-xs font-medium text-gray-500 flex items-center gap-2">
+              <Package className="h-3.5 w-3.5 text-yellow-500" />
+              Inventario Bajo
+            </CardTitle>
+            <div className="text-xl font-semibold text-yellow-600">
+              {inventorySummary.bajo || 0}
+            </div>
+          </CardHeader>
+        </Card>
+        
+        <Card className={cn(
+          "bg-white/50 backdrop-blur-sm border-0 shadow-sm",
+          inventorySummary.agotado > 0 ? "border-l-4 border-l-red-500" : ""
+        )}>
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="text-xs font-medium text-gray-500 flex items-center gap-2">
+              <Package className="h-3.5 w-3.5 text-red-500" />
+              Productos Agotados
+            </CardTitle>
+            <div className="text-xl font-semibold text-red-600">
+              {inventorySummary.agotado || 0}
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+
+      {/* Alerta de Productos con Bajo Stock */}
+      {lowStockProducts.length > 0 && (
+        <Card className="bg-white/50 backdrop-blur-sm border-yellow-100 mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Package className="h-5 w-5 text-yellow-500" />
+              Productos con Inventario Crítico
+            </CardTitle>
             <CardDescription>
+              Los siguientes productos requieren atención inmediata
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {lowStockProducts.slice(0, 6).map((producto) => (
+                <div
+                  key={producto.id_sku}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/50"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{producto.nombre}</p>
+                    <p className="text-xs text-gray-500">SKU: {producto.id_sku}</p>
+                  </div>
+                  <Badge 
+                    variant={producto.existencias === 0 ? "destructive" : "outline"} 
+                    className={cn(
+                      "shrink-0",
+                      producto.existencias === 0 
+                        ? "bg-red-100 text-red-600 border-red-200" 
+                        : "bg-yellow-100 text-yellow-700 border-yellow-200"
+                    )}
+                  >
+                    {producto.existencias} en stock
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            {lowStockProducts.length > 6 && (
+              <p className="text-sm text-gray-500 mt-4 text-center">
+                Y {lowStockProducts.length - 6} productos más necesitan atención...
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+
+
+      <div className="grid gap-8 md:grid-cols-1">
+        <Card className="shadow-lg border-0 bg-white/90 rounded-xl">
+          <CardHeader className="pb-3 border-b border-gray-100">
+            <CardTitle className="text-2xl font-bold text-gray-700">Inventario de Productos</CardTitle>
+            <CardDescription className="text-gray-500">
               {filteredProducts.length} productos encontrados
             </CardDescription>
           </CardHeader>
-          
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               <div className="relative w-full md:w-80">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <Input
                   type="search"
                   placeholder="Buscar por nombre, SKU o número de parte..."
-                  className="pl-8 w-full"
+                  className="pl-10 w-full rounded-lg border-gray-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                   value={searchTerm}
                   onChange={handleSearch}
                 />
               </div>
-              
               <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={() => {
+                          setEditingProduct(null);
+                          setFormData({ activo: true, destacado: false });
+                          setOpenForm(true);
+                        }}
+                        className="group bg-gradient-to-r from-blue-500 to-blue-400 text-white hover:from-blue-600 hover:to-blue-500 transition-all duration-200"
+                        size="sm"
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4 transition-transform group-hover:scale-110" />
+                        Nuevo Producto
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Agregar nuevo producto al inventario</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex items-center">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Filtros
-                      <ChevronDown className="ml-2 h-4 w-4" />
+                    <Button variant="outline" size="sm" className="flex items-center rounded-lg border-gray-300 hover:bg-gray-100">
+                      <Filter className="mr-2 h-4 w-4 text-blue-500" />
+                      <span className="font-medium">Filtros</span>
+                      <ChevronDown className="ml-2 h-4 w-4 text-gray-400" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-60">
-                    <div className="p-2">
+                  <DropdownMenuContent align="end" className="w-64 rounded-lg shadow-lg border-gray-200">
+                    <div className="p-3">
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <Label>Marca</Label>
+                          <Label className="text-gray-700">Marca</Label>
                           <Select 
                             value={selectedMarca || "all"} 
                             onValueChange={(value) => {
@@ -354,7 +465,7 @@ const handleUpdate = async () => {
                               setIsFiltering(true);
                             }}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="rounded-md border-gray-300">
                               <SelectValue placeholder="Todas las marcas" />
                             </SelectTrigger>
                             <SelectContent>
@@ -367,9 +478,8 @@ const handleUpdate = async () => {
                             </SelectContent>
                           </Select>
                         </div>
-                        
                         <div className="space-y-2">
-                          <Label>Categoría</Label>
+                          <Label className="text-gray-700">Categoría</Label>
                           <Select 
                             value={selectedCategoria || "all"} 
                             onValueChange={(value) => {
@@ -377,7 +487,7 @@ const handleUpdate = async () => {
                               setIsFiltering(true);
                             }}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="rounded-md border-gray-300">
                               <SelectValue placeholder="Todas las categorías" />
                             </SelectTrigger>
                             <SelectContent>
@@ -390,17 +500,18 @@ const handleUpdate = async () => {
                             </SelectContent>
                           </Select>
                         </div>
-                        
-                        <div className="flex justify-between">
+                        <div className="flex justify-between gap-2 pt-2">
                           <Button 
                             variant="outline" 
                             size="sm" 
+                            className="rounded-md border-gray-300"
                             onClick={resetFilters}
                           >
                             Limpiar
                           </Button>
                           <Button 
                             size="sm" 
+                            className="rounded-md bg-blue-500 text-white hover:bg-blue-600"
                             onClick={() => setIsFiltering(true)}
                           >
                             Aplicar
@@ -410,41 +521,38 @@ const handleUpdate = async () => {
                     </div>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                
                 {isFiltering && (
                   <Button 
                     variant="ghost" 
                     size="sm" 
                     onClick={resetFilters}
-                    className="text-muted-foreground"
+                    className="text-gray-400 hover:text-blue-500"
                   >
                     Limpiar filtros
                   </Button>
                 )}
               </div>
             </div>
-            
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full md:w-auto">
-                <TabsTrigger value="todos">Todos</TabsTrigger>
-                <TabsTrigger value="activos">Activos</TabsTrigger>
-                <TabsTrigger value="inactivos">Inactivos</TabsTrigger>
-                <TabsTrigger value="destacados">Destacados</TabsTrigger>
-                <TabsTrigger value="agotados">Agotados</TabsTrigger>
+              <TabsList className="w-full md:w-auto bg-gray-100 rounded-lg p-1 flex gap-2">
+                <TabsTrigger value="todos" className="rounded-md px-4 py-2 font-medium data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-colors">Todos</TabsTrigger>
+                <TabsTrigger value="activos" className="rounded-md px-4 py-2 font-medium data-[state=active]:bg-green-500 data-[state=active]:text-white transition-colors">Activos</TabsTrigger>
+                <TabsTrigger value="inactivos" className="rounded-md px-4 py-2 font-medium data-[state=active]:bg-gray-400 data-[state=active]:text-white transition-colors">Inactivos</TabsTrigger>
+                <TabsTrigger value="destacados" className="rounded-md px-4 py-2 font-medium data-[state=active]:bg-amber-500 data-[state=active]:text-white transition-colors">Destacados</TabsTrigger>
+                <TabsTrigger value="agotados" className="rounded-md px-4 py-2 font-medium data-[state=active]:bg-red-500 data-[state=active]:text-white transition-colors">Agotados</TabsTrigger>
               </TabsList>
             </Tabs>
-            
-            <div className="rounded-md border overflow-hidden">
-              <Table>
+            <div className="rounded-xl border border-gray-200 overflow-x-auto bg-white shadow-sm">
+              <Table className="min-w-full divide-y divide-gray-100">
                 <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="font-medium">SKU</TableHead>
-                    <TableHead className="font-medium">Nombre</TableHead>
-                    <TableHead className="font-medium">Marca</TableHead>
-                    <TableHead className="font-medium">Precio</TableHead>
-                    <TableHead className="font-medium text-center">Existencias</TableHead>
-                    <TableHead className="font-medium text-center">Estado</TableHead>
-                    <TableHead className="font-medium text-right">Acciones</TableHead>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-700">SKU</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Nombre</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Marca</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Precio</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-center">Existencias</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-center">Estado</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -452,16 +560,16 @@ const handleUpdate = async () => {
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-10">
                         <div className="flex flex-col items-center justify-center">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                          <p className="text-muted-foreground">Cargando productos...</p>
+                          <Loader2 className="h-8 w-8 animate-spin text-blue-500 mb-2" />
+                          <p className="text-gray-400">Cargando productos...</p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : currentItems.length > 0 ? (
                     currentItems.map((producto) => (
-                      <TableRow key={producto.id_sku} className="transition-colors hover:bg-muted/50">
-                        <TableCell className="font-mono text-xs">{producto.id_sku}</TableCell>
-                        <TableCell className="max-w-xs truncate font-medium">
+                      <TableRow key={producto.id_sku} className="transition-colors hover:bg-blue-50/60">
+                        <TableCell className="font-mono text-xs text-gray-600">{producto.id_sku}</TableCell>
+                        <TableCell className="max-w-xs truncate font-medium text-gray-700">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger className="text-left">{producto.nombre}</TooltipTrigger>
@@ -471,24 +579,66 @@ const handleUpdate = async () => {
                             </Tooltip>
                           </TooltipProvider>
                         </TableCell>
-                        <TableCell>{getMarcaNombre(producto.id_marca)}</TableCell>
-                        <TableCell className="font-medium">${producto.precio.toFixed(2)}</TableCell>
+                        <TableCell className="text-gray-600">{getMarcaNombre(producto.id_marca)}</TableCell>
+                        <TableCell className="font-medium text-blue-600">${producto.precio.toFixed(2)}</TableCell>
                         <TableCell className="text-center">
-                          <Badge 
-                            variant={producto.existencias <= 0 ? "destructive" : producto.existencias < 10 ? "outline" : "secondary"}
-                            className="font-mono"
-                          >
-                            {producto.existencias}
-                          </Badge>
+                          <TooltipProvider>
+                            <div className="flex items-center justify-center gap-2">
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge 
+                                    variant={producto.existencias <= 0 ? "destructive" : producto.existencias <= INVENTARIO_BAJO_UMBRAL ? "outline" : "default"}
+                                    className={cn(
+                                      "font-mono",
+                                      producto.existencias <= 0
+                                        ? "bg-red-100 text-red-600 border-red-200"
+                                        : producto.existencias <= INVENTARIO_BAJO_UMBRAL
+                                        ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+                                        : "bg-green-100 text-green-700 border-green-200",
+                                      producto.existencias <= INVENTARIO_BAJO_UMBRAL && "animate-pulse"
+                                    )}
+                                  >
+                                    {producto.existencias}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {producto.existencias === 0 ? (
+                                    <p className="text-red-500 flex items-center gap-2">
+                                      <Package className="h-4 w-4" />
+                                      Producto agotado - Requiere reabastecimiento
+                                    </p>
+                                  ) : producto.existencias <= INVENTARIO_BAJO_UMBRAL ? (
+                                    <p className="text-yellow-500 flex items-center gap-2">
+                                      <Package className="h-4 w-4" />
+                                      Inventario bajo - Reabastecer pronto
+                                    </p>
+                                  ) : (
+                                    <p className="text-green-500 flex items-center gap-2">
+                                      <Package className="h-4 w-4" />
+                                      Stock saludable
+                                    </p>
+                                  )}
+                                </TooltipContent>
+                              </Tooltip>
+                              {producto.existencias <= INVENTARIO_BAJO_UMBRAL && (
+                                <Package 
+                                  className={cn(
+                                    "h-4 w-4",
+                                    producto.existencias === 0 ? "text-red-500" : "text-yellow-500"
+                                  )} 
+                                />
+                              )}
+                            </div>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-center">
                           {producto.activo ? (
-                            <Badge variant="default" className="bg-green-500 hover:bg-green-600">Activo</Badge>
+                            <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white">Activo</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-muted-foreground">Inactivo</Badge>
+                            <Badge variant="outline" className="text-gray-400 border-gray-300">Inactivo</Badge>
                           )}
                           {producto.destacado && (
-                            <Badge variant="default" className="ml-1 bg-amber-500 hover:bg-amber-600">Destacado</Badge>
+                            <Badge variant="default" className="ml-1 bg-amber-500 hover:bg-amber-600 text-white">Destacado</Badge>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -497,7 +647,7 @@ const handleUpdate = async () => {
                               size="sm" 
                               variant="outline" 
                               onClick={() => handleEdit(producto)} 
-                              className="h-8 px-2"
+                              className="h-8 px-2 rounded-md border-gray-300 hover:bg-blue-100 hover:border-blue-300 transition-all"
                             >
                               Editar
                             </Button>
@@ -505,7 +655,7 @@ const handleUpdate = async () => {
                               size="sm" 
                               variant="destructive" 
                               onClick={() => handleDelete(producto.id_sku)} 
-                              className="h-8 px-2"
+                              className="h-8 px-2 rounded-md bg-red-500 text-white hover:bg-red-600 transition-all"
                             >
                               Desactivar
                             </Button>
@@ -515,7 +665,7 @@ const handleUpdate = async () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
+                      <TableCell colSpan={7} className="h-24 text-center text-gray-400">
                         No se encontraron productos con los filtros seleccionados.
                       </TableCell>
                     </TableRow>
@@ -523,11 +673,10 @@ const handleUpdate = async () => {
                 </TableBody>
               </Table>
             </div>
-
             {/* Pagination */}
             {totalPages > 1 && (
-              <Pagination className="mt-4">
-                <PaginationContent>
+              <Pagination className="mt-6 flex justify-center">
+                <PaginationContent className="gap-2">
                   <PaginationItem>
                     <PaginationPrevious 
                       href="#" 
@@ -535,13 +684,11 @@ const handleUpdate = async () => {
                         e.preventDefault();
                         if (currentPage > 1) setCurrentPage(currentPage - 1);
                       }} 
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "bg-gray-100 rounded-md hover:bg-blue-100 transition-all"}
                     />
                   </PaginationItem>
-                  
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNumber;
-                    
                     if (totalPages <= 5) {
                       pageNumber = i + 1;
                     } else if (currentPage <= 3) {
@@ -551,7 +698,6 @@ const handleUpdate = async () => {
                     } else {
                       pageNumber = currentPage - 2 + i;
                     }
-                    
                     if (pageNumber > 0 && pageNumber <= totalPages) {
                       return (
                         <PaginationItem key={pageNumber}>
@@ -562,22 +708,24 @@ const handleUpdate = async () => {
                               setCurrentPage(pageNumber);
                             }}
                             isActive={currentPage === pageNumber}
+                            className={
+                              currentPage === pageNumber
+                                ? "bg-blue-500 text-white rounded-md px-3 py-1 font-bold shadow"
+                                : "bg-gray-100 text-gray-700 rounded-md px-3 py-1 font-medium hover:bg-blue-100 transition-all"
+                            }
                           >
                             {pageNumber}
                           </PaginationLink>
                         </PaginationItem>
                       );
                     }
-                    
                     return null;
                   })}
-                  
                   {totalPages > 5 && currentPage < totalPages - 2 && (
                     <PaginationItem>
-                      <PaginationEllipsis />
+                      <PaginationEllipsis className="text-gray-400" />
                     </PaginationItem>
                   )}
-                  
                   <PaginationItem>
                     <PaginationNext 
                       href="#" 
@@ -585,7 +733,7 @@ const handleUpdate = async () => {
                         e.preventDefault();
                         if (currentPage < totalPages) setCurrentPage(currentPage + 1);
                       }} 
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "bg-gray-100 rounded-md hover:bg-blue-100 transition-all"}
                     />
                   </PaginationItem>
                 </PaginationContent>
@@ -594,8 +742,7 @@ const handleUpdate = async () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Form Dialog */}
+      {/* Form Dialog ... sin cambios, ya mejorado antes */}
       <Dialog open={openForm} onOpenChange={(open) => {
         if (!open) {
           setEditingProduct(null);
@@ -612,8 +759,12 @@ const handleUpdate = async () => {
               {editingProduct ? "Modifica los detalles del producto seleccionado" : "Completa el formulario para agregar un nuevo producto al inventario"}
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+          {/* Scrollable form container for responsive dialog */}
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[70vh] overflow-y-auto pr-2"
+            style={{ scrollbarGutter: "stable" }}
+          >
+            {/* ...existing form fields... */}
             <div className="space-y-2">
               <Label htmlFor="id_sku">SKU*</Label>
               <Input
@@ -625,7 +776,6 @@ const handleUpdate = async () => {
                 placeholder="Ejemplo: SKU-12345"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="num_parte">Número de Parte</Label>
               <Input
@@ -636,7 +786,6 @@ const handleUpdate = async () => {
                 placeholder="Ejemplo: NP-12345"
               />
             </div>
-            
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="nombre">Nombre del Producto*</Label>
               <Input
@@ -647,7 +796,6 @@ const handleUpdate = async () => {
                 placeholder="Ingrese el nombre del producto"
               />
             </div>
-            
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="descripcion">Descripción</Label>
               <Textarea
@@ -659,7 +807,6 @@ const handleUpdate = async () => {
                 rows={3}
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="id_marca">Marca*</Label>
               <Select
@@ -678,7 +825,6 @@ const handleUpdate = async () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="id_subsubcategoria">Categoría</Label>
               <Select
@@ -697,7 +843,6 @@ const handleUpdate = async () => {
                 </SelectContent>
               </Select>
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="precio">Precio*</Label>
               <div className="relative">
@@ -715,7 +860,6 @@ const handleUpdate = async () => {
                 />
               </div>
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="existencias">Existencias</Label>
               <Input
@@ -728,7 +872,6 @@ const handleUpdate = async () => {
                 placeholder="0"
               />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="imagen_principal">URL de Imagen</Label>
               <Input
@@ -739,9 +882,8 @@ const handleUpdate = async () => {
                 placeholder="https://ejemplo.com/imagen.jpg"
               />
             </div>
-
             <div className="space-y-2">
-            <Label htmlFor="ajuste">Ajuste de Existencias</Label>
+              <Label htmlFor="ajuste">Ajuste de Existencias</Label>
               <Input
                 type="number"
                 id="ajuste"
@@ -749,10 +891,8 @@ const handleUpdate = async () => {
                 placeholder="Ej: 5 o -2"
                 value={formData.ajuste || ""}
                 onChange={(e) => setFormData({ ...formData, ajuste: Number(e.target.value) })}
-                />
-              </div>
-
-            
+              />
+            </div>
             <div className="flex items-center justify-between space-x-2 md:col-span-2">
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="activo">Activo</Label>
@@ -767,7 +907,6 @@ const handleUpdate = async () => {
                   </Label>
                 </div>
               </div>
-              
               <div className="flex flex-col space-y-1.5">
                 <Label htmlFor="destacado">Destacado</Label>
                 <div className="flex items-center space-x-2">
@@ -783,7 +922,6 @@ const handleUpdate = async () => {
               </div>
             </div>
           </div>
-          
           <DialogFooter>
             <Button 
               variant="outline" 
