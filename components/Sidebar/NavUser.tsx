@@ -63,7 +63,7 @@ export function NavUser() {
         <Link href="/login" className="w-full">
           <SidebarMenuButton 
             size="lg" 
-            className="w-full justify-center bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white transition-transform transform hover:-translate-y-0.5 hover:scale-[1.01] shadow-md"
+            className="w-full justify-center bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
           >
             <span className="truncate font-medium">Iniciar sesión</span>
           </SidebarMenuButton>

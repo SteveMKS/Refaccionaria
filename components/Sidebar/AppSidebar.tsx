@@ -10,7 +10,6 @@ import {
 } from "lucide-react"
 
 import { NavMain } from "@/components/Sidebar/NavMain"
-import { useSidebar } from "@/components/ui/sidebar"
 import { NavUser } from "@/components/Sidebar/NavUser"
 import {
   Sidebar,
@@ -115,13 +114,10 @@ const data = {
 export const categories = data.categories;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { state } = useSidebar()
-  const isCollapsed = state === 'collapsed'
-
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarContent>
-        <NavMain isCollapsed={isCollapsed} items={data.navMain} categories={data.categories} Admin={data.Admin} />
+        <NavMain items={data.navMain} categories={data.categories} Admin={data.Admin}/>
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

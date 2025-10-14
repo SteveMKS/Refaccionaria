@@ -52,40 +52,32 @@ export default function ScannerRedirect() {
 
       if (trimmed.length > 0) {
         setScanning(true);
-
+        
         // Simular proceso de escaneo
         setTimeout(() => {
           // Eliminar todos los caracteres no hexadecimales
           const onlyHex = trimmed.replace(/[^a-fA-F0-9]/g, "");
 
-          // Formatear el UUID con guiones si corresponde
-          const formattedUUID = onlyHex.match(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/)
+          // Formatear el UUID con guiones
+          const formattedUUID = onlyHex.match(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/) 
             ? onlyHex.replace(
                 /^(.{8})(.{4})(.{4})(.{4})(.{12})$/,
                 "$1-$2-$3-$4-$5"
               )
             : onlyHex;
 
-          // Si es UUID completo, redirige
           if (isValidUUID(formattedUUID)) {
             setSuccess(true);
             setTimeout(() => {
+              // En lugar de usar next/router, usamos window.location
               window.location.href = `/recibos/${formattedUUID}`;
             }, 800);
-          }
-          // Si tiene exactamente 8 caracteres hexadecimales, redirige por id corto
-          else if (onlyHex.length === 8) {
-            setSuccess(true);
-            setTimeout(() => {
-              window.location.href = `/recibos/${onlyHex}`;
-            }, 800);
-          }
-          else {
+          } else {
             setError(true);
             setErrorMessage("Código escaneado no válido");
-            console.error("UUID o ID corto no válido:", trimmed);
+            console.error("UUID no válido:", trimmed);
           }
-
+          
           setValue(""); // Limpiar campo
           setScanning(false);
         }, 1000);
