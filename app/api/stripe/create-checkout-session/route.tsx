@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import crypto from "crypto";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-03-31.basil",
@@ -29,17 +30,15 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       mode: "payment",
       metadata: {
-        productos: JSON.stringify(productos), // ya con keys correctas
-        user_id: userId,
-        ticket_id: ticket_id || undefined,
+        user_id: String(userId),
+        productos: JSON.stringify(productos || []),
+        ticket_id: String(ticket_id || crypto.randomUUID()),
       },
       line_items: productos.map((p: any) => ({
         price_data: {
           currency: "mxn",
-          product_data: {
-            name: p.name,
-          },
-          unit_amount: Math.round(p.price * 100), // ✅ Esto necesita que `p.price` sea número
+          product_data: { name: p.name },
+          unit_amount: Math.round(p.price * 100),
         },
         quantity: p.quantity,
       })),
