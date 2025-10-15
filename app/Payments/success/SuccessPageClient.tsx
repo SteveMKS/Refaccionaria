@@ -19,6 +19,8 @@ type Recibo = {
   stripe_session_id: string;
   status: string;
   cliente?: string;
+  ticketId?: string;
+  metodoPago?: string;
 };
 
 export default function SuccessPageClient() {
@@ -35,7 +37,7 @@ export default function SuccessPageClient() {
 
   useEffect(() => {
     if (!sessionId) {
-      setError("No se recibió ID de sesión. Llega a esta página después de completar un pago.");
+      setError("No se recibió ID de sesión. Llega a esta página solo después de completar un pago.");
       setLoading(false);
       return;
     }
@@ -43,7 +45,7 @@ export default function SuccessPageClient() {
     const buscarRecibo = async () => {
       try {
         console.log(`Intento #${intentos + 1} de buscar recibo para sesión: ${sessionId}`);
-
+        
         const { data, error: supabaseError } = await supabase
           .from("recibos")
           .select("*")
@@ -57,27 +59,24 @@ export default function SuccessPageClient() {
           setLoading(false);
         } else if (supabaseError) {
           console.error("Error buscando recibo:", supabaseError);
-          if (intentos < 9) {
-            setTimeout(() => setIntentos(intentos + 1), 2000);
-          } else {
-            setError("No pudimos encontrar tu recibo. Contacta soporte con este ID: " + sessionId);
-            setLoading(false);
-          }
-        } else {
-          // Si no hay error ni recibo, reintentar
           if (intentos < 9) setTimeout(() => setIntentos(intentos + 1), 2000);
           else {
             setError("No pudimos encontrar tu recibo. Contacta soporte con este ID: " + sessionId);
             setLoading(false);
           }
+        } else {
+          if (intentos < 9) setTimeout(() => setIntentos(intentos + 1), 2000);
+          else {
+            setError("No se encontró el recibo. Contacta soporte con este ID: " + sessionId);
+            setLoading(false);
+          }
         }
       } catch (err) {
         console.error("Error inesperado buscando recibo:", err);
-        if (intentos >= 9) {
-          setError(`Ocurrió un error inesperado. Contacta soporte con este ID: ${sessionId}`);
+        if (intentos < 9) setTimeout(() => setIntentos(intentos + 1), 2000);
+        else {
+          setError("Error inesperado. Contacta soporte con este ID: " + sessionId);
           setLoading(false);
-        } else {
-          setTimeout(() => setIntentos(intentos + 1), 2000);
         }
       }
     };
@@ -98,7 +97,7 @@ export default function SuccessPageClient() {
           Procesando tu pago...
         </h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Estamos confirmando tu transacción. (Intento {intentos + 1}/10)
+          Confirmando transacción. Esto puede tardar unos segundos. (Intento {intentos + 1}/10)
         </p>
       </div>
     );
@@ -145,9 +144,9 @@ export default function SuccessPageClient() {
           total={recibo.total}
           fecha={recibo.fecha}
           hora={recibo.hora}
-          cliente={recibo.cliente || recibo.id_user}
-          ticketId={recibo.ticket_id}
-          metodoPago={recibo.metodo_pago}
+          cliente={recibo.cliente || recibo.id_user || ""}
+          ticketId={recibo.ticketId || recibo.ticket_id}
+          metodoPago={recibo.metodoPago || recibo.metodo_pago}
         />
       )}
     </>
@@ -304,4 +303,5 @@ export default function SuccessPageClient() {
       )}
     </>
   );
+
 }*/
