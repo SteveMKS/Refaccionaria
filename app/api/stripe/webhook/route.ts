@@ -14,42 +14,48 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function readRequestBodyAsBuffer(request: NextRequest): Promise<Buffer> {
-  const reader = request.body?.getReader();
-  if (!reader) throw new Error("No body stream found.");
-  const chunks: Uint8Array[] = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) chunks.push(value);
-  }
-  return Buffer.concat(chunks);
-}
-
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
-  if (!sig) return NextResponse.json({ error: "Falta firma de Stripe" }, { status: 400 });
+  if (!sig) {
+    console.error("❌ Falta firma de Stripe");
+    return NextResponse.json({ error: "Falta firma de Stripe" }, { status: 400 });
+  }
 
   let event: Stripe.Event;
+
   try {
-    const bodyBuffer = await readRequestBodyAsBuffer(req);
+    // ✅ Compatible con Vercel / Next.js runtime
+    const bodyBuffer = Buffer.from(await req.arrayBuffer());
     event = stripe.webhooks.constructEvent(bodyBuffer, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err) {
-    console.error("Error verificando webhook:", err);
-    return NextResponse.json({ error: "Firma inválida" }, { status: 400 });
+  } catch (err: any) {
+    console.error("❌ Error verificando webhook:", err.message);
+    return NextResponse.json({ error: "Firma inválida o cuerpo no legible" }, { status: 400 });
   }
+
+  console.log(`📩 Evento recibido desde Stripe: ${event.type}`);
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+
+    console.log("🧾 Datos de la sesión recibida:", {
+      id: session.id,
+      amount_total: session.amount_total,
+      metadata: session.metadata,
+    });
+
     const userId = session.metadata?.user_id;
-    if (!userId) return NextResponse.json({ error: "No se proporcionó user_id" }, { status: 400 });
+    if (!userId) {
+      console.error("❌ No se proporcionó user_id en metadata");
+      return NextResponse.json({ error: "No se proporcionó user_id" }, { status: 400 });
+    }
 
     const ticket_id = uuidv4();
 
     let productos = [];
-    if (session.metadata?.productos) {
-      try { productos = JSON.parse(session.metadata.productos); } 
-      catch { productos = []; }
+    try {
+      productos = session.metadata?.productos ? JSON.parse(session.metadata.productos) : [];
+    } catch (err) {
+      console.error("❌ Error parseando productos:", err);
     }
 
     const reciboData = {
@@ -64,16 +70,19 @@ export async function POST(req: NextRequest) {
       status: "completed",
     };
 
+    console.log("📦 Intentando insertar recibo en Supabase:", reciboData);
+
     const { data, error } = await supabase.from("recibos").insert([reciboData]).select();
 
     if (error) {
-      console.error("Error insertando recibo:", error);
+      console.error("❌ Error insertando recibo en Supabase:", error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    console.log(`Recibo creado exitosamente: Ticket ID ${ticket_id}`);
+    console.log(`✅ Recibo creado exitosamente con Ticket ID: ${ticket_id}`);
     return NextResponse.json({ success: true, ticket_id });
   }
 
+  console.log(`⚠️ Evento ignorado: ${event.type}`);
   return NextResponse.json({ received: true });
 }
