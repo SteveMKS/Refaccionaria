@@ -157,5 +157,4 @@ export async function GET(request: NextRequest) {
       session_id: sessionId
     }, { status: 500 });
   }
-
 }*/
