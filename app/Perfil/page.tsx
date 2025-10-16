@@ -17,7 +17,7 @@ interface UserProfile {
 }
 
 interface PurchasePreview {
-  id: string;
+  id_recibo: string; // 🔥 Cambiado de 'id' a 'id_recibo'
   fecha: string;
   total: number;
 }
@@ -64,16 +64,24 @@ export default function PerfilUsuario() {
           setLoginHistory(history.map((h: any) => h.fecha_hora));
         }
 
-        // Fetch recent purchases (if table exists)
-        const { data: recentPurchases } = await supabase
+        // 🔥 Fetch recent purchases - CORREGIDO
+        const { data: recentPurchases, error: purchasesError } = await supabase
           .from('recibos')
-          .select('id, fecha, total')
-          .eq('user_id', profile.id)
+          .select('id_recibo, fecha, total') // ✅ Cambiado 'id' por 'id_recibo'
+          .eq('id_user', profile.id) // ✅ Cambiado 'user_id' por 'id_user'
           .order('fecha', { ascending: false })
           .limit(5);
 
+        if (purchasesError) {
+          console.error('Error fetching purchases:', purchasesError);
+        }
+
         if (mounted && recentPurchases) {
-          setPurchases(recentPurchases.map((r: any) => ({ id: r.id, fecha: r.fecha, total: r.total })));
+          setPurchases(recentPurchases.map((r: any) => ({ 
+            id_recibo: r.id_recibo, // ✅ Usar id_recibo
+            fecha: r.fecha, 
+            total: r.total 
+          })));
         }
 
       } catch (err: any) {
@@ -160,9 +168,9 @@ export default function PerfilUsuario() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {purchases.map(p => (
-                      <div key={p.id} className={cn('p-4 rounded-lg border', 'border-border bg-background')}>
+                      <div key={p.id_recibo} className={cn('p-4 rounded-lg border', 'border-border bg-background')}>
                         <div className="flex justify-between items-center">
-                          <div className="text-sm font-medium">Compra #{p.id}</div>
+                          <div className="text-sm font-medium">Compra #{p.id_recibo.substring(0, 8)}...</div>
                           <div className="text-sm text-muted-foreground">{new Date(p.fecha).toLocaleDateString()}</div>
                         </div>
                         <div className="text-sm text-muted-foreground mt-1">Total: ${Number(p.total).toFixed(2)}</div>
