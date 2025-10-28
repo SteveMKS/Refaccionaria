@@ -33,7 +33,7 @@ type CartStore = {
   isCheckoutInProgress: boolean;
   initUser: () => void;
   setUser: (user: User | null) => void;
-  addToCart: (product: Omit<CartItem, 'quantity'>) => void;
+  addToCart: (product: Omit<CartItem, 'quantity'>) => Promise<boolean>;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -65,7 +65,7 @@ export const useCart = create<CartStore>((set, get) => ({
 
   addToCart: async (product) => {
     const user = get().user;
-    if (!user) return;
+    if (!user) return false;
 
     const { cart, total } = get();
     const existingItem = cart.find((item) => item.id === product.id);
@@ -100,6 +100,7 @@ export const useCart = create<CartStore>((set, get) => ({
     }
 
     set({ cart: updatedCart, total: newTotal });
+    return true;
   },
 
   removeFromCart: async (id) => {

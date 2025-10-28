@@ -32,7 +32,7 @@ export function RecuperacionContraseña({
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "https://refaccionaria.vercel.app/ResetPassword",
-    });    
+    });
 
     setLoading(false);
 

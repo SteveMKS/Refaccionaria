@@ -99,7 +99,7 @@ export const CartItem = ({ item }: CartItemProps) => {
             max="100"
             value={localQuantity}
             onChange={(e) => handleQuantityChange(Number(e.target.value))}
-            className="w-12 h-8 text-center"
+            className="w-16 sm:w-20 h-8 text-center min-w-[48px]"
           />
           
           <Button

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from '@/lib/supabase-browser'; // 🔹 Importamos Supabase correctamente
 import { registrarLogin } from "@/components/Users/RegistroLogins"; // 🔹 Importa la función para registrar el login
+import { toast } from "sonner";
 
 export function LoginForm({
   className,
@@ -56,7 +57,11 @@ export function LoginForm({
       console.log("Usuario:", data.user);
       console.log("Sesión:", data.session);
 
-      alert("Login exitoso");
+      const displayName = data.user.user_metadata?.name || data.user.email || "Usuario";
+      toast.success("Inicio de sesión exitoso", {
+        description: `Bienvenido de vuelta, ${displayName}.`,
+        duration: 2000,
+      });
 
       await registrarLogin(data.user.id);
       router.push("/Perfil");

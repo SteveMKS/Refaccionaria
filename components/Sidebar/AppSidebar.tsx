@@ -33,7 +33,6 @@ const data = {
       icon: SquareTerminal,
       isActive: false,
       items: [
-        { title: "Busqueda de productos", url: "/buscar" },
         { title: "Akron", url: "/Aceites/Akron" },
         { title: "Bardahl", url: "/Aceites/Bardahl" },
         { title: "Castrol", url: "/Aceites/Castrol" },
