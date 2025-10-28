@@ -213,13 +213,13 @@ export default function RefaccionesPage() {
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
                       aria-label="Agregar al carrito"
                       disabled={producto.existencias <= 0}
-                      onClick={() => addToCart({
+                      onClick={async () => { await addToCart({
                         imagen_principal: producto.imagen_principal,
                         id: producto.id_sku,
                         name: producto.nombre,
                         descripcion: producto.descripcion,
                         price: producto.precio,
-                      })}
+                      }); }}
                     >
                       <ShoppingCart className="h-5 w-5" />
                     </button>

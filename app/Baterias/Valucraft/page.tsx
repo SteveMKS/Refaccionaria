@@ -8,6 +8,7 @@ import { ShoppingCart } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
 import { useCart } from "@/components/cart/useCart";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/components/AuthProvider/Auth";
 
 // Definición de tipos
 type Marca = {
@@ -39,6 +40,7 @@ export default function ProductosPage() {
   
   // Hooks
   const { addToCart } = useCart();
+  const { user } = useAuth();
 
   // Efectos
   useEffect(() => {
@@ -97,6 +99,12 @@ export default function ProductosPage() {
 
   // Handlers
   const handleAddToCart = async (producto: Producto) => {
+    if (!user) {
+      setErrorMessage("Debes iniciar sesión para agregar productos.");
+      setTimeout(() => setErrorMessage(null), 3000);
+      return;
+    }
+
     setAddingProductId(producto.id_sku);
     setSuccessMessage(null);
 
@@ -107,13 +115,18 @@ export default function ProductosPage() {
       return;
     }
 
-    await addToCart({
+    const added = await addToCart({
       imagen_principal: producto.imagen_principal,
       id: producto.id_sku,
       name: producto.nombre,
       descripcion: producto.descripcion,
       price: producto.precio,
     });
+
+    if (!added) {
+      setAddingProductId(null);
+      return;
+    }
 
     setSuccessMessage(`"${producto.nombre}" agregado al carrito.`);
     

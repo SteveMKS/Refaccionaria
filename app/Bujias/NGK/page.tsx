@@ -8,6 +8,7 @@ import { ShoppingCart, Loader2 } from "lucide-react";
 import { Cart } from "@/components/cart/Cart";
 import { useCart } from "@/components/cart/useCart";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/AuthProvider/Auth";
 
 type Marca = {
   id_marca: string;
@@ -42,6 +43,7 @@ export default function ProductosPage() {
   const [busqueda, setBusqueda] = useState("");
 const [page, setPage] = useState(1);
 const [totalPages, setTotalPages] = useState(1);
+  const { user } = useAuth();
 
 
 
@@ -97,6 +99,13 @@ useEffect(() => {
 }, [busqueda, page]);
 
   const handleAddToCart = async (producto: Producto) => {
+    // Si no hay sesión, no intentamos agregar y no mostramos mensaje de éxito
+    if (!user) {
+      setErrorMessage("Debes iniciar sesión para agregar productos.");
+      setTimeout(() => setErrorMessage(null), 3000);
+      return;
+    }
+
     setAddingProductId(producto.id_sku);
     setSuccessMessage(null);
 
@@ -107,19 +116,32 @@ useEffect(() => {
       return;
     }
 
-    await addToCart({
-      imagen_principal: producto.imagen_principal,
-      id: producto.id_sku,
-      name: producto.nombre,
-      descripcion: producto.descripcion,
-      price: producto.precio,
-    });
+    try {
+      const added = await addToCart({
+        imagen_principal: producto.imagen_principal,
+        id: producto.id_sku,
+        name: producto.nombre,
+        descripcion: producto.descripcion,
+        price: producto.precio,
+      });
 
-    setSuccessMessage(`"${producto.nombre}" agregado al carrito.`);
-    setTimeout(() => {
-      setSuccessMessage(null);
+      if (!added) {
+        // No hay sesión o fallo controlado: no mostrar éxito
+        setAddingProductId(null);
+        return;
+      }
+
+      setSuccessMessage(`"${producto.nombre}" agregado al carrito.`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setAddingProductId(null);
+      }, 1500);
+    } catch (e) {
+      // En caso de cualquier error inesperado
+      setErrorMessage("No se pudo agregar el producto. Intenta nuevamente.");
+      setTimeout(() => setErrorMessage(null), 3000);
       setAddingProductId(null);
-    }, 1500);
+    }
   };
 
   const totalPaginas = Math.ceil(total / PAGE_SIZE);
