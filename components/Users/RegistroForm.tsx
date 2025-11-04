@@ -53,6 +53,27 @@ export function RegistroForm({
     const lowerCaseEmail = email.toLowerCase();
 
     try {
+      // Verificar primero si el correo ya existe en la BD (usando API segura)
+      const verifyResponse = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lowerCaseEmail }),
+      });
+
+      if (!verifyResponse.ok) {
+        setError("No se pudo verificar el correo. Intenta de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      const { exists } = await verifyResponse.json();
+
+      if (exists) {
+        setError("El correo ya se encuentra registrado. Por favor inicia sesión o recupera tu contraseña.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error: authError } = await supabase.auth.signUp({
         email: lowerCaseEmail,
         password,
@@ -62,7 +83,17 @@ export function RegistroForm({
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Mensaje más amigable si Supabase indica que el usuario ya existe
+        const msg = authError.message || String(authError);
+        if (/already registered|already exists|User already exists|user already registered/i.test(msg)) {
+          setError("El correo ya se encuentra registrado. Intenta iniciar sesión o usar 'Olvidé mi contraseña'.");
+          setLoading(false);
+          return;
+        }
+
+        throw authError;
+      }
 
       if (data.user && !data.session) {
         setSuccess("Registro exitoso. Por favor verifica tu correo electrónico.");

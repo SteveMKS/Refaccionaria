@@ -59,8 +59,8 @@ export function NavUser() {
 
   if (!user) {
     return (
-      <div className="p-4">
-        <Link href="/login" className="w-full">
+      <div className="p-4 group-data-[state=collapsed]:p-2">
+        <Link href="/login" className="w-full group-data-[state=collapsed]:hidden">
           <SidebarMenuButton 
             size="lg" 
             className="w-full justify-center bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
@@ -79,12 +79,12 @@ export function NavUser() {
   };
 
   return (
-    <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+    <div className="p-4 border-t border-slate-200 dark:border-slate-800 group-data-[state=collapsed]:p-2 group-data-[state=collapsed]:border-t-0">
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <SidebarMenuButton 
             size="lg" 
-            className="w-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group-data-[state=collapsed]:p-0 group-data-[state=collapsed]:h-9 group-data-[state=collapsed]:w-9"
           >
             <Avatar className="h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700">
               <AvatarImage src={user.avatar || ""} alt={user.nombre || "Usuario"} />
@@ -92,7 +92,7 @@ export function NavUser() {
                 {user?.nombre?.[0] || "U"}{user?.apellido?.[0] || "S"}
               </AvatarFallback>
             </Avatar>
-            <div className="grid flex-1 text-left text-sm leading-tight">
+            <div className="grid flex-1 text-left text-sm leading-tight group-data-[state=collapsed]:hidden">
               <span className="truncate font-medium">
                 {user.nombre} {user.apellido}
               </span>

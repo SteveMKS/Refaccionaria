@@ -30,18 +30,46 @@ export function RecuperacionContraseña({
     setError(null);
     setMessage(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://refaccionaria.vercel.app/ResetPassword",
-    });
+    const lowerCaseEmail = email.toLowerCase().trim();
 
-    setLoading(false);
+    try {
+      // Primero verificar si el correo existe
+      const verifyResponse = await fetch('/api/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lowerCaseEmail }),
+      });
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setMessage(
-        "Si el correo está registrado, recibirás un enlace para restablecer tu contraseña."
-      );
+      if (!verifyResponse.ok) {
+        setError("No se pudo verificar el correo. Intenta de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      const { exists } = await verifyResponse.json();
+
+      if (!exists) {
+        setMessage("Si el correo está registrado en nuestro sistema, recibirás un enlace para restablecer tu contraseña.");
+        setLoading(false);
+        return;
+      }
+
+      // El correo existe, enviar email de recuperación
+      const { error } = await supabase.auth.resetPasswordForEmail(lowerCaseEmail, {
+        redirectTo: "https://refaccionaria.vercel.app/ResetPassword",
+      });
+
+      setLoading(false);
+
+      if (error) {
+        setError(error.message);
+      } else {
+        setMessage("Se ha enviado un enlace de recuperación a tu correo electrónico.");
+      }
+    } catch (err) {
+      console.error('Error en recuperación:', err);
+      setError("Ocurrió un error. Intenta de nuevo.");
+      setLoading(false);
     }
   };
 

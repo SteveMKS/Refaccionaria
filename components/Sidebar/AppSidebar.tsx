@@ -13,10 +13,13 @@ import { NavMain } from "@/components/Sidebar/NavMain"
 import { NavUser } from "@/components/Sidebar/NavUser"
 import {
   Sidebar,
+  SidebarHeader,
   SidebarContent,
   SidebarFooter,
+  SidebarSeparator,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { motion } from "framer-motion"
 
 const data = {
   teams: [
@@ -114,9 +117,30 @@ export const categories = data.categories;
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon" variant="floating" {...props}>
+      {/* Brand header */}
+      <SidebarHeader className="overflow-hidden pb-1">
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+          className="flex items-center gap-3 rounded-lg p-3 group-data-[state=collapsed]:justify-center bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border border-slate-200 dark:border-slate-700"
+        >
+          <div className="relative h-10 w-10 shrink-0 rounded-lg bg-gradient-to-br from-primary to-purple-500 p-[2px]">
+            <div className="absolute inset-0 -z-10 animate-pulse rounded-lg bg-primary/10" />
+            <div className="flex h-full w-full items-center justify-center rounded-[8px] bg-background text-sm font-bold text-primary">
+              F
+            </div>
+          </div>
+          <div className="min-w-0 group-data-[state=collapsed]:hidden">
+            <div className="truncate text-base font-bold leading-tight">Frontera</div>
+            <div className="truncate text-xs text-muted-foreground">Refaccionaria</div>
+          </div>
+        </motion.div>
+      </SidebarHeader>
+
       <SidebarContent>
-        <NavMain items={data.navMain} categories={data.categories} Admin={data.Admin}/>
+        <NavMain items={data.navMain} categories={data.categories} Admin={data.Admin} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
