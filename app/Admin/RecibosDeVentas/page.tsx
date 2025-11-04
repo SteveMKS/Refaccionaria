@@ -180,7 +180,7 @@ export default function VentasAdminPage() {
                   <td className="px-4 py-3">{format(new Date(venta.fecha), "dd/MM/yyyy")}</td>
                   <td className="px-4 py-3">{venta.hora}</td>
                   <td className="px-4 py-3">{venta.metodo_pago}</td>
-                  <td className="px-4 py-3 font-semibold">${venta.total.toFixed(2)}</td>
+                  <td className="px-4 py-3 font-semibold">${Number(venta.total ?? 0).toFixed(2)}</td>
                   <td className="px-4 py-3">{venta.ticket_id?.slice(0, 8)}</td>
                   <td className="px-4 py-3">
                     <button
@@ -221,7 +221,7 @@ export default function VentasAdminPage() {
     >
       {/* Encabezado con fondo azul gradiente - Fijo */}
       <div className={cn(
-        "px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-500",
+        "px-6 pr-14 py-4 bg-gradient-to-r from-indigo-600 to-blue-500",
         "dark:from-indigo-800 dark:to-blue-700",
         "text-white flex-shrink-0"
       )}>

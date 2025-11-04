@@ -30,6 +30,8 @@ export default function MisComprasPage() {
   const [ticketIdSearch, setTicketIdSearch] = useState<string>("");
   const [selectedVenta, setSelectedVenta] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loadingRecibo, setLoadingRecibo] = useState(false);
+  const [deliveredByName, setDeliveredByName] = useState<{ nombre: string; apellido: string } | null>(null);
 
   // Función para buscar ventas por TicketID (primeros 8 dígitos)
   const filterVentasByTicketId = (ticketId: string) => {
@@ -69,9 +71,55 @@ export default function MisComprasPage() {
     checkAuthAndFetch();
   }, [router]);
 
-  const handleOpenModal = (venta: any) => {
-    setSelectedVenta(venta);
-    setModalOpen(true);
+  const handleOpenModal = async (venta: any) => {
+    try {
+      setLoadingRecibo(true);
+      setDeliveredByName(null);
+      setModalOpen(true);
+      // Traer el recibo con campos de entrega actualizados
+      const { data, error } = await supabase
+        .from('recibos')
+        .select(`
+          id_recibo,
+          fecha,
+          hora,
+          metodo_pago,
+          total,
+          productos,
+          ticket_id,
+          entregado,
+          entregado_en,
+          entregado_por,
+          entrega_nota,
+          id_user,
+          users (
+            id,
+            correo
+          )
+        `)
+        .eq('id_recibo', venta.id_recibo)
+        .single();
+
+      if (error) throw error;
+      setSelectedVenta(data);
+
+      if (data?.entregado && data?.entregado_por) {
+        try {
+          const { data: entregador } = await supabase
+            .from('users')
+            .select('nombre, apellido')
+            .eq('id', data.entregado_por)
+            .single();
+          if (entregador) setDeliveredByName({ nombre: entregador.nombre, apellido: entregador.apellido });
+        } catch (e) {
+          console.warn('No se pudo obtener el nombre de quien entregó:', e);
+        }
+      }
+    } catch (e) {
+      console.error('No se pudo cargar el recibo:', e);
+    } finally {
+      setLoadingRecibo(false);
+    }
   };
 
   if (!authChecked || loading) {
@@ -119,7 +167,7 @@ export default function MisComprasPage() {
                   <td className="px-4 py-3">{format(new Date(venta.fecha), "dd/MM/yyyy")}</td>
                   <td className="px-4 py-3">{venta.hora}</td>
                   <td className="px-4 py-3">{venta.metodo_pago}</td>
-                  <td className="px-4 py-3 font-semibold">${venta.total.toFixed(2)}</td>
+                  <td className="px-4 py-3 font-semibold">${Number(venta.total ?? 0).toFixed(2)}</td>
                   <td className="px-4 py-3">{venta.ticket_id?.slice(0, 8)}</td>
                   <td className="px-4 py-3">
                     <button
@@ -154,9 +202,24 @@ export default function MisComprasPage() {
         "transition-all animate-in fade-in-90 zoom-in-95"
       )}
     >
+      {loadingRecibo ? (
+        <>
+          {/* Título accesible oculto para lectores de pantalla */}
+          <DialogHeader className="sr-only">
+            <DialogTitle>Cargando recibo</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3 text-muted-foreground">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-primary" />
+              <p>Cargando recibo...</p>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
       {/* Encabezado con fondo azul gradiente - Fijo */}
       <div className={cn(
-        "px-6 py-4 bg-gradient-to-r from-indigo-600 to-blue-500",
+        "px-6 pr-14 py-4 bg-gradient-to-r from-indigo-600 to-blue-500",
         "dark:from-indigo-800 dark:to-blue-700",
         "text-white flex-shrink-0"
       )}>
@@ -168,14 +231,27 @@ export default function MisComprasPage() {
                 Recibo #{selectedVenta.id_recibo.substring(0, 8)}
               </DialogTitle>
             </div>
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
-              {selectedVenta.metodo_pago}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+                {selectedVenta.metodo_pago}
+              </span>
+              {selectedVenta?.entregado ? (
+                <span className="text-xs bg-emerald-400/25 text-white px-3 py-1 rounded-full border border-emerald-300/30">Entregado</span>
+              ) : (
+                <span className="text-xs bg-yellow-400/25 text-white px-3 py-1 rounded-full border border-yellow-300/30">Entrega pendiente</span>
+              )}
+            </div>
           </div>
           <DialogDescription className="text-blue-100 dark:text-blue-200">
             <>
               <span className="block text-sm">Cliente: {selectedVenta?.users?.correo || "No disponible"}</span>
               <span className="block text-sm">Detalles completos de la transacción</span>
+              {selectedVenta?.entregado && (
+                <span className="block text-xs mt-1">
+                  Entregado {selectedVenta.entregado_en ? `el ${new Date(selectedVenta.entregado_en).toLocaleString()}` : ''}
+                  {deliveredByName ? ` por ${deliveredByName.nombre} ${deliveredByName.apellido}` : ''}
+                </span>
+              )}
             </>
           </DialogDescription>
         </DialogHeader>
@@ -215,7 +291,7 @@ export default function MisComprasPage() {
               <span className="text-sm font-medium">Total</span>
             </div>
             <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-              ${selectedVenta.total.toFixed(2)}
+              ${Number(selectedVenta.total ?? 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -264,9 +340,9 @@ export default function MisComprasPage() {
                       </div>
                     </td>
                     <td className="p-3 text-center">{item.quantity}</td>
-                    <td className="p-3 text-center">${item.price.toFixed(2)}</td>
+                    <td className="p-3 text-center">${Number(item.price ?? 0).toFixed(2)}</td>
                     <td className="p-3 text-right font-medium">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ${(Number(item.price ?? 0) * Number(item.quantity ?? 0)).toFixed(2)}
                     </td>
                   </tr>
                 ))}
@@ -278,9 +354,16 @@ export default function MisComprasPage() {
 
       {/* Pie de página fijo */}
       <div className="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-zinc-700 flex justify-between items-center flex-shrink-0">
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <Barcode className="w-4 h-4" />
-          <span>Ticket ID: {selectedVenta.ticket_id}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2">
+            <Barcode className="w-4 h-4" />
+            <span>Ticket ID: {selectedVenta.ticket_id}</span>
+          </div>
+          {selectedVenta?.entregado && deliveredByName && (
+            <div className="sm:pl-3 sm:border-l sm:border-gray-300 dark:sm:border-zinc-700">
+              Entregado por: {deliveredByName.nombre} {deliveredByName.apellido}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button 
@@ -298,6 +381,8 @@ export default function MisComprasPage() {
           </Button>
         </div>
       </div>
+      </>
+      )}
     </DialogContent>
         </Dialog>
       )}
