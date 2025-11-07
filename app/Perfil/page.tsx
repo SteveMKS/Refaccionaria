@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase-browser';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { TicketModal } from "@/components/cart/Tickets";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ReceiptText, CalendarDays, Clock, DollarSign, PackageCheck, Barcode } from "lucide-react";
 import { motion } from 'framer-motion';
@@ -39,6 +40,7 @@ export default function PerfilUsuario() {
   const [selectedRecibo, setSelectedRecibo] = useState<any | null>(null);
   const [openRecibo, setOpenRecibo] = useState(false);
   const [loadingRecibo, setLoadingRecibo] = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -611,10 +613,10 @@ export default function PerfilUsuario() {
                       Cerrar
                     </Button>
                     <Button
-                      onClick={() => window.print()}
+                      onClick={() => setShowTicket(true)}
                       className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
                     >
-                      Imprimir
+                      Reimprimir Ticket
                     </Button>
                   </div>
                 </div>
@@ -622,6 +624,26 @@ export default function PerfilUsuario() {
             )}
           </DialogContent>
         </Dialog>
+      )}
+      {selectedRecibo && showTicket && (
+        <TicketModal
+          open={showTicket}
+          onClose={() => setShowTicket(false)}
+          productos={(selectedRecibo.productos || []).map((p: any) => ({
+            id: p.id || p.id_producto || p.id,
+            name: p.name || p.nombre || 'Producto',
+            price: Number(p.price ?? p.precio ?? 0),
+            quantity: Number(p.quantity ?? p.cantidad ?? 1),
+            imagen_principal: p.imagen_principal,
+            descripcion: p.descripcion,
+          }))}
+          total={Number(selectedRecibo.total ?? 0)}
+          fecha={new Date(selectedRecibo.fecha).toLocaleDateString('es-MX')}
+          hora={selectedRecibo.hora}
+          cliente={userProfile ? `${userProfile.nombre} ${userProfile.apellido || ''}`.trim() : (selectedRecibo?.users?.correo || 'Cliente')}
+          ticketId={selectedRecibo.ticket_id || selectedRecibo.id_recibo}
+          metodoPago={selectedRecibo.metodo_pago}
+        />
       )}
     </div>
   );

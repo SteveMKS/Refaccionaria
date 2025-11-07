@@ -12,6 +12,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { TicketModal } from "@/components/cart/Tickets";
 import {
   ReceiptText,
   CalendarDays,
@@ -35,6 +36,7 @@ export default function VentasAdminPage() {
   });
   const [selectedVenta, setSelectedVenta] = useState<any | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
 
   // Función para buscar ventas por TicketID (primeros 8 dígitos)
   const filterVentasByTicketId = (ticketId: string) => {
@@ -356,16 +358,38 @@ export default function VentasAdminPage() {
             Cerrar
           </Button>
           <Button 
-            onClick={() => window.print()}
+            onClick={() => setShowTicket(true)}
             className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-700 dark:hover:bg-indigo-800"
           >
-            Imprimir
+            Reimprimir Ticket
           </Button>
         </div>
       </div>
     </DialogContent>
   </Dialog>
 )}
+
+      {/* Modal de reimpresión del ticket */}
+      {showTicket && selectedVenta && (
+        <TicketModal
+          open={showTicket}
+          onClose={() => setShowTicket(false)}
+          productos={(selectedVenta.productos || []).map((p: any) => ({
+            id: p.id || p.id_producto || p.id,
+            name: p.name || p.nombre || 'Producto',
+            price: Number(p.price ?? p.precio ?? 0),
+            quantity: Number(p.quantity ?? p.cantidad ?? 1),
+            imagen_principal: p.imagen_principal,
+            descripcion: p.descripcion,
+          }))}
+          total={Number(selectedVenta.total ?? 0)}
+          fecha={new Date(selectedVenta.fecha).toLocaleDateString('es-MX')}
+          hora={selectedVenta.hora}
+          cliente={selectedVenta?.users?.correo || 'Cliente'}
+          ticketId={selectedVenta.ticket_id || selectedVenta.id_recibo}
+          metodoPago={selectedVenta.metodo_pago}
+        />
+      )}
     </div>
   );
 }

@@ -32,6 +32,7 @@ export default function SuccessPageClient() {
   const [intentos, setIntentos] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clienteNombre, setClienteNombre] = useState<string>("");
 
   const supabase = createClientComponentClient();
 
@@ -55,6 +56,20 @@ export default function SuccessPageClient() {
         if (data) {
           console.log("✅ Recibo encontrado:", data);
           setRecibo(data as Recibo);
+          // Buscar nombre y apellido del cliente para evitar mostrar UUID
+          try {
+            const { data: perfil } = await supabase
+              .from("users")
+              .select("nombre, apellido")
+              .eq("id", (data as any).id_user)
+              .single();
+            if (perfil) {
+              const nombreCompleto = `${perfil.nombre ?? ""} ${perfil.apellido ?? ""}`.trim();
+              setClienteNombre(nombreCompleto);
+            }
+          } catch (e) {
+            // Silencioso: si falla, se mostrará fallback (email/UUID)
+          }
           setModalOpen(true);
           setLoading(false);
         } else if (supabaseError) {
@@ -144,7 +159,7 @@ export default function SuccessPageClient() {
           total={recibo.total}
           fecha={recibo.fecha}
           hora={recibo.hora}
-          cliente={recibo.cliente || recibo.id_user || ""}
+          cliente={clienteNombre || recibo.cliente || recibo.id_user || ""}
           ticketId={recibo.ticketId || recibo.ticket_id}
           metodoPago={recibo.metodoPago || recibo.metodo_pago}
         />

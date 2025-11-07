@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase-browser";
 import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TicketModal } from "@/components/cart/Tickets";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ReceiptText, CalendarDays, Clock, DollarSign, PackageCheck, Barcode, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +21,7 @@ export default function ReciboPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [deliveredByName, setDeliveredByName] = useState<{nombre: string; apellido: string} | null>(null);
   const [currentUserName, setCurrentUserName] = useState<{nombre: string; apellido: string} | null>(null);
+  const [showTicket, setShowTicket] = useState(false);
 
   useEffect(() => {
     const fetchRecibo = async () => {
@@ -401,7 +403,7 @@ export default function ReciboPage() {
             <Button asChild>
               <Link href={scanPath}>Escanear otro ticket</Link>
             </Button>
-            <Button variant="outline" onClick={() => window.print()}>Imprimir</Button>
+            <Button variant="outline" onClick={() => setShowTicket(true)}>Reimprimir Ticket</Button>
           </div>
         </div>
       </div>
@@ -420,6 +422,27 @@ export default function ReciboPage() {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Modal para reimprimir el ticket original */}
+      {showTicket && (
+        <TicketModal
+          open={showTicket}
+          onClose={() => setShowTicket(false)}
+          productos={(recibo.productos || []).map((p: any) => ({
+            id: p.id || p.id_producto || p.id,
+            name: p.name || p.nombre || 'Producto',
+            price: Number(p.price ?? p.precio ?? 0),
+            quantity: Number(p.quantity ?? p.cantidad ?? 1),
+            imagen_principal: p.imagen_principal,
+            descripcion: p.descripcion,
+          }))}
+          total={Number(recibo.total ?? 0)}
+          fecha={new Date(recibo.fecha).toLocaleDateString('es-MX')}
+          hora={recibo.hora}
+          cliente={recibo.users ? `${recibo.users.nombre} ${recibo.users.apellido || ''}`.trim() : 'Cliente General'}
+          ticketId={recibo.ticket_id || recibo.id_recibo}
+          metodoPago={recibo.metodo_pago}
+        />
+      )}
     </div>
   );
 }
