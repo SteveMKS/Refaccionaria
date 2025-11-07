@@ -99,10 +99,11 @@ export const TicketModal = ({
     const headerGap = 8;
     const infoGapLine = 6;
     const infoGapBlock = 8;
-    const barcodeH = 20; // mm visibles en el PDF
-    const postBarcodeGap = 6;
-    const totalBlockGap = 10; // espacio después del total
-    const thanksGap = 8;
+  const barcodeH = 20; // mm visibles en el PDF
+  const postBarcodeGap = 6;
+  const totalBlockGap = 10; // espacio después del total
+  const midGap = 6; // espacio entre total y etiqueta short ID
+  const thanksGap = 8;
 
     // 1) PRE-CÁLCULO DE ALTURA TOTAL
     let y = margin.top;
@@ -124,12 +125,14 @@ export const TicketModal = ({
       const productHeight = Math.max(productLines.length * lineHeight, lineHeight);
       y += productHeight + rowPadding;
     });
-    // Espacio para el código de barras inmediatamente bajo productos
-    y += barcodeH + postBarcodeGap;
-    // Línea + total + gracias
-    y += rowPadding + 4; // línea y separación
-    y += totalBlockGap; // total
-    y += thanksGap; // gracias
+  // Espacio para el código de barras inmediatamente bajo productos
+  y += rowPadding; // separación tras línea superior
+  y += barcodeH + postBarcodeGap;
+  // Línea + total + etiqueta + gracias
+  y += rowPadding + 4; // línea y separación previa al total
+  y += totalBlockGap; // total
+  y += midGap; // etiqueta short id
+  y += thanksGap; // gracias
 
     const totalHeight = Math.max(y + margin.bottom, 100); // mínimo 100mm
 
@@ -182,7 +185,7 @@ export const TicketModal = ({
       yy = startY + productHeight + rowPadding;
     });
 
-    // Línea superior para delimitar sección del código de barras
+  // Línea superior para delimitar sección del código de barras
     doc.line(margin.left, yy, pageWidth - margin.right, yy);
     yy += rowPadding;
 
@@ -209,15 +212,20 @@ export const TicketModal = ({
     }
     yy += barcodeH + postBarcodeGap;
 
-    // Línea y Total
+  // Línea y Total
     doc.line(margin.left, yy, pageWidth - margin.right, yy);
     yy += rowPadding + 4;
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text(`TOTAL: $${total.toFixed(2)}`, pageWidth / 2, yy, { align: "center" });
     yy += totalBlockGap;
+  // Etiqueta con Ticket ID corto debajo del total
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Ticket: ${ticket_id.substring(0,8)}`, pageWidth / 2, yy, { align: 'center' });
+  yy += midGap;
 
-    // Mensaje de agradecimiento
+  // Mensaje de agradecimiento
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("¡Gracias por su compra!", pageWidth / 2, yy, { align: "center" });
