@@ -21,6 +21,17 @@ type CartItemProps = {
 export const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeFromCart } = useCart();
   const [localQuantity, setLocalQuantity] = useState(item.quantity);
+  const [usePlaceholder, setUsePlaceholder] = useState(false);
+
+  // Normaliza la ruta de imagen para next/image: http(s), data:, o con '/'. De lo contrario, usa placeholder
+  const normalizeImageSrc = (src?: string) => {
+    if (!src) return "/placeholder-product.svg";
+    const s = String(src).trim();
+    if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("/")) return s;
+    if (s.startsWith("data:")) return s;
+    // valores inválidos como "a", "-", etc.
+    return "/placeholder-product.svg";
+  };
 
   // Sincronizar cantidad cuando cambia externamente
   useEffect(() => {
@@ -42,14 +53,12 @@ export const CartItem = ({ item }: CartItemProps) => {
     <div className="flex items-start gap-4 border-b pb-4">
       <div className="w-20 h-20 relative flex-shrink-0">
         <Image
-          src={item.imagen_principal || "/placeholder-product.jpg"}
+          src={usePlaceholder ? "/placeholder-product.svg" : normalizeImageSrc(item.imagen_principal)}
           alt={item.name}
           fill
           className="object-cover rounded"
           sizes="80px"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder-product.jpg";
-          }}
+          onError={() => setUsePlaceholder(true)}
         />
       </div>
 
