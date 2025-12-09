@@ -10,6 +10,7 @@ import { SyncCart } from "@/components/cart/CartSync";
 import { AuthProvider } from "@/components/AuthProvider/Auth";
 import { HydrateUser } from "@/components/Users/HydrateUser";
 import { Toaster } from "sonner"; // ✅ Importar Toaster
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
             </SidebarProvider>
           </AuthProvider>
           <Toaster position="top-center" richColors />
+          <Analytics />
         </ThemeProvider>
       </body>
     </html>
