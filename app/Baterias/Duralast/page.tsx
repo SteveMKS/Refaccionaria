@@ -52,6 +52,7 @@ export default function ProductosPage() {
         .from("productos")
         .select(`*, id_marca (id_marca, nombre, descripcion)`, { count: 'exact' })
         .eq("id_marca", "077fe205-f694-4f18-af90-c5b62d3c8e52")
+        .eq("activo", true)
         .order("nombre", { ascending: true })
         .range(start, end);
 
@@ -60,7 +61,7 @@ export default function ProductosPage() {
         setProductos([]);
         setTotal(0);
       } else {
-        setProductos(data || []);
+        setProductos((data || []).filter((p: any) => p?.activo === true));
         setTotal(count || 0);
       }
       setLoading(false);

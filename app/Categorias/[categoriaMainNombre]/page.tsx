@@ -113,8 +113,9 @@ export default function RefaccionesPage() {
           .from("productos")
           .select("*, id_marca(id_marca, nombre)")
           .eq("id_subsubcategoria", subsubcategoriaSeleccionada)
+          .eq("activo", true)
           .order("nombre");
-        if (data) setProductos(data);
+        if (data) setProductos(data.filter((p: any) => p?.activo === true));
       }
     };
     cargarProductos();

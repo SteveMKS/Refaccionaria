@@ -77,6 +77,7 @@ export default function ProductosPage() {
             )
           `)
           .eq("id_marca", "f38f421b-c7b5-46cc-bb55-755f4160fd6a")
+          .eq("activo", true)
           .order("nombre", { ascending: true });
 
         if (supabaseError) throw supabaseError;
@@ -84,7 +85,8 @@ export default function ProductosPage() {
           throw new Error("No se encontraron productos");
         }
 
-        setProductos(data);
+        // Defensa adicional por si existen registros con activo = null/false
+        setProductos((data || []).filter((p: any) => p?.activo === true));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error desconocido");
       } finally {

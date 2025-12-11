@@ -9,7 +9,20 @@ export async function middleware(req: NextRequest) {
 
   const res = NextResponse.next();
   const supabase = createMiddlewareClient({ req, res });
-  const { data: { session } } = await supabase.auth.getSession();
+  let session: ReturnType<typeof Object> | null = null;
+  try {
+    const { data } = await supabase.auth.getSession();
+    session = data.session ?? null;
+  } catch (err: any) {
+    // Gracefully handle missing/invalid refresh token in Edge runtime
+    const code = err?.code || err?.status || '';
+    if (code === 'refresh_token_not_found' || err?.__isAuthError) {
+      session = null;
+    } else {
+      // For other unexpected errors, proceed without a session
+      session = null;
+    }
+  }
   const path = req.nextUrl.pathname;
 
   const publicRoutes = ['/', '/login', '/Registro'];
